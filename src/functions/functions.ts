@@ -11,7 +11,7 @@ import { getApiKeyAsync } from "../settings/settings";
  * @returns Weather data.
  * @requiresAddress
  */
-export async function Weather(location: string, date: string, invocation: CustomFunctions.Invocation): Promise<string | number> {
+export async function Weather(location: string, date: string, invocation: CustomFunctions.Invocation): Promise<string | number | undefined> {
   try
   {
     const cacheId: string = ToCacheId(location, date);
@@ -29,7 +29,7 @@ export async function Weather(location: string, date: string, invocation: Custom
       }
     }
 
-    const apiKey: string = await getApiKeyAsync();
+    const apiKey: string | null = await getApiKeyAsync();
     
     if (apiKey) {
       const TIMELINE_URL:string = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${location}/${date}?key=${apiKey}`
