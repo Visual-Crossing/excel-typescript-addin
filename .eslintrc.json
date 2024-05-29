@@ -1,0 +1,13 @@
+{
+  "plugins": [
+    "office-addins"
+  ],
+  "extends": [
+    "plugin:office-addins/recommended"
+  ],
+  "env": {
+    "browser": true,
+    "node": true,
+    "office": true
+  }
+}
