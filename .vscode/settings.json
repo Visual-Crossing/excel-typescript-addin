@@ -1,0 +1,12 @@
+{
+    "eslint.validate": [
+      "javascript",
+      "javascriptreact",
+      "typescript"
+    ],
+    "cSpell.words": [
+      "Addin",
+      "initialise",
+      "Initialised"
+    ]
+  }
