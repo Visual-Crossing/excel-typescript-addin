@@ -42,21 +42,21 @@ async function displaySettingsDialog(event: Office.AddinCommands.Event) {
           }
 
           dialog.addEventHandler(Office.EventType.DialogMessageReceived, async (args: { message: string; origin: string | undefined; } | { error: number;}) => {
-            // if (args) {
-            //   const argsAsMessageOrigin = args as { message: string; origin: string | undefined; };
+            if (args) {
+              const argsAsMessageOrigin = args as { message: string; origin: string | undefined; };
 
-            //   if (argsAsMessageOrigin) {
-            //     const json = JSON.parse(argsAsMessageOrigin.message);
+              if (argsAsMessageOrigin && argsAsMessageOrigin.message) {
+                const json = JSON.parse(argsAsMessageOrigin.message);
 
-            //     if (json.apiKey) {
-            //       await storeApiKeyAsync(json.apiKey);
-            //     }
+                if (json.apiKey) {
+                  await storeApiKeyAsync(json.apiKey);
+                }
 
-            //     if (json.unit) {
-            //       await storeUnitAsync(json.unit);
-            //     }
-            //   }
-            // }
+                if (json.unit) {
+                  await storeUnitAsync(json.unit);
+                }
+              }
+            }
 
             dialog.close();
           });

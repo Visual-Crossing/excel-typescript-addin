@@ -161,8 +161,8 @@ async function btnOkOnClickHandler() {
       await storeApiKeyAsync(apiKeyFromInput);
       await storeUnitAsync(unit);
 
-      // Office.context.ui.messageParent(JSON.stringify({"apiKey": apiKeyFromInput, "unit": unit}));
-      Office.context.ui.messageParent("");
+      Office.context.ui.messageParent(JSON.stringify({"apiKey": apiKeyFromInput, "unit": unit}));
+      // Office.context.ui.messageParent("");
     }
   }
   catch (e: unknown) {
