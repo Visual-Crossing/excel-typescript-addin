@@ -210,14 +210,14 @@ function getUnitAsyncFromInput(): string {
   const labelUk = document.getElementById("label-uk");
 
   if (labelUk && labelUk.classList.contains("active")) {
-    return "UK";
+    return "uk";
   } else {
     const labelMetric = document.getElementById("label-metric");
 
     if (labelMetric && labelMetric.classList.contains("active")) {
-      return "Metric";
+      return "metric";
     } else {
-      return "US";
+      return "us";
     }
   }
 }
@@ -229,9 +229,9 @@ async function loadUnit() {
   if (!unit) {
     unitLabel = document.getElementById("label-us");
   }
-  else if (unit === "UK") {
+  else if (unit === "uk") {
     unitLabel = document.getElementById("label-uk");
-  } else if (unit === "Metric") {
+  } else if (unit === "metric") {
     unitLabel = document.getElementById("label-metric");
   } else {
     unitLabel = document.getElementById("label-us");
