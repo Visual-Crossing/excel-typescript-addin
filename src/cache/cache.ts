@@ -1,5 +1,5 @@
-export function ToCacheId(location: string, date: string): string {
-    return `${location.toLowerCase()}_${date.toLowerCase()}`;
+export function ToCacheId(location: string, date: string, unit: string): string {
+    return `${location.toLowerCase()}_${date.toLowerCase()}_${unit.toLowerCase()}`;
 }
 
 export function cacheItemExists(cacheId: string): boolean {

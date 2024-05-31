@@ -1,7 +1,7 @@
 ﻿/* global clearInterval, console, CustomFunctions, setInterval */
 
-import { ToCacheId, getCacheItem } from "../cache/cache";
-import { getApiKeyAsync } from "../settings/settings";
+import { ToCacheId, getCacheItem, setCacheItem } from "../cache/cache";
+import { getApiKeyAsync, getUnitAsync } from "../settings/settings";
 
 /**
  * Offers complete, global weather data coverage both geographically and chronologically..
@@ -11,10 +11,16 @@ import { getApiKeyAsync } from "../settings/settings";
  * @returns Weather data.
  * @requiresAddress
  */
-export async function Weather(location: string, date: string, invocation: CustomFunctions.Invocation): Promise<string | number | undefined> {
+export async function Weather(location: string, date: string, invocation: CustomFunctions.Invocation): Promise<string | number | undefined | any[][]> {
   try
   {
-    const cacheId: string = ToCacheId(location, date);
+    let unit: string | null = await getUnitAsync();
+
+    if (!unit) {
+      unit = "us";
+    }
+
+    const cacheId: string = ToCacheId(location, date, unit);
     const cacheItem: string | null = getCacheItem(cacheId);
 
     if (cacheItem) {
@@ -27,12 +33,35 @@ export async function Weather(location: string, date: string, invocation: Custom
       if (cacheItemJson.status === "Requesting") {
         return "#N/A Requesting...";
       }
+      else if (cacheItemJson.status === "Complete") {
+        if (invocation.address) {
+          await Excel.run(async (context) => {
+            if (invocation.address) {
+              const sheetName = invocation.address.split("!")[0];
+              const sheet = context.workbook.worksheets.getItem(sheetName);
+              const cell = sheet.getRange(invocation.address);
+
+              cell.load();
+              await context.sync();
+
+              sheet.getRangeByIndexes(cell.rowIndex + 1, cell.columnIndex, 4, 1).values = [[cacheItemJson.tempmin], [cacheItemJson.precip], [cacheItemJson.precipprob], [cacheItemJson.windspeed]];
+              await context.sync();
+            }
+          });
+        }
+        
+        return cacheItemJson.tempmax;
+      }
     }
 
     const apiKey: string | null = await getApiKeyAsync();
     
     if (apiKey) {
-      const TIMELINE_URL:string = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${location}/${date}?key=${apiKey}`
+      setCacheItem(cacheId, JSON.stringify({ 
+        "status": "Requesting",
+      }));
+
+      const TIMELINE_URL:string = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${location}/${date}?key=${apiKey}&unitGroup=${unit}`
       const response: Response = await fetch(TIMELINE_URL);
 
       const NA_DATA: string = "#N/A Data";
@@ -45,6 +74,15 @@ export async function Weather(location: string, date: string, invocation: Custom
       const jsonResponse: any = await response.json();
       
       if (jsonResponse && jsonResponse.days && jsonResponse.days[0]) {
+        setCacheItem(cacheId, JSON.stringify({ 
+          "status": "Complete",
+          "tempmax": jsonResponse.days[0].tempmax,
+          "tempmin": jsonResponse.days[0].tempmin,
+          "precip": jsonResponse.days[0].precip,
+          "precipprob": jsonResponse.days[0].precipprob,
+          "windspeed": jsonResponse.days[0].windspeed
+        }));
+
         // Vertical
         // return [[jsonResponse.days[0].tempmax], [jsonResponse.days[0].tempmin], [jsonResponse.days[0].precip], [jsonResponse.days[0].precipprob], [jsonResponse.days[0].windspeed]];
 
@@ -52,34 +90,21 @@ export async function Weather(location: string, date: string, invocation: Custom
         // return [[jsonResponse.days[0].tempmax, jsonResponse.days[0].tempmin, jsonResponse.days[0].precip, jsonResponse.days[0].precipprob, jsonResponse.days[0].windspeed]];
 
         if (invocation.address) {
-          const timer = setInterval(async () => {
-            try
-            {
+          if (invocation.address) {
+            await Excel.run(async (context) => {
               if (invocation.address) {
-                await Excel.run(async (context) => {
-                  if (invocation.address) {
-                    const sheetName = invocation.address.split("!")[0];
-                    const sheet = context.workbook.worksheets.getItem(sheetName);
-                    const cell = sheet.getRange(invocation.address);
+                const sheetName = invocation.address.split("!")[0];
+                const sheet = context.workbook.worksheets.getItem(sheetName);
+                const cell = sheet.getRange(invocation.address);
 
-                    cell.load();
-                    await context.sync();
+                cell.load();
+                await context.sync();
 
-                    sheet.getRangeByIndexes(cell.rowIndex + 1, cell.columnIndex, 4, 1).values = [[jsonResponse.days[0].tempmin], [jsonResponse.days[0].precip], [jsonResponse.days[0].precipprob], [jsonResponse.days[0].windspeed]];
-                    await context.sync();
-                  }
-                });
+                sheet.getRangeByIndexes(cell.rowIndex + 1, cell.columnIndex, 4, 1).values = [[jsonResponse.days[0].tempmin], [jsonResponse.days[0].precip], [jsonResponse.days[0].precipprob], [jsonResponse.days[0].windspeed]];
+                await context.sync();
               }
-            }
-            catch
-            {
-
-            }
-            finally
-            {
-              clearInterval(timer);
-            }
-          }, 250);
+            });
+          }
         }
         else
         {
@@ -88,26 +113,14 @@ export async function Weather(location: string, date: string, invocation: Custom
       }
       else {
         return NA_DATA;
-        // invocation.setResult(NA_DATA);
       }
     }
     else {
       return "#Invalid API Key!";
-      
-      // const timer = setInterval(async () => {
-      //   if (invocation.address) {
-      //     invocation.setResult("#Invalid API Key!");
-      //   }
-      // }, 1000);
-
-      // invocation.onCanceled = () => {
-      //   clearInterval(timer);
-      // };
     }
   }
   catch
   {
     return "#Error!";
-    // invocation.setResult("#Error!");
   }
 }
