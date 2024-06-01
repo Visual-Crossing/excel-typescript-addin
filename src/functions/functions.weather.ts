@@ -1,25 +1,41 @@
 import { PrintDirections, WeatherArgs, extractWeatherArgs } from "../helpers/helpers.args";
 import { generateCacheId, getCacheItem, setCacheItem } from "../cache/cache";
-import { getApiKeyFromSettings } from "../settings/settings";
-import { getDataCols, getDataRows, getFormulaWithoutColsRows } from "../helpers/helpers.formulas";
+import { getApiKeyFromSettingsAsync } from "../settings/settings";
+import { getDataCols, getDataRows } from "../helpers/helpers.formulas";
+import semaphore from "semaphore";
 
-export function getOrRequestData(unit: string | null, location: string, date: string, getRemainingWeatherArgs: () => [any | null, any | null, CustomFunctions.Invocation]): string | number | Date {
+const sem: semaphore.Semaphore = semaphore(1);
+
+export async function getOrRequestData(unit: string | null, location: string, date: string, getRemainingWeatherArgs: () => [any | null, any | null, CustomFunctions.Invocation]): Promise<string | number | Date> {
     if (!unit) {
         //Default unit = us
         unit = "us";
     }
     
     const cacheId: string = generateCacheId(location, date, unit);
-    const cacheItem: string | null = getCacheItem(cacheId);
+    let cacheItem: string | null = null;
+
+    sem.take(function() {
+        cacheItem = getCacheItem(cacheId);
+    
+        if (!cacheItem) {
+            setCacheItem(cacheId, JSON.stringify({ 
+                "status": "Requesting",
+            }));
+
+            requestWeatherData(() => { return [cacheId, location, date, unit] }, () => { return [cacheId, ...getRemainingWeatherArgs()] });
+        }
+
+        sem.leave();
+    });
+
 
     if (cacheItem) {
         const cacheItemJson: any = JSON.parse(cacheItem);
         return getDataFromCache(cacheItemJson, getRemainingWeatherArgs);
     }
 
-    makeRequest(() => { return [cacheId, location, date, unit] }, () => { return [cacheId, ...getRemainingWeatherArgs()] });
-
-    return "Retrieving...";
+    return "Requesting...";
 }
 
 function getDataFromCache(cacheItemJson: any, getRemainingWeatherArgs: () => [any | null, any | null, CustomFunctions.Invocation]): string | number | Date {
@@ -27,10 +43,11 @@ function getDataFromCache(cacheItemJson: any, getRemainingWeatherArgs: () => [an
         //ToDo
     }
 
-    if (cacheItemJson.status === "Retrieving") {
-        return "Retrieving...";
+    if (cacheItemJson.status === "Requesting") {
+        return "Requesting...";
     }
-    else if (cacheItemJson.status === "Complete") {
+    
+    if (cacheItemJson.status === "Complete") {
         const [args, colsRows, invocation] = getRemainingWeatherArgs();
         const weatherArgs: WeatherArgs | null = extractWeatherArgs(args, colsRows);
 
@@ -41,7 +58,7 @@ function getDataFromCache(cacheItemJson: any, getRemainingWeatherArgs: () => [an
 
         if (invocation && invocation.address) {
             let printDirection: PrintDirections;
-
+ 
             if (weatherArgs) {
                 printDirection = weatherArgs.PrintDirection;
             }
@@ -58,18 +75,15 @@ function getDataFromCache(cacheItemJson: any, getRemainingWeatherArgs: () => [an
     throw new Error();
 }
 
-function makeRequest(getApiKeySuccessResponseArgs: () => [string, string, string, string | null], getTimelineApiSuccessJsonResponseArgs: () => [string, any | null, any | null, CustomFunctions.Invocation]): void {
-    getApiKeyFromSettings((apiKey: string | null) => onApiKeySuccessResponse(apiKey, getApiKeySuccessResponseArgs, getTimelineApiSuccessJsonResponseArgs));
+async function requestWeatherData(getApiKeySuccessResponseArgs: () => [string, string, string, string | null], getTimelineApiSuccessJsonResponseArgs: () => [string, any | null, any | null, CustomFunctions.Invocation]): Promise<void> {
+    const apiKey: string | null = await getApiKeyFromSettingsAsync();
+    requestTimelineData(apiKey, getApiKeySuccessResponseArgs, getTimelineApiSuccessJsonResponseArgs)
 }
 
-function onApiKeySuccessResponse(apiKey: string | null, getApiKeySuccessResponseArgs: () => [string, string, string, string | null], getTimelineApiSuccessJsonResponseArgs: () => [string, any | null, any | null, CustomFunctions.Invocation]) {
+function requestTimelineData(apiKey: string | null, getApiKeySuccessResponseArgs: () => [string, string, string, string | null], getTimelineApiSuccessJsonResponseArgs: () => [string, any | null, any | null, CustomFunctions.Invocation]): void {
     if (apiKey) {
         const [cacheId, location, date, unit] = getApiKeySuccessResponseArgs();
 
-        setCacheItem(cacheId, JSON.stringify({ 
-          "status": "Retrieving",
-        }));
-  
         const TIMELINE_API_URL:string = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${location}/${date}?key=${apiKey}&unitGroup=${unit}`
         
         fetch(TIMELINE_API_URL)
@@ -79,8 +93,6 @@ function onApiKeySuccessResponse(apiKey: string | null, getApiKeySuccessResponse
             .catch(() => {
                 //ToDo
             });
-  
-        // return "Requesting...";
     }
     else {
         // return "#Invalid API Key!";
@@ -101,9 +113,6 @@ function onTimelineApiSuccessResponse(response: Response, getTimelineApiSuccessJ
         .catch(() => {
             //ToDo
         });
-        
-    
-
 }
 
 function onTimelineApiSuccessJsonResponse(jsonResponse: any, getTimelineApiSuccessJsonResponseArgs: () => [string, any | null, any | null, CustomFunctions.Invocation]) {
@@ -154,45 +163,50 @@ async function updateFormula(cacheItemJson: any, weatherArgs: WeatherArgs, invoc
 
         try {
             if (invocation && invocation.address) {
-            await Excel.run(async (context: Excel.RequestContext) => {
-                try {
-                if (invocation && invocation.address) {
-                    const sheetName = invocation.address.split("!")[0];
+                await Excel.run(async (context: Excel.RequestContext) => {
+                    try {
+                    if (invocation && invocation.address) {
+                        const sheetName = invocation.address.split("!")[0];
 
-                    if (!sheetName) {
-                    
+                        if (!sheetName) {
+                        
+                        }
+
+                        const sheet = context.workbook.worksheets.getItem(sheetName);
+
+                        if (!sheet) {
+                        
+                        }
+
+                        const caller = sheet.getRange(invocation.address);
+
+                        if (!caller) {
+                        
+                        }
+
+                        caller.load();
+                        await context.sync();
+
+                        const originalFormula: string = caller.formulas[0][0] as string;
+
+                        if (weatherArgs.Columns && weatherArgs.Rows) {
+                            const updatedFormula = originalFormula.replace(`cols=${weatherArgs.Columns};rows=${weatherArgs.Rows}`, `cols=${getDataCols(cacheItemJson, weatherArgs.PrintDirection)};rows=${getDataRows(cacheItemJson, weatherArgs.PrintDirection)}`);
+                            caller.values= [[updatedFormula]];
+                        }
+                        else {
+                            caller.values= [[`${originalFormula.substring(0, originalFormula.length - 1)}, "cols=${getDataCols(cacheItemJson, weatherArgs.PrintDirection)};rows=${getDataRows(cacheItemJson, weatherArgs.PrintDirection)}")`]];
+                        }
+
+                        await context.sync();
                     }
-
-                    const sheet = context.workbook.worksheets.getItem(sheetName);
-
-                    if (!sheet) {
-                    
+                    else {
+                        //ToDo
                     }
-
-                    const caller = sheet.getRange(invocation.address);
-
-                    if (!caller) {
-                    
                     }
-
-                    caller.load();
-                    await context.sync();
-
-                    const originalFormula: string = caller.formulas[0][0] as string;
-                    const originalFormulaWithoutColsRows: string = getFormulaWithoutColsRows(originalFormula, weatherArgs);
-                    const newFormula = `${originalFormulaWithoutColsRows.substring(0, originalFormulaWithoutColsRows.length - 1)}, "cols=${getDataCols(cacheItemJson, weatherArgs.PrintDirection)};rows=${getDataRows(cacheItemJson, weatherArgs.PrintDirection)}")`;
-
-                    caller.values= [[newFormula]];
-                    await context.sync();
-                }
-                else {
+                    catch {
                     //ToDo
-                }
-                }
-                catch {
-                //ToDo
-                }
-            });
+                    }
+                });
             }
             else {
             //ToDo
@@ -211,40 +225,40 @@ async function updateFormula(cacheItemJson: any, weatherArgs: WeatherArgs, invoc
 async function printArrayData(cacheItemJson: any, printDirection: PrintDirections, invocation: CustomFunctions.Invocation): Promise<void> {
     if (cacheItemJson && invocation && invocation.address) {
         await Excel.run(async (context) => {
-        if (invocation && invocation.address) {
-            const sheetName = invocation.address.split("!")[0];
+            if (invocation && invocation.address) {
+                const sheetName = invocation.address.split("!")[0];
 
-            if (!sheetName) {
-            
-            }
+                if (!sheetName) {
+                
+                }
 
-            const sheet = context.workbook.worksheets.getItem(sheetName);
+                const sheet = context.workbook.worksheets.getItem(sheetName);
 
-            if (!sheet) {
-            
-            }
+                if (!sheet) {
+                
+                }
 
-            const caller = sheet.getRange(invocation.address);
+                const caller = sheet.getRange(invocation.address);
 
-            if (!caller) {
-            
-            }
-            
-            caller.load();
-            await context.sync();
+                if (!caller) {
+                
+                }
+                
+                caller.load();
+                await context.sync();
 
-            if (printDirection === PrintDirections.Horizontal) {
-            sheet.getRangeByIndexes(caller.rowIndex, caller.columnIndex + 1, 1, 4).values = [[cacheItemJson.tempmin, cacheItemJson.precip, cacheItemJson.precipprob, cacheItemJson.windspeed]];
+                if (printDirection === PrintDirections.Horizontal) {
+                    sheet.getRangeByIndexes(caller.rowIndex, caller.columnIndex + 1, 1, 4).values = [[cacheItemJson.tempmin, cacheItemJson.precip, cacheItemJson.precipprob, cacheItemJson.windspeed]];
+                }
+                else {
+                    sheet.getRangeByIndexes(caller.rowIndex + 1, caller.columnIndex, 4, 1).values = [[cacheItemJson.tempmin], [cacheItemJson.precip], [cacheItemJson.precipprob], [cacheItemJson.windspeed]];
+                }
+
+                await context.sync();
             }
             else {
-            sheet.getRangeByIndexes(caller.rowIndex + 1, caller.columnIndex, 4, 1).values = [[cacheItemJson.tempmin], [cacheItemJson.precip], [cacheItemJson.precipprob], [cacheItemJson.windspeed]];
+                //ToDo
             }
-
-            await context.sync();
-        }
-        else {
-            //ToDo
-        }
         });
     }
     else {
