@@ -5,7 +5,7 @@ export function getFormulaWithoutColsRows(formula: string, weatherArgs: WeatherA
         throw new Error("Invalid formula!");
     }
 
-    return formula.replace(`, cols=${weatherArgs?.Columns};rows=${weatherArgs?.Rows}`, "");
+    return formula.replace(`cols=${weatherArgs?.Columns};rows=${weatherArgs?.Rows}`, "");
 }
 
 export function getDataCols(cacheItemJson: any, printDirection: PrintDirections): number {

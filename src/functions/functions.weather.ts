@@ -3,7 +3,7 @@ import { generateCacheId, getCacheItem, setCacheItem } from "../cache/cache";
 import { getApiKeyFromSettings } from "../settings/settings";
 import { getDataCols, getDataRows, getFormulaWithoutColsRows } from "../helpers/helpers.formulas";
 
-export function onUnitSuccessResponse(unit: string | null, location: string, date: string, getRemainingWeatherArgsCallback: () => [any | null, any | null, CustomFunctions.Invocation]): void {
+export function getOrRequestData(unit: string | null, location: string, date: string, getRemainingWeatherArgs: () => [any | null, any | null, CustomFunctions.Invocation]): string | number | Date {
     if (!unit) {
         //Default unit = us
         unit = "us";
@@ -14,29 +14,29 @@ export function onUnitSuccessResponse(unit: string | null, location: string, dat
 
     if (cacheItem) {
         const cacheItemJson: any = JSON.parse(cacheItem);
-        returnDataFromCache(cacheItemJson, getRemainingWeatherArgsCallback);
-
-        return;
+        return getDataFromCache(cacheItemJson, getRemainingWeatherArgs);
     }
 
-    makeRequest(() => { return [cacheId, location, date, unit] }, () => { return [cacheId, ...getRemainingWeatherArgsCallback()] });
+    makeRequest(() => { return [cacheId, location, date, unit] }, () => { return [cacheId, ...getRemainingWeatherArgs()] });
+
+    return "Retrieving...";
 }
 
-function returnDataFromCache(cacheItemJson: any, getRemainingWeatherArgs: () => [any | null, any | null, CustomFunctions.Invocation]): void {
+function getDataFromCache(cacheItemJson: any, getRemainingWeatherArgs: () => [any | null, any | null, CustomFunctions.Invocation]): string | number | Date {
     if (!cacheItemJson) {
         //ToDo
     }
 
     if (cacheItemJson.status === "Retrieving") {
-        return;
+        return "Retrieving...";
     }
     else if (cacheItemJson.status === "Complete") {
         const [args, colsRows, invocation] = getRemainingWeatherArgs();
         const weatherArgs: WeatherArgs | null = extractWeatherArgs(args, colsRows);
 
-        if (invocation && !colsRows) {
+        if (invocation && weatherArgs && (!weatherArgs.Columns || !weatherArgs.Rows)) {
             updateFormula(cacheItemJson, weatherArgs ?? new WeatherArgs(), invocation);
-            return;
+            return "Updating...";
         }
 
         if (invocation && invocation.address) {
@@ -52,8 +52,10 @@ function returnDataFromCache(cacheItemJson: any, getRemainingWeatherArgs: () => 
             printArrayData(cacheItemJson, printDirection, invocation);
         }
         
-        //   return cacheItemJson.tempmax;
+        return cacheItemJson.tempmax;
     }
+
+    throw new Error();
 }
 
 function makeRequest(getApiKeySuccessResponseArgs: () => [string, string, string, string | null], getTimelineApiSuccessJsonResponseArgs: () => [string, any | null, any | null, CustomFunctions.Invocation]): void {

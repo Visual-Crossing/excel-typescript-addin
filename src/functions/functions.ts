@@ -1,7 +1,7 @@
 ﻿/* global clearInterval, console, CustomFunctions, setInterval */
 
-import { getUnitFromSettings } from "../settings/settings";
-import { onUnitSuccessResponse } from "./functions.weather";
+import { getUnitFromSettingsAsync } from "../settings/settings";
+import { getOrRequestData } from "./functions.weather";
 
 /**
  * Offers complete, global weather data coverage both geographically and chronologically.
@@ -13,7 +13,7 @@ import { onUnitSuccessResponse } from "./functions.weather";
  * @requiresAddress
  * @returns Weather data.
  */
-export function Weather(location: any, date: any, args: any | null = null, colsRows: any | null = null, invocation: CustomFunctions.Invocation): undefined | string | number | any {
+export async function Weather(location: any, date: any, args: any | null = null, colsRows: any | null = null, invocation: CustomFunctions.Invocation): Promise<string | number | Date> {
   try {
     if (!location) {
       return "#Invalid Location!";
@@ -23,33 +23,12 @@ export function Weather(location: any, date: any, args: any | null = null, colsR
       return "#Invalid Date!";
     }
 
-    getUnitFromSettings((unit: string | null) => onUnitSuccessResponse(unit, location, date, ()=> { return [args, colsRows, invocation] } ));
+    const unit = await getUnitFromSettingsAsync();
+    return getOrRequestData(unit, location, date, ()=> { return [args, colsRows, invocation] } )
 
-    // Excel.run(async (context: Excel.RequestContext) => { getUnitFromSettings((unit: string | null) => onUnitSuccessResponse(unit, location, date, ()=> { return [args, colsRows, invocation] } )); })
-    //   .then(() => {
-    //     //ToDo
-    //   })
-    //   .catch(() => {
-    //     //ToDo
-    //   });
+    // getUnitFromSettings((unit: string | null) => onUnitSuccessResponse(unit, location, date, ()=> { return [args, colsRows, invocation] } ));
 
-    // const timer = setInterval(async () => {   
-    //   try {
-    //       clearInterval(timer);
-    //   }
-    //   catch {
-    //       //ToDo
-    //   }
-
-    //   try {
-    //     getUnitFromSettings((unit: string | null) => onUnitSuccessResponse(unit, location, date, ()=> { return [args, colsRows, invocation] } ));
-    //   }
-    //   catch {
-    //       //ToDo
-    //   }
-    // }, 250);
-
-    return "Retrieving...";
+    // return "Retrieving...";
   }
   catch {
     return "#Error!";
