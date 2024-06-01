@@ -33,6 +33,7 @@ export function getOrRequestData(unit: string | null, location: string, date: st
         sem.leave();
     });
 
+    clearArrayData(getRemainingWeatherArgs);
 
     if (cacheItem) {
         const cacheItemJson: any = JSON.parse(cacheItem);
@@ -267,5 +268,55 @@ async function printArrayData(cacheItemJson: any, printDirection: PrintDirection
     }
     else {
         //ToDo
+    }
+}
+
+function clearArrayData(getRemainingWeatherArgs: () => [any | null, any | null, CustomFunctions.Invocation]) {
+    const [args, colsRows, invocation] = getRemainingWeatherArgs();
+    const weatherArgs: WeatherArgs | null = extractWeatherArgs(args, colsRows);
+
+    if (weatherArgs && weatherArgs.Columns && weatherArgs.Rows) {
+        Excel.run(async (context: Excel.RequestContext) => {
+            try {
+                if (invocation && invocation.address && weatherArgs && weatherArgs.Columns && weatherArgs.Rows) {
+                    const sheetName = invocation.address.split("!")[0];
+
+                    if (!sheetName) {
+                    
+                    }
+
+                    const sheet = context.workbook.worksheets.getItem(sheetName);
+                    
+                    if (!sheet) {
+                    
+                    }
+
+                    const caller = sheet.getRange(invocation.address);
+
+                    if (!caller) {
+                    
+                    }
+
+                    caller.load();
+                    await context.sync();
+
+                    if (weatherArgs.Rows > 1) {
+                        sheet.getRangeByIndexes(caller.rowIndex + 1, caller.columnIndex, weatherArgs.Rows - 1, weatherArgs.Columns).clear(Excel.ClearApplyTo.contents);
+                    }
+
+                    if (weatherArgs.Columns > 1) {
+                        sheet.getRangeByIndexes(caller.rowIndex, caller.columnIndex + 1, weatherArgs.Rows, weatherArgs.Columns - 1).clear(Excel.ClearApplyTo.contents);
+                    }
+
+                    await context.sync();
+                }
+                else {
+                    //ToDo
+                }
+            }
+            catch {
+                //ToDo
+            }
+        });
     }
 }
