@@ -11,6 +11,8 @@ import { getApiKeyFromSettingsAsync, getUnitFromSettingsAsync, storeApiKeyAsync,
 Office.onReady(async () => {
   try
   {
+    Office.addin.setStartupBehavior(Office.StartupBehavior.load);
+
     if (!await tryInitialiseApiKey()) {
       return;
     }
