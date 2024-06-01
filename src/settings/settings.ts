@@ -1,16 +1,36 @@
 const API_KEY_SETTING: string = "Visual Crossing API Key";
 const UNIT_SETTING: string = "Visual Crossing Unit";
 
-export async function getApiKeyAsync(): Promise<string | null> {
+export async function getApiKeyFromSettingsAsync(): Promise<string | null> {
     return await OfficeRuntime.storage.getItem(API_KEY_SETTING);
+}
+
+export function getApiKeyFromSettings(callback: (apiKey: string | null) => void): void {
+    OfficeRuntime.storage.getItem(API_KEY_SETTING)
+        .then((apiKey: string | null) => {
+            callback(apiKey);
+        })
+        .catch((error: any) => {
+            //ToDo
+        });
 }
 
 export async function storeApiKeyAsync(apiKey: string): Promise<void> {
     await OfficeRuntime.storage.setItem(API_KEY_SETTING, apiKey);
 }
 
-export async function getUnitAsync(): Promise<string | null> {
+export async function getUnitFromSettingsAsync(): Promise<string | null> {
     return await OfficeRuntime.storage.getItem(UNIT_SETTING);
+}
+
+export function getUnitFromSettings(callback: (unit: string | null) => void): void {
+    OfficeRuntime.storage.getItem(UNIT_SETTING)
+        .then((unit: string | null) => {
+            callback(unit);
+        })
+        .catch((error: any) => {
+            //ToDo
+        });
 }
 
 export async function storeUnitAsync(unit: string): Promise<void> {

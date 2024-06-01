@@ -1,8 +1,7 @@
 import { PrintDirections, WeatherArgs, extractWeatherArgs } from "../helpers/helpers.args";
 import { ToCacheId as generateCacheId, getCacheItem, setCacheItem } from "../cache/cache";
-import { getApiKeyAsync } from "../settings/settings";
+import { getApiKeyFromSettings } from "../settings/settings";
 import { getDataCols, getDataRows, getFormulaWithoutColsRows } from "../helpers/helpers.formulas";
-import { cache } from "webpack";
 
 export function onUnitSuccessResponse(unit: string | null, location: string, date: string, getRemainingWeatherArgsCallback: () => [any | null, any | null, CustomFunctions.Invocation]): void {
     if (!unit) {
@@ -58,13 +57,7 @@ function returnDataFromCache(cacheItemJson: any, getRemainingWeatherArgs: () => 
 }
 
 function makeRequest(getApiKeySuccessResponseArgs: () => [string, string, string, string | null], getTimelineApiSuccessJsonResponseArgs: () => [string, any | null, any | null, CustomFunctions.Invocation]): void {
-    getApiKeyAsync()
-        .then((apiKey: string | null) => {
-            onApiKeySuccessResponse(apiKey, getApiKeySuccessResponseArgs, getTimelineApiSuccessJsonResponseArgs);
-        })
-        .catch((error: any) => {
-            //ToDo
-        });
+    getApiKeyFromSettings((apiKey: string | null) => onApiKeySuccessResponse(apiKey, getApiKeySuccessResponseArgs, getTimelineApiSuccessJsonResponseArgs));
 }
 
 function onApiKeySuccessResponse(apiKey: string | null, getApiKeySuccessResponseArgs: () => [string, string, string, string | null], getTimelineApiSuccessJsonResponseArgs: () => [string, any | null, any | null, CustomFunctions.Invocation]) {

@@ -1,6 +1,6 @@
 ﻿/* global clearInterval, console, CustomFunctions, setInterval */
 
-import { getUnitAsync as getUnitFromSettingsAsync } from "../settings/settings";
+import { getUnitFromSettings } from "../settings/settings";
 import { onUnitSuccessResponse } from "./functions.weather";
 
 /**
@@ -23,13 +23,7 @@ export function Weather(location: any, date: any, args: any | null = null, colsR
       return "#Invalid Date!";
     }
 
-    getUnitFromSettingsAsync()
-      .then((unit: string | null) => {
-        onUnitSuccessResponse(unit, location, date, ()=> { return [args, colsRows, invocation] } );
-      })
-      .catch((error: any) => {
-        //ToDo
-      });
+    getUnitFromSettings((unit: string | null) => onUnitSuccessResponse(unit, location, date, ()=> { return [args, colsRows, invocation] } ));
     
     return "Retrieving...";
   }

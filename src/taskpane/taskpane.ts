@@ -3,7 +3,7 @@
  * See LICENSE in the project root for license information.
  */
 
-import { getApiKeyAsync, getUnitAsync, storeApiKeyAsync, storeUnitAsync } from "../settings/settings";
+import { getApiKeyFromSettingsAsync, getUnitFromSettingsAsync, storeApiKeyAsync, storeUnitAsync } from "../settings/settings";
 
 /* global console, document, Excel, Office */
 
@@ -51,7 +51,7 @@ async function tryInitialiseApiKey(): Promise<boolean> {
   } else {
     apiKeyTextBox.oninput = updateBtnOkState;
 
-    const apiKey: string | null = await getApiKeyAsync();
+    const apiKey: string | null = await getApiKeyFromSettingsAsync();
     
     if (apiKey && apiKey.length > 0) {
       apiKeyTextBox.value = apiKey;
@@ -223,7 +223,7 @@ function getUnitAsyncFromInput(): string {
 }
 
 async function loadUnit() {
-  const unit: string | null = await getUnitAsync();
+  const unit: string | null = await getUnitFromSettingsAsync();
   let unitLabel: HTMLElement | null = null;
 
   if (!unit) {
@@ -244,3 +244,4 @@ async function loadUnit() {
     console.error("Unable to load the unit.");
   }
 }
+
