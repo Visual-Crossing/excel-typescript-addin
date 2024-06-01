@@ -6,16 +6,20 @@ import semaphore from "semaphore";
 
 const sem: semaphore.Semaphore = semaphore(1);
 
-export async function getOrRequestData(unit: string | null, location: string, date: string, getRemainingWeatherArgs: () => [any | null, any | null, CustomFunctions.Invocation]): Promise<string | number | Date> {
+export function getOrRequestData(unit: string | null, location: string, date: string, getRemainingWeatherArgs: () => [any | null, any | null, CustomFunctions.Invocation]): string | number | Date {
     if (!unit) {
         //Default unit = us
         unit = "us";
     }
     
-    const cacheId: string = generateCacheId(location, date, unit);
     let cacheItem: string | null = null;
 
+    /**
+     * Use of semaphore ensures that only 1 request to the server is made for each unique combination of location, date & unit.
+     * Subsequent requests for the same data are retrieved from the cache i.e. a second request is NOT made to the server.
+     */
     sem.take(function() {
+        const cacheId: string = generateCacheId(location, date, unit);
         cacheItem = getCacheItem(cacheId);
     
         if (!cacheItem) {

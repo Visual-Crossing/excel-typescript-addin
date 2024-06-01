@@ -24,7 +24,7 @@ export async function Weather(location: any, date: any, args: any | null = null,
     }
 
     const unit = await getUnitFromSettingsAsync();
-    return await getOrRequestData(unit, location, date, ()=> { return [args, colsRows, invocation] } )
+    return getOrRequestData(unit, location, date, ()=> { return [args, colsRows, invocation] } )
   }
   catch {
     return "#Error!";
