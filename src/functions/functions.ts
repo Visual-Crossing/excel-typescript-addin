@@ -24,7 +24,31 @@ export function Weather(location: any, date: any, args: any | null = null, colsR
     }
 
     getUnitFromSettings((unit: string | null) => onUnitSuccessResponse(unit, location, date, ()=> { return [args, colsRows, invocation] } ));
-    
+
+    // Excel.run(async (context: Excel.RequestContext) => { getUnitFromSettings((unit: string | null) => onUnitSuccessResponse(unit, location, date, ()=> { return [args, colsRows, invocation] } )); })
+    //   .then(() => {
+    //     //ToDo
+    //   })
+    //   .catch(() => {
+    //     //ToDo
+    //   });
+
+    // const timer = setInterval(async () => {   
+    //   try {
+    //       clearInterval(timer);
+    //   }
+    //   catch {
+    //       //ToDo
+    //   }
+
+    //   try {
+    //     getUnitFromSettings((unit: string | null) => onUnitSuccessResponse(unit, location, date, ()=> { return [args, colsRows, invocation] } ));
+    //   }
+    //   catch {
+    //       //ToDo
+    //   }
+    // }, 250);
+
     return "Retrieving...";
   }
   catch {

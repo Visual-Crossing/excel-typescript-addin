@@ -1,4 +1,4 @@
-export function ToCacheId(location: string, date: string, unit: string): string {
+export function generateCacheId(location: string, date: string, unit: string): string {
     return `${location.toLowerCase()}_${date.toLowerCase()}_${unit.toLowerCase()}`;
 }
 

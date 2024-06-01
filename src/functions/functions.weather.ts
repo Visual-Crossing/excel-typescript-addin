@@ -1,5 +1,5 @@
 import { PrintDirections, WeatherArgs, extractWeatherArgs } from "../helpers/helpers.args";
-import { ToCacheId as generateCacheId, getCacheItem, setCacheItem } from "../cache/cache";
+import { generateCacheId, getCacheItem, setCacheItem } from "../cache/cache";
 import { getApiKeyFromSettings } from "../settings/settings";
 import { getDataCols, getDataRows, getFormulaWithoutColsRows } from "../helpers/helpers.formulas";
 
