@@ -1,9 +1,11 @@
 ﻿/* global clearInterval, console, CustomFunctions, setInterval */
 
+import { PrintDirections, WeatherArgs, extractWeatherArgs } from "../helpers/helpers.args";
 import { ToCacheId, getCacheItem, setCacheItem } from "../cache/cache";
 import { getApiKeyAsync, getUnitAsync } from "../settings/settings";
+import { getDataCols, getDataRows, getFormulaWithoutColsRows } from "../helpers/helpers.formulas";
 
-async function updateFormula(invocation: CustomFunctions.Invocation) {
+async function updateFormula(cacheItemJson: any, weatherArgs: WeatherArgs, invocation: CustomFunctions.Invocation): Promise<void> {
   if (invocation && invocation.address) {
     const timer = setInterval(async () => {
       try {
@@ -39,8 +41,9 @@ async function updateFormula(invocation: CustomFunctions.Invocation) {
                 caller.load();
                 await context.sync();
 
-                const originalFormula = caller.formulas[0][0] as string;
-                const newFormula = `${originalFormula.substring(0, originalFormula.length - 1)}, "cols=1;rows=5")`;
+                const originalFormula: string = caller.formulas[0][0] as string;
+                const originalFormulaWithoutColsRows: string = getFormulaWithoutColsRows(originalFormula, weatherArgs);
+                const newFormula = `${originalFormulaWithoutColsRows.substring(0, originalFormulaWithoutColsRows.length - 1)}, "cols=${getDataCols(cacheItemJson, weatherArgs.PrintDirection)};rows=${getDataRows(cacheItemJson, weatherArgs.PrintDirection)}")`;
 
                 caller.values= [[newFormula]];
                 await context.sync();
@@ -68,7 +71,7 @@ async function updateFormula(invocation: CustomFunctions.Invocation) {
   }
 }
 
-async function insertData(cacheItemJson: any, invocation: CustomFunctions.Invocation) {
+async function insertData(cacheItemJson: any, printDirection: PrintDirections, invocation: CustomFunctions.Invocation): Promise<void> {
   if (cacheItemJson && invocation && invocation.address) {
     await Excel.run(async (context) => {
       if (invocation && invocation.address) {
@@ -93,7 +96,13 @@ async function insertData(cacheItemJson: any, invocation: CustomFunctions.Invoca
         caller.load();
         await context.sync();
 
-        sheet.getRangeByIndexes(caller.rowIndex + 1, caller.columnIndex, 4, 1).values = [[cacheItemJson.tempmin], [cacheItemJson.precip], [cacheItemJson.precipprob], [cacheItemJson.windspeed]];
+        if (printDirection === PrintDirections.Horizontal) {
+          sheet.getRangeByIndexes(caller.rowIndex, caller.columnIndex + 1, 1, 4).values = [[cacheItemJson.tempmin, cacheItemJson.precip, cacheItemJson.precipprob, cacheItemJson.windspeed]];
+        }
+        else {
+          sheet.getRangeByIndexes(caller.rowIndex + 1, caller.columnIndex, 4, 1).values = [[cacheItemJson.tempmin], [cacheItemJson.precip], [cacheItemJson.precipprob], [cacheItemJson.windspeed]];
+        }
+
         await context.sync();
       }
       else {
@@ -102,7 +111,7 @@ async function insertData(cacheItemJson: any, invocation: CustomFunctions.Invoca
     });
   }
   else {
-    //TOdO
+    //ToDo
   }
 }
 
@@ -111,10 +120,12 @@ async function insertData(cacheItemJson: any, invocation: CustomFunctions.Invoca
  * @customfunction
  * @param location Location
  * @param date Date
+ * @param args Optional Parameters
+ * @param colsRows Number of columns and rows
  * @requiresAddress
  * @returns Weather data.
  */
-export async function Weather(location: string, date: string, colsRows: string | null = null, args: string | null = null, invocation: CustomFunctions.Invocation): Promise<string | number | undefined | any> {
+export async function Weather(location: string, date: string, args: string | null = null, colsRows: string | null = null, invocation: CustomFunctions.Invocation): Promise<string | number | undefined | any> {
   try
   {
     if (!location) {
@@ -132,6 +143,11 @@ export async function Weather(location: string, date: string, colsRows: string |
     }
     
     const cacheId: string = ToCacheId(location, date, unit);
+
+    if (!cacheId) {
+      throw new Error("Unable to generate the cache id.");
+    }
+
     const cacheItem: string | null = getCacheItem(cacheId);
 
     if (cacheItem) {
@@ -145,13 +161,24 @@ export async function Weather(location: string, date: string, colsRows: string |
         return "#N/A Requesting...";
       }
       else if (cacheItemJson.status === "Complete") {
+        const weatherArgs: WeatherArgs | null = extractWeatherArgs(args, colsRows);
+
         if (invocation && !colsRows) {
-          updateFormula(invocation);
+          updateFormula(cacheItemJson, weatherArgs ?? new WeatherArgs(), invocation);
           return "Updating...";
         }
 
         if (invocation && invocation.address) {
-          insertData(cacheItemJson, invocation);
+          let printDirection: PrintDirections;
+
+          if (weatherArgs) {
+            printDirection = weatherArgs.PrintDirection;
+          }
+          else {
+            printDirection = PrintDirections.Vertical;
+          }
+
+          insertData(cacheItemJson, printDirection, invocation);
         }
         
         return cacheItemJson.tempmax;
@@ -161,12 +188,12 @@ export async function Weather(location: string, date: string, colsRows: string |
     const apiKey: string | null = await getApiKeyAsync();
     
     if (apiKey) {
-      const TIMELINE_URL:string = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${location}/${date}?key=${apiKey}&unitGroup=${unit}`
-      const response: Response = await fetch(TIMELINE_URL);
-
       setCacheItem(cacheId, JSON.stringify({ 
         "status": "Requesting",
       }));
+
+      const TIMELINE_URL:string = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${location}/${date}?key=${apiKey}&unitGroup=${unit}`
+      const response: Response = await fetch(TIMELINE_URL);
 
       const NA_DATA: string = "#N/A Data";
 
@@ -187,7 +214,18 @@ export async function Weather(location: string, date: string, colsRows: string |
         }));
 
         if (invocation && invocation.address) {
-          updateFormula(invocation);
+          const cacheItem = getCacheItem(cacheId);
+
+          if (!cacheItem) {
+            //ToDo
+          }
+
+          const cacheItemString = cacheItem as string;
+          const cacheItemJson = JSON.parse(cacheItemString);
+          const weatherArgs: WeatherArgs | null = extractWeatherArgs(args, colsRows);
+
+          updateFormula(cacheItemJson, weatherArgs ?? new WeatherArgs(), invocation);
+
           return "Updating...";
         }
         else
