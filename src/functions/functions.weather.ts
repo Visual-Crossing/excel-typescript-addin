@@ -1,7 +1,7 @@
 import { PrintDirections, WeatherArgs, extractWeatherArgs } from "../helpers/helpers.args";
 import { generateCacheId, getCacheItem, setCacheItem } from "../cache/cache";
 import { getApiKeyFromSettingsAsync } from "../settings/settings";
-import { getDataCols, getDataRows, replaceArgs } from "../helpers/helpers.formulas";
+import { extractFormulaArgsSection, getDataCols, getDataRows, replaceOrInsertArgs } from "../helpers/helpers.formulas";
 import semaphore from "semaphore";
 
 const sem: semaphore.Semaphore = semaphore(1);
@@ -200,14 +200,22 @@ async function updateFormula(cacheItemJson: any, weatherArgs: WeatherArgs, invoc
 
                         if (originalFormula) {
                             if (weatherArgs.Args) {
-                                let updatedArgs = replaceArgs(weatherArgs.Args, "cols", `cols=${getDataCols(cacheItemJson, weatherArgs.PrintDirection)};`);
-                                updatedArgs = replaceArgs(updatedArgs, "rows", `rows=${getDataRows(cacheItemJson, weatherArgs.PrintDirection)};`);
+                                const formulaArgsSection: string | null = extractFormulaArgsSection(originalFormula);
 
-                                const updatedFormula = originalFormula.replace(weatherArgs.Args, updatedArgs);
+                                if (!formulaArgsSection) {
+                                    //ToDo
+                                    return;
+                                }
+
+                                let updatedArgs = replaceOrInsertArgs(formulaArgsSection, "cols", `cols=${getDataCols(cacheItemJson, weatherArgs.PrintDirection)};`);
+                                updatedArgs = replaceOrInsertArgs(updatedArgs, "rows", `rows=${getDataRows(cacheItemJson, weatherArgs.PrintDirection)};`);
+
+                                const updatedFormula = originalFormula.replace(formulaArgsSection, updatedArgs);
                                 caller.values= [[updatedFormula]];
                             }
                             else {
-                                caller.values= [[`${originalFormula.substring(0, originalFormula.length - 1)}, "cols=${getDataCols(cacheItemJson, weatherArgs.PrintDirection)};rows=${getDataRows(cacheItemJson, weatherArgs.PrintDirection)};")`]];
+                                const originalFormulaTrimmed = originalFormula.trim();
+                                caller.values= [[`${originalFormulaTrimmed.substring(0, originalFormulaTrimmed.length - 1)}, "cols=${getDataCols(cacheItemJson, weatherArgs.PrintDirection)};rows=${getDataRows(cacheItemJson, weatherArgs.PrintDirection)};")`]];
                             }
                             
                             await context.sync();

@@ -18,11 +18,33 @@ export function getDataRows(cacheItemJson: any, printDirection: PrintDirections)
     }
 }
 
-export function replaceArgs(formula: string, searchString: string, replaceValue: string): string {
-    const argNamePos: number = formula.indexOf(searchString);
-    const argEndPos: number = formula.indexOf(";", argNamePos);
+export function replaceOrInsertArgs(args: string, argName: string, replaceValue: string): string {
+    const argNamePos: number = args.indexOf(argName);
 
-    return formula.replace(formula.substring(argNamePos, argEndPos + 1), replaceValue);
+    if (argNamePos === -1) {
+        const argsWithoutSpaces: string =  args.replace(" ", "");
+        const lastChar: string = argsWithoutSpaces.substring(argsWithoutSpaces.length - 1, argsWithoutSpaces.length);
+
+        if (lastChar === '\"') {
+            const secondLastChar: string = argsWithoutSpaces.substring(argsWithoutSpaces.length - 2, argsWithoutSpaces.length - 1);
+
+            if (secondLastChar === ";") {
+                let char: string | null = null;
+                let index: number = args.length;
+
+                do {
+                    index--;
+                    char = args.substring(index, index + 1)
+                } while (char !== ";" && index > 0)
+
+                return `${args.substring(0, index + 1)}${replaceValue}\"`;
+            }
+        }
+    }
+
+    const argEndPos: number = args.indexOf(";", argNamePos);
+
+    return args.replace(args.substring(argNamePos, argEndPos + 1), replaceValue);
 }
 
 export function extractFormulaArgsSection(formula: string): string | null {
