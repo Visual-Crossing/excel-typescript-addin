@@ -25,7 +25,7 @@ export function replaceArgs(formula: string, searchString: string, replaceValue:
     return formula.replace(formula.substring(argNamePos, argEndPos + 1), replaceValue);
 }
 
-export function getFormulaArgsSection(formula: string): string | null {
+export function extractFormulaArgsSection(formula: string): string | null {
     const trimmedFormula = formula.trim();
     let index: number = trimmedFormula.length;
     let openBracketsCount: number, closeBracketsCount: number, doubleQuotesCount: number;
@@ -49,7 +49,7 @@ export function getFormulaArgsSection(formula: string): string | null {
         }
         else if (char === ",") {
             if (openBracketsCount === closeBracketsCount && (doubleQuotesCount === 0 || doubleQuotesCount % 2 === 0)) {
-                return trimmedFormula.substring(index, trimmedFormula.length - 1);
+                return trimmedFormula.substring(index + 1, trimmedFormula.length - 1);
             }
         }
     }
