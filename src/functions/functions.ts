@@ -1,5 +1,6 @@
 ﻿/* global clearInterval, console, CustomFunctions, setInterval */
 
+import { WeatherArgs, extractWeatherArgs } from "../helpers/helpers.args";
 import { getUnitFromSettingsAsync } from "../settings/settings";
 import { getOrRequestData } from "./functions.weather";
 
@@ -13,8 +14,10 @@ import { getOrRequestData } from "./functions.weather";
  * @requiresAddress
  * @returns Weather data.
  */
-export async function Weather(location: any, date: any, args: any | null = null, colsRows: any | null = null, invocation: CustomFunctions.Invocation): Promise<string | number | Date> {
+export async function Weather(location: any, date: any, args: any | null = null, invocation: CustomFunctions.Invocation): Promise<string | number | Date> {
   try {
+    const weatherArgs: WeatherArgs | null = extractWeatherArgs(args);
+
     if (!location) {
       return "#Invalid Location!";
     }
@@ -24,9 +27,13 @@ export async function Weather(location: any, date: any, args: any | null = null,
     }
 
     const unit = await getUnitFromSettingsAsync();
-    return getOrRequestData(unit, location, date, ()=> { return [args, colsRows, invocation] } )
+    return getOrRequestData(unit, location, date, ()=> { return [args, invocation] } )
   }
-  catch {
+  catch (error: any) {
+    if (error && error.message) {
+      return `#Error! - (${error.message})`;
+    }
+
     return "#Error!";
   }
 }

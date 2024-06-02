@@ -1,12 +1,12 @@
 import { PrintDirections, WeatherArgs, extractWeatherArgs } from "../helpers/helpers.args";
 import { generateCacheId, getCacheItem, setCacheItem } from "../cache/cache";
 import { getApiKeyFromSettingsAsync } from "../settings/settings";
-import { getDataCols, getDataRows } from "../helpers/helpers.formulas";
+import { getDataCols, getDataRows, replaceArgs } from "../helpers/helpers.formulas";
 import semaphore from "semaphore";
 
 const sem: semaphore.Semaphore = semaphore(1);
 
-export function getOrRequestData(unit: string | null, location: string, date: string, getRemainingWeatherArgs: () => [any | null, any | null, CustomFunctions.Invocation]): string | number | Date {
+export function getOrRequestData(unit: string | null, location: string, date: string, getRemainingWeatherArgs: () => [any | null, CustomFunctions.Invocation]): string | number | Date {
     if (!unit) {
         //Default unit = us
         unit = "us";
@@ -43,7 +43,7 @@ export function getOrRequestData(unit: string | null, location: string, date: st
     return "Requesting...";
 }
 
-function getDataFromCache(cacheItemJson: any, getRemainingWeatherArgs: () => [any | null, any | null, CustomFunctions.Invocation]): string | number | Date {
+function getDataFromCache(cacheItemJson: any, getRemainingWeatherArgs: () => [any | null, CustomFunctions.Invocation]): string | number | Date {
     if (!cacheItemJson) {
         //ToDo
     }
@@ -53,10 +53,14 @@ function getDataFromCache(cacheItemJson: any, getRemainingWeatherArgs: () => [an
     }
     
     if (cacheItemJson.status === "Complete") {
-        const [args, colsRows, invocation] = getRemainingWeatherArgs();
-        const weatherArgs: WeatherArgs | null = extractWeatherArgs(args, colsRows);
+        const [args, invocation] = getRemainingWeatherArgs();
+        const weatherArgs: WeatherArgs | null = extractWeatherArgs(args);
 
-        if (invocation && weatherArgs && (!weatherArgs.Columns || !weatherArgs.Rows)) {
+        const newCols = getDataCols(cacheItemJson, weatherArgs.PrintDirection);
+        const newRows = getDataRows(cacheItemJson, weatherArgs.PrintDirection);
+
+        if (invocation && weatherArgs && 
+            (!weatherArgs.Columns || !weatherArgs.Rows || weatherArgs.Columns !== newCols || weatherArgs.Rows !== newRows)) {
             updateFormula(cacheItemJson, weatherArgs ?? new WeatherArgs(), invocation);
             return "Updating...";
         }
@@ -80,12 +84,12 @@ function getDataFromCache(cacheItemJson: any, getRemainingWeatherArgs: () => [an
     throw new Error();
 }
 
-async function requestWeatherData(getApiKeySuccessResponseArgs: () => [string, string, string, string | null], getTimelineApiSuccessJsonResponseArgs: () => [string, any | null, any | null, CustomFunctions.Invocation]): Promise<void> {
+async function requestWeatherData(getApiKeySuccessResponseArgs: () => [string, string, string, string | null], getTimelineApiSuccessJsonResponseArgs: () => [string, any | null, CustomFunctions.Invocation]): Promise<void> {
     const apiKey: string | null = await getApiKeyFromSettingsAsync();
     requestTimelineData(apiKey, getApiKeySuccessResponseArgs, getTimelineApiSuccessJsonResponseArgs)
 }
 
-function requestTimelineData(apiKey: string | null, getApiKeySuccessResponseArgs: () => [string, string, string, string | null], getTimelineApiSuccessJsonResponseArgs: () => [string, any | null, any | null, CustomFunctions.Invocation]): void {
+function requestTimelineData(apiKey: string | null, getApiKeySuccessResponseArgs: () => [string, string, string, string | null], getTimelineApiSuccessJsonResponseArgs: () => [string, any | null, CustomFunctions.Invocation]): void {
     if (apiKey) {
         const [cacheId, location, date, unit] = getApiKeySuccessResponseArgs();
 
@@ -104,7 +108,7 @@ function requestTimelineData(apiKey: string | null, getApiKeySuccessResponseArgs
     }
 }
 
-function onTimelineApiSuccessResponse(response: Response, getTimelineApiSuccessJsonResponseArgs: () => [string, any | null, any | null, CustomFunctions.Invocation]) {
+function onTimelineApiSuccessResponse(response: Response, getTimelineApiSuccessJsonResponseArgs: () => [string, any | null, CustomFunctions.Invocation]) {
     const NA_DATA: string = "#N/A Data";
   
     if (!response) {
@@ -120,9 +124,9 @@ function onTimelineApiSuccessResponse(response: Response, getTimelineApiSuccessJ
         });
 }
 
-function onTimelineApiSuccessJsonResponse(jsonResponse: any, getTimelineApiSuccessJsonResponseArgs: () => [string, any | null, any | null, CustomFunctions.Invocation]) {
+function onTimelineApiSuccessJsonResponse(jsonResponse: any, getTimelineApiSuccessJsonResponseArgs: () => [string, any | null, CustomFunctions.Invocation]) {
     if (jsonResponse && jsonResponse.days && jsonResponse.days.length > 0 && jsonResponse.days[0]) {
-        const [cacheId, args, colsRows, invocation] = getTimelineApiSuccessJsonResponseArgs();
+        const [cacheId, args, invocation] = getTimelineApiSuccessJsonResponseArgs();
 
         setCacheItem(cacheId, JSON.stringify({ 
           "status": "Complete",
@@ -142,7 +146,7 @@ function onTimelineApiSuccessJsonResponse(jsonResponse: any, getTimelineApiSucce
   
           const cacheItemString = cacheItem as string;
           const cacheItemJson = JSON.parse(cacheItemString);
-          const weatherArgs: WeatherArgs | null = extractWeatherArgs(args, colsRows);
+          const weatherArgs: WeatherArgs | null = extractWeatherArgs(args);
   
           updateFormula(cacheItemJson, weatherArgs ?? new WeatherArgs(), invocation);
         }
@@ -194,15 +198,23 @@ async function updateFormula(cacheItemJson: any, weatherArgs: WeatherArgs, invoc
 
                         const originalFormula: string = caller.formulas[0][0] as string;
 
-                        if (weatherArgs.Columns && weatherArgs.Rows) {
-                            const updatedFormula = originalFormula.replace(`cols=${weatherArgs.Columns};rows=${weatherArgs.Rows}`, `cols=${getDataCols(cacheItemJson, weatherArgs.PrintDirection)};rows=${getDataRows(cacheItemJson, weatherArgs.PrintDirection)}`);
-                            caller.values= [[updatedFormula]];
+                        if (originalFormula) {
+                            if (weatherArgs.Args) {
+                                let updatedArgs = replaceArgs(weatherArgs.Args, "cols", `cols=${getDataCols(cacheItemJson, weatherArgs.PrintDirection)};`);
+                                updatedArgs = replaceArgs(updatedArgs, "rows", `rows=${getDataRows(cacheItemJson, weatherArgs.PrintDirection)};`);
+
+                                const updatedFormula = originalFormula.replace(weatherArgs.Args, updatedArgs);
+                                caller.values= [[updatedFormula]];
+                            }
+                            else {
+                                caller.values= [[`${originalFormula.substring(0, originalFormula.length - 1)}, "cols=${getDataCols(cacheItemJson, weatherArgs.PrintDirection)};rows=${getDataRows(cacheItemJson, weatherArgs.PrintDirection)};")`]];
+                            }
+                            
+                            await context.sync();
                         }
                         else {
-                            caller.values= [[`${originalFormula.substring(0, originalFormula.length - 1)}, "cols=${getDataCols(cacheItemJson, weatherArgs.PrintDirection)};rows=${getDataRows(cacheItemJson, weatherArgs.PrintDirection)}")`]];
+                            //ToDo
                         }
-
-                        await context.sync();
                     }
                     else {
                         //ToDo
@@ -271,9 +283,9 @@ async function printArrayData(cacheItemJson: any, printDirection: PrintDirection
     }
 }
 
-function clearArrayData(getRemainingWeatherArgs: () => [any | null, any | null, CustomFunctions.Invocation]) {
-    const [args, colsRows, invocation] = getRemainingWeatherArgs();
-    const weatherArgs: WeatherArgs | null = extractWeatherArgs(args, colsRows);
+function clearArrayData(getRemainingWeatherArgs: () => [any | null, CustomFunctions.Invocation]) {
+    const [args, invocation] = getRemainingWeatherArgs();
+    const weatherArgs: WeatherArgs | null = extractWeatherArgs(args);
 
     if (weatherArgs && weatherArgs.Columns && weatherArgs.Rows) {
         Excel.run(async (context: Excel.RequestContext) => {
