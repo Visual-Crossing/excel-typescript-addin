@@ -20,7 +20,8 @@
     "node_modules",
     "dist",
     "lib",
-    "lib-amd"
+    "lib-amd",
+    "tests"
   ],
   "ts-node": { 
     "files": true 
