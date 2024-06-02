@@ -14,7 +14,15 @@ describe('replaceOrInsertArgs Tests', () => {
     expect(replaceOrInsertArgs("\"dir=h;cols=1;rows=5;\"", "dir", "dir=v;")).toBe("\"dir=v;cols=1;rows=5;\"");
   });
 
+  test('Replace existing arg without the trailing semi-colon should update the value and add a trailing semi-colon', () => {
+    expect(replaceOrInsertArgs("\"dir=h\"", "dir", "dir=v;")).toBe("\"dir=v;\"");
+  });
+
   test('Insert new arg should append the arg at the end', () => {
     expect(replaceOrInsertArgs("\"dir=h;rows=5;\"", "cols", "cols=5;")).toBe("\"dir=h;rows=5;cols=5;\"");
+  });
+
+  test('Insert new arg without the trailing semi-colon should insert the new arg and value and add a trailing semi-colon', () => {
+    expect(replaceOrInsertArgs("\"dir=h\"", "cols", "cols=1;")).toBe("\"dir=h;cols=1;\"");
   });
 });

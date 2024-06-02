@@ -39,10 +39,28 @@ export function replaceOrInsertArgs(args: string, argName: string, replaceValue:
 
                 return `${args.substring(0, index + 1)}${replaceValue}\"`;
             }
+            else {
+                let char: string | null = null;
+                let index: number = args.length;
+
+                do {
+                    index--;
+                    char = args.substring(index, index + 1)
+                } while (char !== "\"" && index > 0)
+
+                return `${args.substring(0, index)};${replaceValue}\"`;
+            }
+        }
+        else {
+            return  `${args} & \";${replaceValue}\"`;
         }
     }
 
-    const argEndPos: number = args.indexOf(";", argNamePos);
+    let argEndPos: number = args.indexOf(";", argNamePos);
+
+    if (argEndPos === -1) {
+        argEndPos = args.indexOf("\"", argNamePos) - 1;
+    }
 
     return args.replace(args.substring(argNamePos, argEndPos + 1), replaceValue);
 }
