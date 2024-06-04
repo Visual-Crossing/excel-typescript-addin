@@ -65,16 +65,22 @@ export function replaceOrInsertArgs(args: string, argName: string, replaceValue:
     return args.replace(args.substring(argNamePos, argEndPos + 1), replaceValue);
 }
 
+/*
+* We need to extract the args section of the formula and cannot simply use the value passed into the VC.Weather function.
+* This is because it might consist of other functions i.e it may not simply be a raw value.
+* The args parameter must be the last parameter for this implementation to work correctly. 
+*/
 export function extractFormulaArgsSection(formula: string): string | null {
+    if (!formula) {
+        throw new Error("Invalid formula.");
+    }
+
     const trimmedFormula = formula.trim();
     let index: number = trimmedFormula.length;
-    let openBracketsCount: number, closeBracketsCount: number, doubleQuotesCount: number;
 
-    openBracketsCount = 0;
-    closeBracketsCount = 0;
-    doubleQuotesCount = 0;
+    let openBracketsCount: number = 0, closeBracketsCount: number = 0, doubleQuotesCount: number = 0;
 
-    while (index > 0) {
+    while (index > 1) {
         index--;
         const char: string = trimmedFormula.substring(index - 1, index);
 
