@@ -35,7 +35,7 @@ function checkAndFixArgsSyntax(args: string): string {
 
         if (char !== ";" && index > 0) {
             if (index + 1 < args.length - 1) {
-                return `${args.substring(0, index + 1)};${args.substring(index + 1, args.length)}\"`;
+                return `${args.substring(0, index + 1)};${args.substring(index + 1, args.length)}`;
             }
             else {
                 return `${args.substring(0, index + 1)};\"`;

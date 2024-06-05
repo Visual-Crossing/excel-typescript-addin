@@ -28,6 +28,7 @@ describe('replaceOrInsertArgs Tests', () => {
   test('Insert new arg should append the arg at the end', () => {
     expect(replaceOrInsertArgs("\"dir=h;rows=5;\"", "cols", "cols=5;")).toBe("\"dir=h;rows=5;cols=5;\"");
     expect(replaceOrInsertArgs("\"dir=h;rows=5;   \"", "cols", "cols=5;")).toBe("\"dir=h;rows=5;   cols=5;\"");
+    expect(replaceOrInsertArgs("\"dir=h;rows=5   \"", "cols", "cols=5;")).toBe("\"dir=h;rows=5;   cols=5;\"");
   });
 
   test('Insert new arg without the trailing semi-colon should insert the new arg and value and add a trailing semi-colon', () => {
