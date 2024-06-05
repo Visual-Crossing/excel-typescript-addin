@@ -7,7 +7,7 @@ import { Queue } from 'queue-typescript';
 
 const sem: semaphore.Semaphore = semaphore(1);
 
-export function getOrRequestData(args: { actualArgs: any | null, unit: string | null, location: string, date: string, invocation: CustomFunctions.Invocation }): string | number | Date {
+export function getOrRequestData(args: { functionOptionalArgs: any | null, unit: string | null, location: string, date: string, invocation: CustomFunctions.Invocation }): string | number | Date {
     if (!args.unit) {
         //Default unit = us
         args.unit = "us";
@@ -28,7 +28,7 @@ export function getOrRequestData(args: { actualArgs: any | null, unit: string | 
                 "status": "Requesting",
             }));
 
-            requestWeatherData({ ...args, cacheId: cacheId });
+            requestWeatherData({ cacheId: cacheId, ...args });
         }
 
         sem.leave();
@@ -44,7 +44,7 @@ export function getOrRequestData(args: { actualArgs: any | null, unit: string | 
     return "Requesting...";
 }
 
-function getDataFromCache(cacheItemJson: any, args: { actualArgs: any | null, invocation: CustomFunctions.Invocation }): string | number | Date {
+function getDataFromCache(cacheItemJson: any, args: { functionOptionalArgs: any | null, invocation: CustomFunctions.Invocation }): string | number | Date {
     if (!cacheItemJson) {
         //ToDo
     }
@@ -54,7 +54,7 @@ function getDataFromCache(cacheItemJson: any, args: { actualArgs: any | null, in
     }
     
     if (cacheItemJson.status === "Complete") {
-        const weatherArgs: WeatherArgs | null = extractWeatherArgs(args.actualArgs);
+        const weatherArgs: WeatherArgs | null = extractWeatherArgs(args.functionOptionalArgs);
 
         const newCols = getDataCols(cacheItemJson, weatherArgs.PrintDirection);
         const newRows = getDataRows(cacheItemJson, weatherArgs.PrintDirection);
@@ -84,12 +84,12 @@ function getDataFromCache(cacheItemJson: any, args: { actualArgs: any | null, in
     throw new Error();
 }
 
-async function requestWeatherData(args: { actualArgs: any | null, unit: string | null, location: string, date: string, invocation: CustomFunctions.Invocation, cacheId: string }): Promise<void> {
+async function requestWeatherData(args: { functionOptionalArgs: any | null, unit: string | null, location: string, date: string, invocation: CustomFunctions.Invocation, cacheId: string }): Promise<void> {
     const apiKey: string | null = await getApiKeyFromSettingsAsync();
     requestTimelineData(apiKey, args)
 }
 
-function requestTimelineData(apiKey: string | null, args: { actualArgs: any | null, unit: string | null, location: string, date: string, invocation: CustomFunctions.Invocation, cacheId: string }): void {
+function requestTimelineData(apiKey: string | null, args: { functionOptionalArgs: any | null, unit: string | null, location: string, date: string, invocation: CustomFunctions.Invocation, cacheId: string }): void {
     if (apiKey) {
         const q = new Queue<CustomFunctions.Invocation>();
         q.enqueue(args.invocation);
@@ -109,7 +109,7 @@ function requestTimelineData(apiKey: string | null, args: { actualArgs: any | nu
     }
 }
 
-function onTimelineApiSuccessResponse(response: Response, args: { actualArgs: any | null, invocation: CustomFunctions.Invocation, cacheId: string }) {
+function onTimelineApiSuccessResponse(response: Response, args: { functionOptionalArgs: any | null, invocation: CustomFunctions.Invocation, cacheId: string }) {
     const NA_DATA: string = "#N/A Data";
   
     if (!response) {
@@ -125,7 +125,7 @@ function onTimelineApiSuccessResponse(response: Response, args: { actualArgs: an
         });
 }
 
-function onTimelineApiSuccessJsonResponse(jsonResponse: any, args: { actualArgs: any | null, invocation: CustomFunctions.Invocation, cacheId: string }) {
+function onTimelineApiSuccessJsonResponse(jsonResponse: any, args: { functionOptionalArgs: any | null, invocation: CustomFunctions.Invocation, cacheId: string }) {
     if (jsonResponse && jsonResponse.days && jsonResponse.days.length > 0 && jsonResponse.days[0]) {
 
         setCacheItem(args.cacheId, JSON.stringify({ 
@@ -146,7 +146,7 @@ function onTimelineApiSuccessJsonResponse(jsonResponse: any, args: { actualArgs:
   
           const cacheItemString = cacheItem as string;
           const cacheItemJson = JSON.parse(cacheItemString);
-          const weatherArgs: WeatherArgs | null = extractWeatherArgs(args.actualArgs);
+          const weatherArgs: WeatherArgs | null = extractWeatherArgs(args.functionOptionalArgs);
   
           updateFormula(cacheItemJson, weatherArgs ?? new WeatherArgs(), args.invocation);
         }
@@ -291,8 +291,8 @@ async function printArrayData(cacheItemJson: any, printDirection: PrintDirection
     }
 }
 
-function clearArrayData(args: { actualArgs: any | null, invocation: CustomFunctions.Invocation }) {
-    const weatherArgs: WeatherArgs | null = extractWeatherArgs(args.actualArgs);
+function clearArrayData(args: { functionOptionalArgs: any | null, invocation: CustomFunctions.Invocation }) {
+    const weatherArgs: WeatherArgs | null = extractWeatherArgs(args.functionOptionalArgs);
 
     if (weatherArgs && weatherArgs.Columns && weatherArgs.Rows) {
         Excel.run(async (context: Excel.RequestContext) => {
