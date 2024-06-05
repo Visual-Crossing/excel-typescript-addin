@@ -3,13 +3,14 @@ import { generateCacheId, getCacheItem, setCacheItem } from "../cache/cache";
 import { getApiKeyFromSettingsAsync } from "../settings/settings";
 import { extractFormulaArgsSection, getDataCols, getDataRows, replaceOrInsertArgs } from "../helpers/helpers.formulas";
 import semaphore from "semaphore";
+import { Queue } from 'queue-typescript';
 
 const sem: semaphore.Semaphore = semaphore(1);
 
-export function getOrRequestData(unit: string | null, location: string, date: string, getRemainingWeatherArgs: () => [any | null, CustomFunctions.Invocation]): string | number | Date {
-    if (!unit) {
+export function getOrRequestData(args: { actualArgs: any | null, unit: string | null, location: string, date: string, invocation: CustomFunctions.Invocation }): string | number | Date {
+    if (!args.unit) {
         //Default unit = us
-        unit = "us";
+        args.unit = "us";
     }
     
     let cacheItem: string | null = null;
@@ -19,7 +20,7 @@ export function getOrRequestData(unit: string | null, location: string, date: st
      * Subsequent requests for the same data are retrieved from the cache i.e. a second request is NOT made to the server.
      */
     sem.take(function() {
-        const cacheId: string = generateCacheId(location, date, unit);
+        const cacheId: string = generateCacheId(args.location, args.date, args.unit!);
         cacheItem = getCacheItem(cacheId);
     
         if (!cacheItem) {
@@ -27,23 +28,23 @@ export function getOrRequestData(unit: string | null, location: string, date: st
                 "status": "Requesting",
             }));
 
-            requestWeatherData(() => { return [cacheId, location, date, unit] }, () => { return [cacheId, ...getRemainingWeatherArgs()] });
+            requestWeatherData({ ...args, cacheId: cacheId });
         }
 
         sem.leave();
     });
 
-    clearArrayData(getRemainingWeatherArgs);
+    clearArrayData(args);
 
     if (cacheItem) {
         const cacheItemJson: any = JSON.parse(cacheItem);
-        return getDataFromCache(cacheItemJson, getRemainingWeatherArgs);
+        return getDataFromCache(cacheItemJson, args);
     }
 
     return "Requesting...";
 }
 
-function getDataFromCache(cacheItemJson: any, getRemainingWeatherArgs: () => [any | null, CustomFunctions.Invocation]): string | number | Date {
+function getDataFromCache(cacheItemJson: any, args: { actualArgs: any | null, invocation: CustomFunctions.Invocation }): string | number | Date {
     if (!cacheItemJson) {
         //ToDo
     }
@@ -53,19 +54,18 @@ function getDataFromCache(cacheItemJson: any, getRemainingWeatherArgs: () => [an
     }
     
     if (cacheItemJson.status === "Complete") {
-        const [args, invocation] = getRemainingWeatherArgs();
-        const weatherArgs: WeatherArgs | null = extractWeatherArgs(args);
+        const weatherArgs: WeatherArgs | null = extractWeatherArgs(args.actualArgs);
 
         const newCols = getDataCols(cacheItemJson, weatherArgs.PrintDirection);
         const newRows = getDataRows(cacheItemJson, weatherArgs.PrintDirection);
 
-        if (invocation && weatherArgs && 
+        if (args.invocation && weatherArgs && 
             (!weatherArgs.Columns || !weatherArgs.Rows || weatherArgs.Columns !== newCols || weatherArgs.Rows !== newRows)) {
-            updateFormula(cacheItemJson, weatherArgs ?? new WeatherArgs(), invocation);
+            updateFormula(cacheItemJson, weatherArgs ?? new WeatherArgs(), args.invocation);
             return "Updating...";
         }
 
-        if (invocation && invocation.address) {
+        if (args.invocation && args.invocation.address) {
             let printDirection: PrintDirections;
  
             if (weatherArgs) {
@@ -75,7 +75,7 @@ function getDataFromCache(cacheItemJson: any, getRemainingWeatherArgs: () => [an
                 printDirection = PrintDirections.Vertical;
             }
 
-            printArrayData(cacheItemJson, printDirection, invocation);
+            printArrayData(cacheItemJson, printDirection, args.invocation);
         }
         
         return cacheItemJson.tempmax;
@@ -84,20 +84,21 @@ function getDataFromCache(cacheItemJson: any, getRemainingWeatherArgs: () => [an
     throw new Error();
 }
 
-async function requestWeatherData(getApiKeySuccessResponseArgs: () => [string, string, string, string | null], getTimelineApiSuccessJsonResponseArgs: () => [string, any | null, CustomFunctions.Invocation]): Promise<void> {
+async function requestWeatherData(args: { actualArgs: any | null, unit: string | null, location: string, date: string, invocation: CustomFunctions.Invocation, cacheId: string }): Promise<void> {
     const apiKey: string | null = await getApiKeyFromSettingsAsync();
-    requestTimelineData(apiKey, getApiKeySuccessResponseArgs, getTimelineApiSuccessJsonResponseArgs)
+    requestTimelineData(apiKey, args)
 }
 
-function requestTimelineData(apiKey: string | null, getApiKeySuccessResponseArgs: () => [string, string, string, string | null], getTimelineApiSuccessJsonResponseArgs: () => [string, any | null, CustomFunctions.Invocation]): void {
+function requestTimelineData(apiKey: string | null, args: { actualArgs: any | null, unit: string | null, location: string, date: string, invocation: CustomFunctions.Invocation, cacheId: string }): void {
     if (apiKey) {
-        const [cacheId, location, date, unit] = getApiKeySuccessResponseArgs();
+        const q = new Queue<CustomFunctions.Invocation>();
+        q.enqueue(args.invocation);
 
-        const TIMELINE_API_URL:string = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${location}/${date}?key=${apiKey}&unitGroup=${unit}`
+        const TIMELINE_API_URL:string = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${args.location}/${args.date}?key=${apiKey}&unitGroup=${args.unit}`
         
         fetch(TIMELINE_API_URL)
             .then(async (response: Response) => {
-                onTimelineApiSuccessResponse(response, getTimelineApiSuccessJsonResponseArgs);
+                onTimelineApiSuccessResponse(response, args);
             })
             .catch(() => {
                 //ToDo
@@ -108,7 +109,7 @@ function requestTimelineData(apiKey: string | null, getApiKeySuccessResponseArgs
     }
 }
 
-function onTimelineApiSuccessResponse(response: Response, getTimelineApiSuccessJsonResponseArgs: () => [string, any | null, CustomFunctions.Invocation]) {
+function onTimelineApiSuccessResponse(response: Response, args: { actualArgs: any | null, invocation: CustomFunctions.Invocation, cacheId: string }) {
     const NA_DATA: string = "#N/A Data";
   
     if (!response) {
@@ -117,18 +118,17 @@ function onTimelineApiSuccessResponse(response: Response, getTimelineApiSuccessJ
 
     response.json()
         .then((jsonResponse: any) => {
-            onTimelineApiSuccessJsonResponse(jsonResponse, getTimelineApiSuccessJsonResponseArgs);
+            onTimelineApiSuccessJsonResponse(jsonResponse, args);
         })
         .catch(() => {
             //ToDo
         });
 }
 
-function onTimelineApiSuccessJsonResponse(jsonResponse: any, getTimelineApiSuccessJsonResponseArgs: () => [string, any | null, CustomFunctions.Invocation]) {
+function onTimelineApiSuccessJsonResponse(jsonResponse: any, args: { actualArgs: any | null, invocation: CustomFunctions.Invocation, cacheId: string }) {
     if (jsonResponse && jsonResponse.days && jsonResponse.days.length > 0 && jsonResponse.days[0]) {
-        const [cacheId, args, invocation] = getTimelineApiSuccessJsonResponseArgs();
 
-        setCacheItem(cacheId, JSON.stringify({ 
+        setCacheItem(args.cacheId, JSON.stringify({ 
           "status": "Complete",
           "tempmax": jsonResponse.days[0].tempmax,
           "tempmin": jsonResponse.days[0].tempmin,
@@ -137,8 +137,8 @@ function onTimelineApiSuccessJsonResponse(jsonResponse: any, getTimelineApiSucce
           "windspeed": jsonResponse.days[0].windspeed
         }));
   
-        if (invocation && invocation.address) {
-          const cacheItem = getCacheItem(cacheId);
+        if (args.invocation && args.invocation.address) {
+          const cacheItem = getCacheItem(args.cacheId);
   
           if (!cacheItem) {
             //ToDo
@@ -146,9 +146,9 @@ function onTimelineApiSuccessJsonResponse(jsonResponse: any, getTimelineApiSucce
   
           const cacheItemString = cacheItem as string;
           const cacheItemJson = JSON.parse(cacheItemString);
-          const weatherArgs: WeatherArgs | null = extractWeatherArgs(args);
+          const weatherArgs: WeatherArgs | null = extractWeatherArgs(args.actualArgs);
   
-          updateFormula(cacheItemJson, weatherArgs ?? new WeatherArgs(), invocation);
+          updateFormula(cacheItemJson, weatherArgs ?? new WeatherArgs(), args.invocation);
         }
         else
         {
@@ -291,15 +291,14 @@ async function printArrayData(cacheItemJson: any, printDirection: PrintDirection
     }
 }
 
-function clearArrayData(getRemainingWeatherArgs: () => [any | null, CustomFunctions.Invocation]) {
-    const [args, invocation] = getRemainingWeatherArgs();
-    const weatherArgs: WeatherArgs | null = extractWeatherArgs(args);
+function clearArrayData(args: { actualArgs: any | null, invocation: CustomFunctions.Invocation }) {
+    const weatherArgs: WeatherArgs | null = extractWeatherArgs(args.actualArgs);
 
     if (weatherArgs && weatherArgs.Columns && weatherArgs.Rows) {
         Excel.run(async (context: Excel.RequestContext) => {
             try {
-                if (invocation && invocation.address && weatherArgs && weatherArgs.Columns && weatherArgs.Rows) {
-                    const sheetName = invocation.address.split("!")[0];
+                if (args.invocation && args.invocation.address && weatherArgs && weatherArgs.Columns && weatherArgs.Rows) {
+                    const sheetName = args.invocation.address.split("!")[0];
 
                     if (!sheetName) {
                     
@@ -311,7 +310,7 @@ function clearArrayData(getRemainingWeatherArgs: () => [any | null, CustomFuncti
                     
                     }
 
-                    const caller = sheet.getRange(invocation.address);
+                    const caller = sheet.getRange(args.invocation.address);
 
                     if (!caller) {
                     
