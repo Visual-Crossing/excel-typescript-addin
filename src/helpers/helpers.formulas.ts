@@ -18,51 +18,65 @@ export function getDataRows(cacheItemJson: any, printDirection: PrintDirections)
     }
 }
 
-export function replaceOrInsertArgs(args: string, argName: string, replaceValue: string): string {
-    const argNamePos: number = args.indexOf(argName);
+function checkAndFixArgsSyntax(args: string): string {
+    let char: string | null = null;
+    let index: number = args.length;
 
-    if (argNamePos === -1) {
-        const argsWithoutSpaces: string =  args.replace(" ", "");
-        const lastChar: string = argsWithoutSpaces.substring(argsWithoutSpaces.length - 1, argsWithoutSpaces.length);
+    do {
+        index--;
+        char = args.substring(index, index + 1)
+    } while (char !== "\"" && index > 0)
 
-        if (lastChar === '\"') {
-            const secondLastChar: string = argsWithoutSpaces.substring(argsWithoutSpaces.length - 2, argsWithoutSpaces.length - 1);
+    if (char === "\"" && index > 0) {
+        do {
+            index--;
+            char = args.substring(index, index + 1)
+        } while (char === " " && index > 0)
 
-            if (secondLastChar === ";") {
-                let char: string | null = null;
-                let index: number = args.length;
-
-                do {
-                    index--;
-                    char = args.substring(index, index + 1)
-                } while (char !== ";" && index > 0)
-
-                return `${args.substring(0, index + 1)}${replaceValue}\"`;
+        if (char !== ";" && index > 0) {
+            if (index + 1 < args.length - 1) {
+                return `${args.substring(0, index + 1)};${args.substring(index + 1, args.length)}\"`;
             }
             else {
-                let char: string | null = null;
-                let index: number = args.length;
-
-                do {
-                    index--;
-                    char = args.substring(index, index + 1)
-                } while (char !== "\"" && index > 0)
-
-                return `${args.substring(0, index)};${replaceValue}\"`;
+                return `${args.substring(0, index + 1)};\"`;
             }
         }
-        else {
-            return  `${args} & \";${replaceValue}\"`;
+    }
+
+    return args;
+}
+
+export function replaceOrInsertArgs(args: string, argName: string, replaceValue: string): string {
+    const argsWithoutSpaces: string =  args.replace(" ", "");
+    const lastChar: string = argsWithoutSpaces.substring(argsWithoutSpaces.length - 1, argsWithoutSpaces.length);
+    
+    if (lastChar === '\"') {
+        args = checkAndFixArgsSyntax(args);
+    }
+
+    let argNameFoundCount: number = 0;
+    let argNamePos: number = -1;
+
+    do {
+        argNamePos = args.indexOf(argName, argNamePos + 1);
+
+        if (argNamePos === -1 && argNameFoundCount === 0) {
+            if (lastChar === '\"') {
+                return `${args.substring(0, args.length - 1)}${replaceValue}\"`;
+            }
+            else {
+                return  `${args} & \";${replaceValue}\"`;
+            }
         }
-    }
+        else if (argNamePos !== -1) {
+            argNameFoundCount++;
 
-    let argEndPos: number = args.indexOf(";", argNamePos);
+            let argEndPos: number = args.indexOf(";", argNamePos);
+            args = args.replace(args.substring(argNamePos, argEndPos + 1), replaceValue);
+        }
+    } while (argNamePos !== -1)
 
-    if (argEndPos === -1) {
-        argEndPos = args.indexOf("\"", argNamePos) - 1;
-    }
-
-    return args.replace(args.substring(argNamePos, argEndPos + 1), replaceValue);
+    return args;
 }
 
 /*
