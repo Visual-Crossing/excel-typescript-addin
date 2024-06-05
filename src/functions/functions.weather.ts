@@ -5,6 +5,8 @@ import { extractFormulaArgsSection, getDataCols, getDataRows, replaceOrInsertArg
 import semaphore from "semaphore";
 import { Queue } from 'queue-typescript';
 
+var requests: Record<string, Queue<CustomFunctions.Invocation>> | null;
+
 const sem: semaphore.Semaphore = semaphore(1);
 
 export function getOrRequestData(args: { functionOptionalArgs: any | null, unit: string | null, location: string, date: string, invocation: CustomFunctions.Invocation }): string | number | Date {
@@ -13,6 +15,8 @@ export function getOrRequestData(args: { functionOptionalArgs: any | null, unit:
         args.unit = "us";
     }
     
+    const cacheId: string = generateCacheId(args.location, args.date, args.unit!);
+
     let cacheItem: string | null = null;
 
     /**
@@ -20,15 +24,12 @@ export function getOrRequestData(args: { functionOptionalArgs: any | null, unit:
      * Subsequent requests for the same data are retrieved from the cache i.e. a second request is NOT made to the server.
      */
     sem.take(function() {
-        const cacheId: string = generateCacheId(args.location, args.date, args.unit!);
         cacheItem = getCacheItem(cacheId);
     
         if (!cacheItem) {
             setCacheItem(cacheId, JSON.stringify({ 
                 "status": "Requesting",
             }));
-
-            requestWeatherData({ cacheId: cacheId, ...args });
         }
 
         sem.leave();
@@ -38,18 +39,31 @@ export function getOrRequestData(args: { functionOptionalArgs: any | null, unit:
 
     if (cacheItem) {
         const cacheItemJson: any = JSON.parse(cacheItem);
-        return getDataFromCache(cacheItemJson, args);
+        return getDataFromCache(cacheItemJson, { cacheId: cacheId, ...args });
+    }
+    else {
+        requestWeatherData({ cacheId: cacheId, ...args });
     }
 
     return "Requesting...";
 }
 
-function getDataFromCache(cacheItemJson: any, args: { functionOptionalArgs: any | null, invocation: CustomFunctions.Invocation }): string | number | Date {
+function getDataFromCache(cacheItemJson: any, args: { functionOptionalArgs: any | null, invocation: CustomFunctions.Invocation, cacheId: string }): string | number | Date {
     if (!cacheItemJson) {
         //ToDo
     }
 
     if (cacheItemJson.status === "Requesting") {
+        if (!requests) {
+            requests = {};
+            requests[args.cacheId] = new Queue<CustomFunctions.Invocation>();
+        }
+        else if (!requests[args.cacheId]) {
+            requests[args.cacheId] = new Queue<CustomFunctions.Invocation>();
+        }
+
+        requests[args.cacheId].enqueue(args.invocation);
+
         return "Requesting...";
     }
     
@@ -91,8 +105,15 @@ async function requestWeatherData(args: { functionOptionalArgs: any | null, unit
 
 function requestTimelineData(apiKey: string | null, args: { functionOptionalArgs: any | null, unit: string | null, location: string, date: string, invocation: CustomFunctions.Invocation, cacheId: string }): void {
     if (apiKey) {
-        const q = new Queue<CustomFunctions.Invocation>();
-        q.enqueue(args.invocation);
+        if (!requests) {
+            requests = {};
+            requests[args.cacheId] = new Queue<CustomFunctions.Invocation>();
+        }
+        else if (!requests[args.cacheId]) {
+            requests[args.cacheId] = new Queue<CustomFunctions.Invocation>();
+        }
+
+        requests[args.cacheId].enqueue(args.invocation);
 
         const TIMELINE_API_URL:string = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${args.location}/${args.date}?key=${apiKey}&unitGroup=${args.unit}`
         
@@ -136,24 +157,38 @@ function onTimelineApiSuccessJsonResponse(jsonResponse: any, args: { functionOpt
           "precipprob": jsonResponse.days[0].precipprob,
           "windspeed": jsonResponse.days[0].windspeed
         }));
-  
-        if (args.invocation && args.invocation.address) {
-          const cacheItem = getCacheItem(args.cacheId);
-  
-          if (!cacheItem) {
-            //ToDo
-          }
-  
-          const cacheItemString = cacheItem as string;
-          const cacheItemJson = JSON.parse(cacheItemString);
-          const weatherArgs: WeatherArgs | null = extractWeatherArgs(args.functionOptionalArgs);
-  
-          updateFormula(cacheItemJson, weatherArgs ?? new WeatherArgs(), args.invocation);
+
+        if (requests === null) {
+            return;
         }
-        else
-        {
-          // return "#Error!";
+
+        const printQueue = requests[args.cacheId];
+  
+        while (printQueue !== null && printQueue.length > 0) {
+            const printItem = printQueue.front;
+
+            if (printItem && printItem.address) {
+                const cacheItem = getCacheItem(args.cacheId);
+        
+                if (!cacheItem) {
+                  //ToDo
+                }
+        
+                const cacheItemString = cacheItem as string;
+                const cacheItemJson = JSON.parse(cacheItemString);
+                const weatherArgs: WeatherArgs | null = extractWeatherArgs(args.functionOptionalArgs);
+        
+                updateFormula(cacheItemJson, weatherArgs ?? new WeatherArgs(), printItem);
+            }
+            else
+            {
+            // return "#Error!";
+            }
+
+            printQueue.dequeue();
         }
+
+        requests = null;
       }
       else {
         // return NA_DATA;
@@ -334,7 +369,7 @@ function clearArrayData(args: { functionOptionalArgs: any | null, invocation: Cu
                 }
             }
             catch {
-                //ToDo
+                //Nothing too important. It just means that there was an error when trying to clear cell data.
             }
         });
     }
