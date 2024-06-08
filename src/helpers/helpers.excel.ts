@@ -25,7 +25,7 @@ export function getSheet(address: string, context: Excel.RequestContext): Excel.
     const sheetName = address.split("!")[0];
 
     if (!sheetName) {
-        throw new Error("Unable to identify the sheet name.");
+        throw new Error(`Unable to identify the sheet name for address '${address}'.`);
     }
 
     const sheet = context.workbook.worksheets.getItem(sheetName);

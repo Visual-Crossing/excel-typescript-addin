@@ -8,7 +8,7 @@ export enum PrintDirections {
 
 export class WeatherArgs {
     CacheId: string;
-    Args: any | null | undefined = null;
+    Args: any | null | undefined;
     Columns: number = 1;
     Rows: number = 1;
     Location: string;
@@ -17,10 +17,11 @@ export class WeatherArgs {
     Invocation: CustomFunctions.Invocation;
     PrintDirection: PrintDirections = PrintDirections.Vertical;
 
-    public constructor(location: any, date: any, unit: string, invocation: CustomFunctions.Invocation) {
+    public constructor(location: any, date: any, unit: string, args: any | null | undefined, invocation: CustomFunctions.Invocation) {
         this.Location = location as string;
         this.Date = date as string;
         this.Unit = unit;
+        this.Args = args;
         this.Invocation = invocation;
 
         this.CacheId = generateCacheId(this.Location, this.Date, this.Unit)
@@ -49,8 +50,7 @@ export async function extractWeatherArgs(location: any, date: any, args: any | n
         unit = "us";
     }
 
-    const weatherArgs: WeatherArgs = new WeatherArgs(location, date, unit, invocation);
-    weatherArgs.Args = args;
+    const weatherArgs: WeatherArgs = new WeatherArgs(location, date, unit, args, invocation);
     
     if (!weatherArgs.Args) {
         return weatherArgs;

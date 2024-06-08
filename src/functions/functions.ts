@@ -1,26 +1,26 @@
 ﻿/* global clearInterval, console, CustomFunctions, setInterval */
 
-import { generateCacheId } from "../cache/cache";
 import { WeatherArgs, extractWeatherArgs } from "../helpers/helpers.args";
-import { getUnitFromSettingsAsync } from "../settings/settings";
-import { getOrRequestData } from "./functions.weather";
+import { clearArrayData, getOrRequestData, updateFormula } from "./functions.weather";
 
 /**
  * Offers complete, global weather data coverage both geographically and chronologically.
  * @customfunction
  * @param location Location
  * @param date Date
- * @param args Optional Parameters
+ * @param optionalArgs Optional Parameters
  * @param invocation
  * @requiresAddress
  * @returns Weather data.
  */
-export async function Weather(location: any, date: any, args: any | null | undefined = null, invocation: CustomFunctions.Invocation): Promise<string | number | Date> {
+export async function Weather(location: any, date: any, optionalArgs: any | null | undefined = null, invocation: CustomFunctions.Invocation): Promise<string | number | Date> {
   try {
-    const weatherArgs: WeatherArgs = await extractWeatherArgs(location, date, args, invocation);
+    const weatherArgs: WeatherArgs = await extractWeatherArgs(location, date, optionalArgs, invocation);
+
+    await clearArrayData(weatherArgs.Invocation, weatherArgs.Columns, weatherArgs.Rows);
 
     if (!location) {
-      
+      updateFormula(weatherArgs, 1, 1);
 
       return "#Invalid Location!";
     }
@@ -29,7 +29,7 @@ export async function Weather(location: any, date: any, args: any | null | undef
       return "#Invalid Date!";
     }
 
-    return getOrRequestData(weatherArgs)
+    return await getOrRequestData(weatherArgs)
   }
   catch (error: any) {
     if (error && error.message) {
