@@ -4,12 +4,50 @@ import { getApiKeyFromSettingsAsync } from "../settings/settings";
 import { extractFormulaArgsSection, getDataCols, getDataRows, replaceOrInsertArgs } from "../helpers/helpers.formulas";
 import semaphore from "semaphore";
 import { Queue } from 'queue-typescript';
+import { getCell, getSheet } from "../helpers/helpers.excel";
 
-var requests: Record<string, Queue<CustomFunctions.Invocation>> | null;
+var invocationsSetsByCacheId: Map<string, Set<CustomFunctions.Invocation>> | null;
 
 const sem: semaphore.Semaphore = semaphore(1);
 
-export function getOrRequestData(args: { functionOptionalArgs: any | null, unit: string | null, location: string, date: string, invocation: CustomFunctions.Invocation }): string | number | Date {
+function addToPrintSet(cacheId: string, invocation: CustomFunctions.Invocation) {
+    if (!cacheId) {
+        throw new Error("Invalid cache id.");
+    }
+
+    if (!invocation ||
+        !invocation.address) {
+            throw new Error("Invalid invocation.");
+    }
+
+    if (!invocationsSetsByCacheId) {
+        invocationsSetsByCacheId = new Map<string, Set<CustomFunctions.Invocation>>();
+    }
+    
+    if (!invocationsSetsByCacheId.has(cacheId)) {
+        invocationsSetsByCacheId.set(cacheId, new Set<CustomFunctions.Invocation>());
+    }
+
+    const setForCacheId: Set<CustomFunctions.Invocation> = invocationsSetsByCacheId.get(cacheId)!;
+
+    if (!setForCacheId.has(invocation)) {
+        setForCacheId.add(invocation);
+    }
+}
+
+function ToQueue(set: Set<CustomFunctions.Invocation>): Queue<CustomFunctions.Invocation> | null {
+    if (set && set.size > 0) {
+        const queue = new Queue<CustomFunctions.Invocation>();
+
+        set.forEach((x) => queue.enqueue(x));
+
+        return queue;
+    }
+
+    return null;
+}
+
+export function getOrRequestData(args: { functionOptionalArgs: any | null, unit: string | null, location: any, date: any, invocation: CustomFunctions.Invocation }): string | number | Date {
     if (!args.unit) {
         //Default unit = us
         args.unit = "us";
@@ -20,7 +58,7 @@ export function getOrRequestData(args: { functionOptionalArgs: any | null, unit:
     let cacheItem: string | null = null;
 
     /**
-     * Use of semaphore ensures that only 1 request to the server is made for each unique combination of location, date & unit.
+     * Use of semaphore ensures that only 1 request to the server is made for each unique cacheId (i.e. each unique combination of location, date & unit).
      * Subsequent requests for the same data are retrieved from the cache i.e. a second request is NOT made to the server.
      */
     sem.take(function() {
@@ -54,16 +92,7 @@ function getDataFromCache(cacheItemJson: any, args: { functionOptionalArgs: any 
     }
 
     if (cacheItemJson.status === "Requesting") {
-        if (!requests) {
-            requests = {};
-            requests[args.cacheId] = new Queue<CustomFunctions.Invocation>();
-        }
-        else if (!requests[args.cacheId]) {
-            requests[args.cacheId] = new Queue<CustomFunctions.Invocation>();
-        }
-
-        requests[args.cacheId].enqueue(args.invocation);
-
+        addToPrintSet(args.cacheId, args.invocation);
         return "Requesting...";
     }
     
@@ -105,15 +134,7 @@ async function requestWeatherData(args: { functionOptionalArgs: any | null, unit
 
 function requestTimelineData(apiKey: string | null, args: { functionOptionalArgs: any | null, unit: string | null, location: string, date: string, invocation: CustomFunctions.Invocation, cacheId: string }): void {
     if (apiKey) {
-        if (!requests) {
-            requests = {};
-            requests[args.cacheId] = new Queue<CustomFunctions.Invocation>();
-        }
-        else if (!requests[args.cacheId]) {
-            requests[args.cacheId] = new Queue<CustomFunctions.Invocation>();
-        }
-
-        requests[args.cacheId].enqueue(args.invocation);
+        addToPrintSet(args.cacheId, args.invocation);
 
         const TIMELINE_API_URL:string = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${args.location}/${args.date}?key=${apiKey}&unitGroup=${args.unit}`
         
@@ -158,13 +179,25 @@ function onTimelineApiSuccessJsonResponse(jsonResponse: any, args: { functionOpt
           "windspeed": jsonResponse.days[0].windspeed
         }));
 
-        if (requests === null) {
+        if (!invocationsSetsByCacheId) {
             return;
         }
 
-        const printQueue = requests[args.cacheId];
+        const printSet = invocationsSetsByCacheId.get(args.cacheId);
+
+        if (!printSet || printSet.size === 0) {
+            invocationsSetsByCacheId.delete(args.cacheId);
+
+            if (invocationsSetsByCacheId.size === 0) {
+                invocationsSetsByCacheId = null;
+            }
+
+            return;
+        }
+
+        const printQueue = ToQueue(printSet);
   
-        while (printQueue !== null && printQueue.length > 0) {
+        while (printQueue && printQueue.length > 0) {
             const printItem = printQueue.front;
 
             if (printItem && printItem.address) {
@@ -186,9 +219,10 @@ function onTimelineApiSuccessJsonResponse(jsonResponse: any, args: { functionOpt
             }
 
             printQueue.dequeue();
+            printSet.delete(printItem);
         }
 
-        requests = null;
+        invocationsSetsByCacheId = null;
       }
       else {
         // return NA_DATA;
@@ -326,33 +360,19 @@ async function printArrayData(cacheItemJson: any, printDirection: PrintDirection
     }
 }
 
-function clearArrayData(args: { functionOptionalArgs: any | null, invocation: CustomFunctions.Invocation }) {
+function clearArrayData(args: { functionOptionalArgs: any | null, invocation: CustomFunctions.Invocation }): void {
     const weatherArgs: WeatherArgs | null = extractWeatherArgs(args.functionOptionalArgs);
 
     if (weatherArgs && weatherArgs.Columns && weatherArgs.Rows) {
         Excel.run(async (context: Excel.RequestContext) => {
             try {
                 if (args.invocation && args.invocation.address && weatherArgs && weatherArgs.Columns && weatherArgs.Rows) {
-                    const sheetName = args.invocation.address.split("!")[0];
-
-                    if (!sheetName) {
-                    
-                    }
-
-                    const sheet = context.workbook.worksheets.getItem(sheetName);
-                    
-                    if (!sheet) {
-                    
-                    }
-
-                    const caller = sheet.getRange(args.invocation.address);
-
-                    if (!caller) {
-                    
-                    }
+                    const caller = getCell(args.invocation.address, context);
 
                     caller.load();
                     await context.sync();
+
+                    const sheet = getSheet(args.invocation.address, context);
 
                     if (weatherArgs.Rows > 1) {
                         sheet.getRangeByIndexes(caller.rowIndex + 1, caller.columnIndex, weatherArgs.Rows - 1, weatherArgs.Columns).clear(Excel.ClearApplyTo.contents);
@@ -364,12 +384,9 @@ function clearArrayData(args: { functionOptionalArgs: any | null, invocation: Cu
 
                     await context.sync();
                 }
-                else {
-                    //ToDo
-                }
             }
             catch {
-                //Nothing too important. It just means that there was an error when trying to clear cell data.
+                //Nothing too important - it can be ignored (unless if it happens all the time). It just means that there was an error when trying to clear data.
             }
         });
     }

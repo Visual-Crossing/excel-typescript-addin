@@ -26,7 +26,7 @@ export async function Weather(location: any, date: any, args: any | null = null,
       return "#Invalid Date!";
     }
 
-    const unit = await getUnitFromSettingsAsync();
+    const unit: string | null = await getUnitFromSettingsAsync();
     return getOrRequestData({ functionOptionalArgs: args, unit, location, date, invocation } )
   }
   catch (error: any) {

@@ -12,10 +12,10 @@ export function cacheItemExists(cacheId: string): boolean {
     return false;
 }
 
-export function getCacheItem(cacheId: string) {
+export function getCacheItem(cacheId: string): string | null {
     return window.sessionStorage.getItem(cacheId);
 }
 
-export function setCacheItem(cacheId: string, value: string) {
+export function setCacheItem(cacheId: string, value: string): void {
     return window.sessionStorage.setItem(cacheId, value);
 }
