@@ -1,23 +1,55 @@
+import { generateCacheId } from "../cache/cache";
+import { getUnitFromSettingsAsync } from "../settings/settings";
+
 export enum PrintDirections {
     Horizontal,
     Vertical
 }  
 
 export class WeatherArgs {
-    Args: any | null = null;
-    Columns: number | null = null;
-    Rows: number | null = null;
+    CacheId: string;
+    Args: any | null | undefined = null;
+    Columns: number = 1;
+    Rows: number = 1;
+    Location: string;
+    Date: string;
+    Unit: string;
+    Invocation: CustomFunctions.Invocation;
     PrintDirection: PrintDirections = PrintDirections.Vertical;
+
+    public constructor(location: any, date: any, unit: string, invocation: CustomFunctions.Invocation) {
+        this.Location = location as string;
+        this.Date = date as string;
+        this.Unit = unit;
+        this.Invocation = invocation;
+
+        this.CacheId = generateCacheId(this.Location, this.Date, this.Unit)
+    }
+
+    public isFormulaUpdateRequired(cols: number, rows: number): boolean {
+        return this.Invocation && this.Invocation.address && (rows !== this.Rows) || (cols !== this.Columns);
+    }
+
+    public isArrayDataCleanUpRequired(): boolean {
+        return this.Invocation && this.Invocation.address && this.Rows !== 1 || this.Columns !== 1;
+    }
 }
 
-export function extractWeatherArgs(args: any | null): WeatherArgs {
+export async function extractWeatherArgs(location: any, date: any, args: any | null | undefined, invocation: CustomFunctions.Invocation): Promise<WeatherArgs> {
     const INVALID_PARAMETERS: string = "Invalid parameters.";
 
     if (args && typeof args !== 'string') {
         throw new Error(INVALID_PARAMETERS);
     }
 
-    const weatherArgs: WeatherArgs = new WeatherArgs();
+    let unit: string | null | undefined = await getUnitFromSettingsAsync();
+
+    if (!unit) {
+        //Default unit = us
+        unit = "us";
+    }
+
+    const weatherArgs: WeatherArgs = new WeatherArgs(location, date, unit, invocation);
     weatherArgs.Args = args;
     
     if (!weatherArgs.Args) {

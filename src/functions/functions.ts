@@ -1,5 +1,6 @@
 ﻿/* global clearInterval, console, CustomFunctions, setInterval */
 
+import { generateCacheId } from "../cache/cache";
 import { WeatherArgs, extractWeatherArgs } from "../helpers/helpers.args";
 import { getUnitFromSettingsAsync } from "../settings/settings";
 import { getOrRequestData } from "./functions.weather";
@@ -10,15 +11,17 @@ import { getOrRequestData } from "./functions.weather";
  * @param location Location
  * @param date Date
  * @param args Optional Parameters
- * @param colsRows Number of columns and rows
+ * @param invocation
  * @requiresAddress
  * @returns Weather data.
  */
-export async function Weather(location: any, date: any, args: any | null = null, invocation: CustomFunctions.Invocation): Promise<string | number | Date> {
+export async function Weather(location: any, date: any, args: any | null | undefined = null, invocation: CustomFunctions.Invocation): Promise<string | number | Date> {
   try {
-    const weatherArgs: WeatherArgs | null = extractWeatherArgs(args);
+    const weatherArgs: WeatherArgs = await extractWeatherArgs(location, date, args, invocation);
 
     if (!location) {
+      
+
       return "#Invalid Location!";
     }
 
@@ -26,8 +29,7 @@ export async function Weather(location: any, date: any, args: any | null = null,
       return "#Invalid Date!";
     }
 
-    const unit: string | null = await getUnitFromSettingsAsync();
-    return getOrRequestData({ functionOptionalArgs: args, unit, location, date, invocation } )
+    return getOrRequestData(weatherArgs)
   }
   catch (error: any) {
     if (error && error.message) {

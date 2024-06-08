@@ -47,14 +47,7 @@ function ToQueue(set: Set<CustomFunctions.Invocation>): Queue<CustomFunctions.In
     return null;
 }
 
-export function getOrRequestData(args: { functionOptionalArgs: any | null, unit: string | null, location: any, date: any, invocation: CustomFunctions.Invocation }): string | number | Date {
-    if (!args.unit) {
-        //Default unit = us
-        args.unit = "us";
-    }
-    
-    const cacheId: string = generateCacheId(args.location, args.date, args.unit!);
-
+export function getOrRequestData(weatherArgs: WeatherArgs): string | number | Date {
     let cacheItem: string | null = null;
 
     /**
@@ -62,10 +55,10 @@ export function getOrRequestData(args: { functionOptionalArgs: any | null, unit:
      * Subsequent requests for the same data are retrieved from the cache i.e. a second request is NOT made to the server.
      */
     sem.take(function() {
-        cacheItem = getCacheItem(cacheId);
+        cacheItem = getCacheItem(weatherArgs.CacheId);
     
         if (!cacheItem) {
-            setCacheItem(cacheId, JSON.stringify({ 
+            setCacheItem(weatherArgs.CacheId, JSON.stringify({ 
                 "status": "Requesting",
             }));
         }
@@ -73,42 +66,39 @@ export function getOrRequestData(args: { functionOptionalArgs: any | null, unit:
         sem.leave();
     });
 
-    clearArrayData(args);
+    clearArrayData(weatherArgs.Invocation, weatherArgs.Columns, weatherArgs.Rows);
 
     if (cacheItem) {
         const cacheItemJson: any = JSON.parse(cacheItem);
-        return getDataFromCache(cacheItemJson, { cacheId: cacheId, ...args });
+        return getDataFromCache(weatherArgs, cacheItemJson);
     }
     else {
-        requestWeatherData({ cacheId: cacheId, ...args });
+        requestWeatherData(weatherArgs);
     }
 
     return "Requesting...";
 }
 
-function getDataFromCache(cacheItemJson: any, args: { functionOptionalArgs: any | null, invocation: CustomFunctions.Invocation, cacheId: string }): string | number | Date {
+function getDataFromCache(weatherArgs: WeatherArgs, cacheItemJson: any): string | number | Date {
     if (!cacheItemJson) {
         //ToDo
     }
 
     if (cacheItemJson.status === "Requesting") {
-        addToPrintSet(args.cacheId, args.invocation);
+        addToPrintSet(weatherArgs.CacheId, weatherArgs.Invocation);
         return "Requesting...";
     }
     
     if (cacheItemJson.status === "Complete") {
-        const weatherArgs: WeatherArgs | null = extractWeatherArgs(args.functionOptionalArgs);
-
         const newCols = getDataCols(cacheItemJson, weatherArgs.PrintDirection);
         const newRows = getDataRows(cacheItemJson, weatherArgs.PrintDirection);
 
-        if (args.invocation && weatherArgs && 
-            (!weatherArgs.Columns || !weatherArgs.Rows || weatherArgs.Columns !== newCols || weatherArgs.Rows !== newRows)) {
-            updateFormula(cacheItemJson, weatherArgs ?? new WeatherArgs(), args.invocation);
+        if (weatherArgs && weatherArgs.isFormulaUpdateRequired(newCols, newRows)) {
+            updateFormula(cacheItemJson, weatherArgs, weatherArgs.Invocation);
             return "Updating...";
         }
 
-        if (args.invocation && args.invocation.address) {
+        if (weatherArgs.Invocation && weatherArgs.Invocation.address) {
             let printDirection: PrintDirections;
  
             if (weatherArgs) {
@@ -118,29 +108,29 @@ function getDataFromCache(cacheItemJson: any, args: { functionOptionalArgs: any 
                 printDirection = PrintDirections.Vertical;
             }
 
-            printArrayData(cacheItemJson, printDirection, args.invocation);
+            printArrayData(cacheItemJson, printDirection, weatherArgs.Invocation);
         }
         
-        return cacheItemJson.tempmax;
+        return cacheItemJson.values[0].value;
     }
 
     throw new Error();
 }
 
-async function requestWeatherData(args: { functionOptionalArgs: any | null, unit: string | null, location: string, date: string, invocation: CustomFunctions.Invocation, cacheId: string }): Promise<void> {
-    const apiKey: string | null = await getApiKeyFromSettingsAsync();
-    requestTimelineData(apiKey, args)
+async function requestWeatherData(weatherArgs: WeatherArgs): Promise<void> {
+    const apiKey: string | null | undefined = await getApiKeyFromSettingsAsync();
+    requestTimelineData(apiKey, weatherArgs)
 }
 
-function requestTimelineData(apiKey: string | null, args: { functionOptionalArgs: any | null, unit: string | null, location: string, date: string, invocation: CustomFunctions.Invocation, cacheId: string }): void {
+function requestTimelineData(apiKey: string | null | undefined, weatherArgs: WeatherArgs): void {
     if (apiKey) {
-        addToPrintSet(args.cacheId, args.invocation);
+        addToPrintSet(weatherArgs.CacheId, weatherArgs.Invocation);
 
-        const TIMELINE_API_URL:string = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${args.location}/${args.date}?key=${apiKey}&unitGroup=${args.unit}`
+        const TIMELINE_API_URL:string = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${weatherArgs.Location}/${weatherArgs.Date}?key=${apiKey}&unitGroup=${weatherArgs.Unit}`
         
         fetch(TIMELINE_API_URL)
             .then(async (response: Response) => {
-                onTimelineApiSuccessResponse(response, args);
+                onTimelineApiSuccessResponse(response, weatherArgs);
             })
             .catch(() => {
                 //ToDo
@@ -151,7 +141,7 @@ function requestTimelineData(apiKey: string | null, args: { functionOptionalArgs
     }
 }
 
-function onTimelineApiSuccessResponse(response: Response, args: { functionOptionalArgs: any | null, invocation: CustomFunctions.Invocation, cacheId: string }) {
+function onTimelineApiSuccessResponse(response: Response, weatherArgs: WeatherArgs) {
     const NA_DATA: string = "#N/A Data";
   
     if (!response) {
@@ -160,33 +150,36 @@ function onTimelineApiSuccessResponse(response: Response, args: { functionOption
 
     response.json()
         .then((jsonResponse: any) => {
-            onTimelineApiSuccessJsonResponse(jsonResponse, args);
+            onTimelineApiSuccessJsonResponse(jsonResponse, weatherArgs);
         })
         .catch(() => {
             //ToDo
         });
 }
 
-function onTimelineApiSuccessJsonResponse(jsonResponse: any, args: { functionOptionalArgs: any | null, invocation: CustomFunctions.Invocation, cacheId: string }) {
+function onTimelineApiSuccessJsonResponse(jsonResponse: any, weatherArgs: WeatherArgs) {
     if (jsonResponse && jsonResponse.days && jsonResponse.days.length > 0 && jsonResponse.days[0]) {
 
-        setCacheItem(args.cacheId, JSON.stringify({ 
+        setCacheItem(weatherArgs.CacheId, JSON.stringify({ 
           "status": "Complete",
-          "tempmax": jsonResponse.days[0].tempmax,
-          "tempmin": jsonResponse.days[0].tempmin,
-          "precip": jsonResponse.days[0].precip,
-          "precipprob": jsonResponse.days[0].precipprob,
-          "windspeed": jsonResponse.days[0].windspeed
+          "values":
+            [
+                {"name": "tempmax", "value": jsonResponse.days[0].tempmax},
+                {"name": "tempmin", "value": jsonResponse.days[0].tempmin},
+                {"name": "precip", "value": jsonResponse.days[0].precip},
+                {"name": "precipprob", "value": jsonResponse.days[0].precipprob},
+                {"name": "windspeed", "value": jsonResponse.days[0].windspeed}
+            ]
         }));
 
         if (!invocationsSetsByCacheId) {
             return;
         }
 
-        const printSet = invocationsSetsByCacheId.get(args.cacheId);
+        const printSet = invocationsSetsByCacheId.get(weatherArgs.CacheId);
 
         if (!printSet || printSet.size === 0) {
-            invocationsSetsByCacheId.delete(args.cacheId);
+            invocationsSetsByCacheId.delete(weatherArgs.CacheId);
 
             if (invocationsSetsByCacheId.size === 0) {
                 invocationsSetsByCacheId = null;
@@ -201,7 +194,7 @@ function onTimelineApiSuccessJsonResponse(jsonResponse: any, args: { functionOpt
             const printItem = printQueue.front;
 
             if (printItem && printItem.address) {
-                const cacheItem = getCacheItem(args.cacheId);
+                const cacheItem = getCacheItem(weatherArgs.CacheId);
         
                 if (!cacheItem) {
                   //ToDo
@@ -209,9 +202,8 @@ function onTimelineApiSuccessJsonResponse(jsonResponse: any, args: { functionOpt
         
                 const cacheItemString = cacheItem as string;
                 const cacheItemJson = JSON.parse(cacheItemString);
-                const weatherArgs: WeatherArgs | null = extractWeatherArgs(args.functionOptionalArgs);
         
-                updateFormula(cacheItemJson, weatherArgs ?? new WeatherArgs(), printItem);
+                updateFormula(cacheItemJson, weatherArgs, printItem);
             }
             else
             {
@@ -244,23 +236,12 @@ async function updateFormula(cacheItemJson: any, weatherArgs: WeatherArgs, invoc
                 await Excel.run(async (context: Excel.RequestContext) => {
                     try {
                     if (invocation && invocation.address) {
-                        const sheetName = invocation.address.split("!")[0];
+                        const caller = getCell(invocation.address, context);
 
-                        if (!sheetName) {
-                        
-                        }
-
-                        const sheet = context.workbook.worksheets.getItem(sheetName);
-
-                        if (!sheet) {
-                        
-                        }
-
-                        const caller = sheet.getRange(invocation.address);
-
-                        if (!caller) {
-                        
-                        }
+                        caller.load();
+                        await context.sync();
+    
+                        const sheet = getSheet(invocation.address, context);
 
                         caller.load();
                         await context.sync();
@@ -320,32 +301,21 @@ async function printArrayData(cacheItemJson: any, printDirection: PrintDirection
     if (cacheItemJson && invocation && invocation.address) {
         await Excel.run(async (context) => {
             if (invocation && invocation.address) {
-                const sheetName = invocation.address.split("!")[0];
+                const caller = getCell(invocation.address, context);
 
-                if (!sheetName) {
-                
-                }
+                caller.load();
+                await context.sync();
 
-                const sheet = context.workbook.worksheets.getItem(sheetName);
-
-                if (!sheet) {
-                
-                }
-
-                const caller = sheet.getRange(invocation.address);
-
-                if (!caller) {
-                
-                }
+                const sheet = getSheet(invocation.address, context);
                 
                 caller.load();
                 await context.sync();
 
                 if (printDirection === PrintDirections.Horizontal) {
-                    sheet.getRangeByIndexes(caller.rowIndex, caller.columnIndex + 1, 1, 4).values = [[cacheItemJson.tempmin, cacheItemJson.precip, cacheItemJson.precipprob, cacheItemJson.windspeed]];
+                    sheet.getRangeByIndexes(caller.rowIndex, caller.columnIndex + 1, 1, 4).values = [[cacheItemJson.values[1].value, cacheItemJson.values[2].value, cacheItemJson.values[3].value, cacheItemJson.values[4].value]];
                 }
                 else {
-                    sheet.getRangeByIndexes(caller.rowIndex + 1, caller.columnIndex, 4, 1).values = [[cacheItemJson.tempmin], [cacheItemJson.precip], [cacheItemJson.precipprob], [cacheItemJson.windspeed]];
+                    sheet.getRangeByIndexes(caller.rowIndex + 1, caller.columnIndex, 4, 1).values = [[cacheItemJson.values[1].value], [cacheItemJson.values[2].value], [cacheItemJson.values[3].value], [cacheItemJson.values[4].value]];
                 }
 
                 await context.sync();
@@ -360,26 +330,24 @@ async function printArrayData(cacheItemJson: any, printDirection: PrintDirection
     }
 }
 
-function clearArrayData(args: { functionOptionalArgs: any | null, invocation: CustomFunctions.Invocation }): void {
-    const weatherArgs: WeatherArgs | null = extractWeatherArgs(args.functionOptionalArgs);
-
-    if (weatherArgs && weatherArgs.Columns && weatherArgs.Rows) {
+function clearArrayData(invocation: CustomFunctions.Invocation, cols: number, rows: number): void {
+    if (invocation && invocation.address && (cols > 1 || rows > 1)) {
         Excel.run(async (context: Excel.RequestContext) => {
             try {
-                if (args.invocation && args.invocation.address && weatherArgs && weatherArgs.Columns && weatherArgs.Rows) {
-                    const caller = getCell(args.invocation.address, context);
+                if (invocation && invocation.address && (cols > 1 || rows > 1)) {
+                    const caller = getCell(invocation.address, context);
 
                     caller.load();
                     await context.sync();
 
-                    const sheet = getSheet(args.invocation.address, context);
+                    const sheet = getSheet(invocation.address, context);
 
-                    if (weatherArgs.Rows > 1) {
-                        sheet.getRangeByIndexes(caller.rowIndex + 1, caller.columnIndex, weatherArgs.Rows - 1, weatherArgs.Columns).clear(Excel.ClearApplyTo.contents);
+                    if (rows > 1) {
+                        sheet.getRangeByIndexes(caller.rowIndex + 1, caller.columnIndex, rows - 1, cols).clear(Excel.ClearApplyTo.contents);
                     }
 
-                    if (weatherArgs.Columns > 1) {
-                        sheet.getRangeByIndexes(caller.rowIndex, caller.columnIndex + 1, weatherArgs.Rows, weatherArgs.Columns - 1).clear(Excel.ClearApplyTo.contents);
+                    if (cols > 1) {
+                        sheet.getRangeByIndexes(caller.rowIndex, caller.columnIndex + 1, rows, cols - 1).clear(Excel.ClearApplyTo.contents);
                     }
 
                     await context.sync();
