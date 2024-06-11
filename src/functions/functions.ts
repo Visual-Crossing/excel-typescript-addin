@@ -1,5 +1,6 @@
 ﻿/* global clearInterval, console, CustomFunctions, setInterval */
 
+import { clearArrayData } from "../helpers/helpers.array-data";
 import { WeatherArgs, extractWeatherArgs } from "../helpers/helpers.args";
 import { getOrRequestData } from "./functions.weather";
 
@@ -17,9 +18,9 @@ export async function Weather(location: any, date: any, optionalArgs: any | null
   try {
     const weatherArgs: WeatherArgs = await extractWeatherArgs(location, date, optionalArgs, invocation);
 
-    if (!location) {
-      // updateFormula(weatherArgs, 1, 1);
+    await clearArrayData(weatherArgs.Columns, weatherArgs.Rows, weatherArgs.Invocation);
 
+    if (!location) {
       return "#Invalid Location!";
     }
 

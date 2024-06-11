@@ -1,14 +1,14 @@
-import { PrintDirections, WeatherArgs } from "../helpers/helpers.args";
+import { WeatherArgs } from "../helpers/helpers.args";
 import { getCacheItem, setCacheItem } from "../cache/cache";
 import { getApiKeyFromSettingsAsync } from "../settings/settings";
 import semaphore from "semaphore";
-import { getCell, getSheet } from "../helpers/helpers.excel";
+import { getCell } from "../helpers/helpers.excel";
 import { DistinctQueue } from "../types/distinct-queue";
 import { getArrayDataCols, getArrayDataRows } from "../helpers/helpers.formulas";
-import { generateArrayData } from "../helpers/helpers.array-data";
-import { printArrayDataWithFormula, printArrayDataWithoutFormula } from "../helpers/helpers.printer";
+import { generateArrayData, getUpdatedFormula } from "../helpers/helpers.array-data";
+import {  printArrayDataWithoutFormula } from "../helpers/helpers.printer";
 
-var subscribersGroupedByCacheId: Map<string, DistinctQueue<WeatherArgs>> | null;
+var subscribersGroupedByCacheId: Map<string, DistinctQueue<string, WeatherArgs>> | null;
 
 const sem: semaphore.Semaphore = semaphore(1);
 const REQUESTING: string = "Requesting...";
@@ -28,25 +28,25 @@ function subscribe(weatherArgs: WeatherArgs): void {
     }
 
     if (!subscribersGroupedByCacheId) {
-        subscribersGroupedByCacheId = new Map<string, DistinctQueue<WeatherArgs>>();
+        subscribersGroupedByCacheId = new Map<string, DistinctQueue<string, WeatherArgs>>();
+        subscribersGroupedByCacheId.set(weatherArgs.CacheId, new DistinctQueue<string, WeatherArgs>());
     }
-    
-    if (!subscribersGroupedByCacheId.has(weatherArgs.CacheId)) {
-        subscribersGroupedByCacheId.set(weatherArgs.CacheId, new DistinctQueue<WeatherArgs>());
+    else if (!subscribersGroupedByCacheId.has(weatherArgs.CacheId)) {
+        subscribersGroupedByCacheId.set(weatherArgs.CacheId, new DistinctQueue<string, WeatherArgs>());
     }
 
-    const subscribersForCacheId: DistinctQueue<WeatherArgs> = subscribersGroupedByCacheId.get(weatherArgs.CacheId)!;
+    const subscribersForCacheId: DistinctQueue<string, WeatherArgs> = subscribersGroupedByCacheId.get(weatherArgs.CacheId)!;
 
-    // if (!setForCacheId.has(weatherArgs)) {
-    //     setForCacheId.add(weatherArgs);
-    // }
+    if (!subscribersForCacheId) {
+        throw new Error("Invalid internal state.");
+    }
 
-    subscribersForCacheId.enqueue(weatherArgs);
+    subscribersForCacheId.enqueue(weatherArgs.Invocation.address, weatherArgs);
 }
 
-async function processSubscribersQueue(weatherArgs: WeatherArgs) {
-    if (!weatherArgs) {
-        throw new Error();
+async function processSubscribersQueue(weatherArgs: WeatherArgs): Promise<void> {
+    if (!weatherArgs || !weatherArgs.CacheId) {
+        throw new Error("Invalid args.");
     }
     
     if (!subscribersGroupedByCacheId || !subscribersGroupedByCacheId.has(weatherArgs.CacheId)) {
@@ -86,15 +86,22 @@ async function processSubscribersQueue(weatherArgs: WeatherArgs) {
                                 const cacheItemObject = JSON.parse(cacheItemString);
 
                                 if (cacheItemObject && cacheItemObject.values) {
-                                    const arrayData: any[] | null = generateArrayData(subscriberWeatherArgs, cacheItemObject.values);
-                                    printArrayDataWithFormula(arrayData, subscriberWeatherArgs.Invocation, subscriberWeatherArgs.PrintDirection);
+                                    // const arrayData: any[] | null = generateArrayData(subscriberWeatherArgs, cacheItemObject.values);
+                                    // printArrayDataWithFormula(arrayData, subscriberWeatherArgs.Invocation, subscriberWeatherArgs.PrintDirection);
+
+                                    const arrayDataCols = getArrayDataCols(cacheItemObject.values, weatherArgs.PrintDirection);
+                                    const arrayDataRows = getArrayDataRows(cacheItemObject.values, weatherArgs.PrintDirection);
+
+                                    caller.values = getUpdatedFormula(weatherArgs, arrayDataCols, arrayDataRows) as any;
                                 }
                             }
                         }
                     }
                 }
                 
-                subscribersForCacheId.dequeue();
+                if (subscriberWeatherArgs && subscriberWeatherArgs.Invocation && subscriberWeatherArgs.Invocation.address) {
+                    subscribersForCacheId.dequeue(subscriberWeatherArgs.Invocation.address);
+                }
             }
 
             if (subscribersGroupedByCacheId && subscribersGroupedByCacheId.has(weatherArgs.CacheId)) {
@@ -106,7 +113,16 @@ async function processSubscribersQueue(weatherArgs: WeatherArgs) {
             }
         }
         catch {
-            //ToDo: Retry
+            // Retry
+            const timer: NodeJS.Timeout = setTimeout(() => {
+                try {
+                    clearTimeout(timer);
+                    processSubscribersQueue(weatherArgs);
+                }
+                catch {
+
+                }
+            }, 250);
         }
     });
 }
@@ -142,7 +158,7 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
             }
         }
         catch (error: any) {
-            throw new Error(error);
+            throw error;
         }
     });
 
@@ -161,23 +177,13 @@ async function getDataFromCache(weatherArgs: WeatherArgs, cacheItemJsonString: s
     if (!cacheItemObject) {
         throw new Error("Unable to deserialize cache.");
     }
-
+    
     if (cacheItemObject.status === "Requesting") {
         subscribe(weatherArgs);
         return REQUESTING;
     }
     
     if (cacheItemObject.status === "Complete") {
-        const arrayDataCols = getArrayDataCols(cacheItemObject.values, weatherArgs.PrintDirection);
-        const arrayDataRows = getArrayDataRows(cacheItemObject.values, weatherArgs.PrintDirection);
-
-        if (weatherArgs && weatherArgs.isFormulaUpdateRequired(arrayDataCols, arrayDataRows)) {
-            await clearArrayData(weatherArgs.Columns, weatherArgs.Rows, weatherArgs.Invocation);
-            subscribe(weatherArgs);
-            await processSubscribersQueue(weatherArgs);
-
-            return "Updating...";
-        }
         const arrayData: any[] | null = generateArrayData(weatherArgs, cacheItemObject.values);
         printArrayDataWithoutFormula(arrayData, weatherArgs.Invocation, weatherArgs.PrintDirection);
 
@@ -197,8 +203,8 @@ async function fetchTimelineData(apiKey: string | null | undefined, weatherArgs:
             .then(async (response: Response) => {
                 await onTimelineApiSuccessResponse(response, weatherArgs);
             })
-            .catch(() => {
-                //ToDo
+            .catch((error: any) => {
+                throw error;
             });
         
         return REQUESTING;
@@ -219,8 +225,8 @@ async function onTimelineApiSuccessResponse(response: Response, weatherArgs: Wea
         .then((jsonResponse: any) => {
             onTimelineApiSuccessJsonResponse(jsonResponse, weatherArgs);
         })
-        .catch(() => {
-            //ToDo
+        .catch((error: any) => {
+            throw error;
         });
 }
 
@@ -239,39 +245,9 @@ async function onTimelineApiSuccessJsonResponse(jsonResponse: any, weatherArgs: 
             ]
         }));
 
-        processSubscribersQueue(weatherArgs);
+        await processSubscribersQueue(weatherArgs);
     }
     else {
     // return NA_DATA;
-    }
-}
-
-export async function clearArrayData(cols: number, rows: number, invocation: CustomFunctions.Invocation): Promise<void> {
-    if (invocation && invocation.address && (cols > 1 || rows > 1)) {
-        await Excel.run(async (context: Excel.RequestContext) => {
-            try {
-                if (invocation && invocation.address && (cols > 1 || rows > 1)) {
-                    const caller = getCell(invocation.address, context);
-
-                    caller.load();
-                    await context.sync();
-
-                    const sheet = getSheet(invocation.address, context);
-
-                    if (rows > 1) {
-                        sheet.getRangeByIndexes(caller.rowIndex + 1, caller.columnIndex, rows - 1, cols).clear(Excel.ClearApplyTo.contents);
-                    }
-
-                    if (cols > 1) {
-                        sheet.getRangeByIndexes(caller.rowIndex, caller.columnIndex + 1, rows, cols - 1).clear(Excel.ClearApplyTo.contents);
-                    }
-
-                    await context.sync();
-                }
-            }
-            catch {
-                //Nothing too important - it can be ignored (unless if it happens all the time). It just means that there was an error when trying to clear data.
-            }
-        });
     }
 }

@@ -2,13 +2,13 @@ import { Queue } from "queue-typescript";
 
 const INVALID_QUEUE_STATE_ERROR_MSG: string = "Invalid queue state.";
 
-export class DistinctQueue<T> {
+export class DistinctQueue<T, U> {
     private keys: Set<T> | null;
-    private queue: Queue<T> | null;
+    private queue: Queue<U> | null;
 
     public constructor() {
         this.keys = new Set<T>();
-        this.queue = new Queue<T>();
+        this.queue = new Queue<U>();
     }
 
     public getLength(): number {
@@ -27,7 +27,7 @@ export class DistinctQueue<T> {
         return this.queue.length;
     }
 
-    public getFront(): T | null {
+    public getFront(): U | null {
         if (!this.queue) {
             return null;
         }
@@ -35,23 +35,27 @@ export class DistinctQueue<T> {
         return this.queue.front;
     }
 
-    public enqueue(item: T): void{
+    public enqueue(key: T, item: U): void{
         if (!this.keys) {
             this.keys = new Set<T>();
         }
 
-        if (!this.keys.has(item)) {
-            this.keys.add(item);
+        if (!this.keys.has(key)) {
+            this.keys.add(key);
 
             if (!this.queue) {
-                this.queue = new Queue<T>();
+                this.queue = new Queue<U>();
             }
 
             this.queue.enqueue(item);
         }
     }
 
-    public dequeue(): T | null{
+    public dequeue(key: T): U | null {
+        if (!key) {
+            throw new Error("Invalid key.");
+        }
+
         if (!this.queue) {
             return null;
         }
@@ -60,7 +64,7 @@ export class DistinctQueue<T> {
             throw new Error(INVALID_QUEUE_STATE_ERROR_MSG);
         }
 
-        if (this.queue.length !== this.keys.size) {
+        if (this.keys.size !== this.queue.length) {
             throw new Error(INVALID_QUEUE_STATE_ERROR_MSG);
         }
 
@@ -72,9 +76,9 @@ export class DistinctQueue<T> {
         }
 
         const item = this.queue.dequeue();
-        this.keys.delete(item);
+        this.keys.delete(key);
 
-        if (this.queue.length !== this.keys.size) {
+        if (this.keys.size !== this.queue.length) {
             throw new Error(INVALID_QUEUE_STATE_ERROR_MSG);
         }
 
