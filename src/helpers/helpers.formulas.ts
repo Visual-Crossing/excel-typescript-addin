@@ -1,6 +1,6 @@
 import { PrintDirections, WeatherArgs } from "./helpers.args";
 
-export function getDataCols(values: any[], printDirection: PrintDirections): number {
+export function getArrayDataCols(values: any[], printDirection: PrintDirections): number {
     if (printDirection === PrintDirections.Horizontal) {
         return values.length;
     }
@@ -9,7 +9,7 @@ export function getDataCols(values: any[], printDirection: PrintDirections): num
     }
 }
 
-export function getDataRows(values: any[], printDirection: PrintDirections): number {
+export function getArrayDataRows(values: any[], printDirection: PrintDirections): number {
     if (printDirection === PrintDirections.Horizontal) {
         return 1;
     }
