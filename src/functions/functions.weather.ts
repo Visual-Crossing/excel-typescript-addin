@@ -92,6 +92,7 @@ async function processSubscribersQueue(weatherArgs: WeatherArgs): Promise<void> 
                                         const arrayDataRows = getArrayDataRows(cacheItemObject.values, weatherArgs.PrintDirection);
 
                                         caller.values = getUpdatedFormula(weatherArgs, arrayDataCols, arrayDataRows) as any;
+                                        await context.sync();
                                     }
                                 }
                             }
@@ -139,6 +140,48 @@ async function processSubscribersQueue(weatherArgs: WeatherArgs): Promise<void> 
     }
 }
 
+async function saveCallerFormula(weatherArgs: WeatherArgs): Promise<void> {
+    try {
+        await Excel.run(async (context: Excel.RequestContext) => {
+            try {
+                if (weatherArgs && weatherArgs.Invocation && weatherArgs.Invocation.address) {
+                    const cell = getCell(weatherArgs.Invocation.address, context);
+                    
+                    cell.load();
+                    await context.sync();
+    
+                    weatherArgs.OriginalFormula = cell.formulas[0][0];
+                    await clearArrayData(weatherArgs.Columns, weatherArgs.Rows, weatherArgs.OriginalFormula, weatherArgs.Invocation);
+                }
+            }
+            catch {
+                // Retry
+                const timeout: NodeJS.Timeout = setTimeout(() => {
+                    try {
+                        clearTimeout(timeout);
+                        saveCallerFormula(weatherArgs);
+                    }
+                    catch {
+                        
+                    }
+                }, 250);
+            }
+        });
+    }
+    catch {
+        // Retry
+        const timeout: NodeJS.Timeout = setTimeout(() => {
+            try {
+                clearTimeout(timeout);
+                saveCallerFormula(weatherArgs);
+            }
+            catch {
+                
+            }
+        }, 250);
+    }
+}
+
 export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string | number | Date> {
     let cacheItemJsonString: string | null | undefined = null;
 
@@ -158,22 +201,7 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
         sem.leave();
     });
 
-    await Excel.run(async (context: Excel.RequestContext) => {
-        try {
-            if (weatherArgs && weatherArgs.Invocation && weatherArgs.Invocation.address) {
-                const cell = getCell(weatherArgs.Invocation.address, context);
-                
-                cell.load();
-                await context.sync();
-
-                weatherArgs.OriginalFormula = cell.formulas[0][0];
-                await clearArrayData(weatherArgs.Columns, weatherArgs.Rows, weatherArgs.OriginalFormula, weatherArgs.Invocation);
-            }
-        }
-        catch (error: any) {
-            throw error;
-        }
-    });
+    await saveCallerFormula(weatherArgs);
 
     if (cacheItemJsonString) {
         return await getDataFromCache(weatherArgs, cacheItemJsonString);
