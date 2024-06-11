@@ -87,7 +87,7 @@ async function processSubscribersQueue(weatherArgs: WeatherArgs): Promise<void> 
                                 if (cacheItemString) {
                                     const cacheItemObject = JSON.parse(cacheItemString);
 
-                                    if (cacheItemObject && cacheItemObject.values) {
+                                    if (cacheItemObject && cacheItemObject.status && cacheItemObject.status === "Complete" && cacheItemObject.values && cacheItemObject.values.length > 0) {
                                         const arrayDataCols = getArrayDataCols(cacheItemObject.values, weatherArgs.PrintDirection);
                                         const arrayDataRows = getArrayDataRows(cacheItemObject.values, weatherArgs.PrintDirection);
 
