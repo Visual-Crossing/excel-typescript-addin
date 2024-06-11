@@ -176,8 +176,8 @@ input[type=radio] {
 }
 
 .btn-secondary.active, .btn-secondary:active, .btn-secondary:focus, .btn-secondary:hover {
-    border-color: #e4dfeb;
-    background-color: #f7f6f9;
-    color: #1f1b2d;
+    border-color: #e4dfeb !important;
+    background-color: #f7f6f9 !important;
+    color: #1f1b2d !important;
     box-shadow: 0 .25rem .25rem .125rem rgba(187, 183, 197, .1), 0 .375rem .75rem -.125rem rgba(187, 183, 197, .4);
 }
