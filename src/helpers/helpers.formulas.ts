@@ -116,3 +116,28 @@ export function extractFormulaArgsSection(formula: string): string | null {
 
     return null;
 }
+
+export function getUpdatedFormula(weatherArgs: WeatherArgs, arrayCols: number, arrayRows: number): string {
+    if (weatherArgs && weatherArgs.Args && weatherArgs.OriginalFormula) {
+        const formulaArgsSection: string | null = extractFormulaArgsSection(weatherArgs.OriginalFormula);
+
+        if (!formulaArgsSection) {
+            throw new Error("Unexpected formula error.");
+        }
+
+        let updatedArgs = replaceOrInsertArgs(formulaArgsSection, "cols", `cols=${arrayCols};`);
+        updatedArgs = replaceOrInsertArgs(updatedArgs, "rows", `rows=${arrayRows};`);
+
+        const updatedFormula = weatherArgs.OriginalFormula.replace(formulaArgsSection, updatedArgs);
+        return updatedFormula;
+    }
+    else if (weatherArgs && weatherArgs.OriginalFormula) {
+        const originalFormulaTrimmed = weatherArgs.OriginalFormula.trim();
+        const updatedFormula = `${originalFormulaTrimmed.substring(0, originalFormulaTrimmed.length - 1)}, "cols=${arrayCols};rows=${arrayRows};")`;
+
+        return updatedFormula;
+    }
+    else {
+        throw new Error("Unexpected error.");
+    }
+}

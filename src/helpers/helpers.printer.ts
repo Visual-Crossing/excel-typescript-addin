@@ -1,82 +1,65 @@
 import { PrintDirections } from "./helpers.args";
 import { getCell, getSheet } from "./helpers.excel";
 
-export async function printArrayDataWithFormula(values: any[] | null, invocation: CustomFunctions.Invocation, printDirection: PrintDirections): Promise<void> {
+export async function printArrayData(values: any[] | null, originalFormula: any, printDirection: PrintDirections, invocation: CustomFunctions.Invocation): Promise<void> {
     if (values && values.length > 0 && invocation && invocation.address) {
-        await Excel.run(async (context) => {
-            if (values && values.length > 0 && invocation && invocation.address) {
-                const caller = getCell(invocation.address, context);
+        try {
+            await Excel.run(async (context) => {
+                try {
+                    if (values && values.length > 0 && invocation && invocation.address) {
+                        const caller = getCell(invocation.address, context);
 
-                caller.load();
-                await context.sync();
+                        caller.load();
+                        await context.sync();
 
-                const sheet = getSheet(invocation.address, context);
-                let arrayData: any[] = [];
+                        if (caller.formulas[0][0] === originalFormula) {
+                            const sheet = getSheet(invocation.address, context);
+                            let arrayData: any[] = [];
 
-                if (printDirection === PrintDirections.Horizontal) {
-                    values.forEach((value) => {
-                        arrayData.push(value);
-                    });
+                            if (printDirection === PrintDirections.Horizontal) {
+                                for (let i = 1; i < values.length; i++) {
+                                    arrayData.push(values[i]);
+                                }
 
-                    sheet.getRangeByIndexes(caller.rowIndex, caller.columnIndex, 1, arrayData.length).values = [arrayData];
-                }
-                else {
-                    values.forEach((value) => {
-                        arrayData.push([value]);
-                    });
+                                sheet.getRangeByIndexes(caller.rowIndex, caller.columnIndex + 1, 1, arrayData.length).values = [arrayData];
+                            }
+                            else {
+                                for (let i = 1; i < values.length; i++) {
+                                    arrayData.push([values[i]]);
+                                }
 
-                    sheet.getRangeByIndexes(caller.rowIndex, caller.columnIndex, arrayData.length, 1).values = arrayData;
-                }
+                                sheet.getRangeByIndexes(caller.rowIndex + 1, caller.columnIndex, arrayData.length, 1).values = arrayData;
+                            }
 
-                await context.sync();
-            }
-        });
-    }
-}
-
-export async function printArrayDataWithoutFormula(values: any[] | null, invocation: CustomFunctions.Invocation, printDirection: PrintDirections): Promise<void> {
-    if (values && values.length > 0 && invocation && invocation.address) {
-        await Excel.run(async (context) => {
-            try {
-                if (values && values.length > 0 && invocation && invocation.address) {
-                    const caller = getCell(invocation.address, context);
-
-                    caller.load();
-                    await context.sync();
-
-                    const sheet = getSheet(invocation.address, context);
-                    let arrayData: any[] = [];
-
-                    if (printDirection === PrintDirections.Horizontal) {
-                        for (let i = 1; i < values.length; i++) {
-                            arrayData.push(values[i]);
+                            await context.sync();
                         }
-
-                        sheet.getRangeByIndexes(caller.rowIndex, caller.columnIndex + 1, 1, arrayData.length).values = [arrayData];
                     }
-                    else {
-                        for (let i = 1; i < values.length; i++) {
-                            arrayData.push([values[i]]);
-                        }
-
-                        sheet.getRangeByIndexes(caller.rowIndex + 1, caller.columnIndex, arrayData.length, 1).values = arrayData;
-                    }
-
-                    await context.sync();
                 }
-            }
-            catch {
-                // Retry
-                const timer: NodeJS.Timeout = setTimeout(() => {
-                    try {
-                        clearTimeout(timer);
-                        printArrayDataWithoutFormula(values, invocation, printDirection);
-                    }
-                    catch {
+                catch {
+                    // Retry
+                    const timeout: NodeJS.Timeout = setTimeout(() => {
+                        try {
+                            clearTimeout(timeout);
+                            printArrayData(values, originalFormula, printDirection, invocation);
+                        }
+                        catch {
 
-                    }
-                }, 250);
-            }
-        });
+                        }
+                    }, 250);
+                }
+            });
+        }
+        catch {
+            // Retry
+            const timeout: NodeJS.Timeout = setTimeout(() => {
+                try {
+                    clearTimeout(timeout);
+                    printArrayData(values, originalFormula, printDirection, invocation);
+                }
+                catch {
+
+                }
+            }, 250);
+        }
     }
 }

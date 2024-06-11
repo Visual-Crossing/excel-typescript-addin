@@ -4,14 +4,15 @@ import { getApiKeyFromSettingsAsync } from "../settings/settings";
 import semaphore from "semaphore";
 import { getCell } from "../helpers/helpers.excel";
 import { DistinctQueue } from "../types/distinct-queue";
-import { getArrayDataCols, getArrayDataRows } from "../helpers/helpers.formulas";
-import { generateArrayData, getUpdatedFormula } from "../helpers/helpers.array-data";
-import {  printArrayDataWithoutFormula } from "../helpers/helpers.printer";
+import { getArrayDataCols, getArrayDataRows, getUpdatedFormula } from "../helpers/helpers.formulas";
+import { clearArrayData, generateArrayData } from "../helpers/helpers.array-data";
+import {  printArrayData } from "../helpers/helpers.printer";
 
 var subscribersGroupedByCacheId: Map<string, DistinctQueue<string, WeatherArgs>> | null;
 
 const sem: semaphore.Semaphore = semaphore(1);
 const REQUESTING: string = "Requesting...";
+const NA_DATA: string = "#N/A Data";
 
 function subscribe(weatherArgs: WeatherArgs): void {
     if (!weatherArgs) {
@@ -65,66 +66,77 @@ async function processSubscribersQueue(weatherArgs: WeatherArgs): Promise<void> 
         return;
     }
 
-    await Excel.run(async (context) => {
-        try {
-            while (subscribersForCacheId && subscribersForCacheId.getLength() > 0) {
-                const subscriberWeatherArgs = subscribersForCacheId.getFront();
+    try {
+        await Excel.run(async (context) => {
+            try {
+                while (subscribersForCacheId && subscribersForCacheId.getLength() > 0) {
+                    const subscriberWeatherArgs = subscribersForCacheId.getFront();
 
-                if (subscriberWeatherArgs && subscriberWeatherArgs.Invocation && subscriberWeatherArgs.Invocation.address) {
-                    const caller = getCell(subscriberWeatherArgs.Invocation.address, context);
+                    if (subscriberWeatherArgs && subscriberWeatherArgs.Invocation && subscriberWeatherArgs.Invocation.address) {
+                        const caller = getCell(subscriberWeatherArgs.Invocation.address, context);
 
-                    caller.load();
-                    await context.sync();
+                        caller.load();
+                        await context.sync();
 
-                    if (subscriberWeatherArgs.OriginalFormula === caller.formulas[0][0]) {
-                        const cacheItem = getCacheItem(subscriberWeatherArgs.CacheId);
-                
-                        if (cacheItem) {
-                            const cacheItemString = cacheItem as string;
+                        if (subscriberWeatherArgs.OriginalFormula === caller.formulas[0][0]) {
+                            const cacheItem = getCacheItem(subscriberWeatherArgs.CacheId);
+                    
+                            if (cacheItem) {
+                                const cacheItemString = cacheItem as string;
 
-                            if (cacheItemString) {
-                                const cacheItemObject = JSON.parse(cacheItemString);
+                                if (cacheItemString) {
+                                    const cacheItemObject = JSON.parse(cacheItemString);
 
-                                if (cacheItemObject && cacheItemObject.values) {
-                                    // const arrayData: any[] | null = generateArrayData(subscriberWeatherArgs, cacheItemObject.values);
-                                    // printArrayDataWithFormula(arrayData, subscriberWeatherArgs.Invocation, subscriberWeatherArgs.PrintDirection);
+                                    if (cacheItemObject && cacheItemObject.values) {
+                                        const arrayDataCols = getArrayDataCols(cacheItemObject.values, weatherArgs.PrintDirection);
+                                        const arrayDataRows = getArrayDataRows(cacheItemObject.values, weatherArgs.PrintDirection);
 
-                                    const arrayDataCols = getArrayDataCols(cacheItemObject.values, weatherArgs.PrintDirection);
-                                    const arrayDataRows = getArrayDataRows(cacheItemObject.values, weatherArgs.PrintDirection);
-
-                                    caller.values = getUpdatedFormula(weatherArgs, arrayDataCols, arrayDataRows) as any;
+                                        caller.values = getUpdatedFormula(weatherArgs, arrayDataCols, arrayDataRows) as any;
+                                    }
                                 }
                             }
                         }
                     }
+                    
+                    if (subscriberWeatherArgs && subscriberWeatherArgs.Invocation && subscriberWeatherArgs.Invocation.address) {
+                        subscribersForCacheId.dequeue(subscriberWeatherArgs.Invocation.address);
+                    }
                 }
-                
-                if (subscriberWeatherArgs && subscriberWeatherArgs.Invocation && subscriberWeatherArgs.Invocation.address) {
-                    subscribersForCacheId.dequeue(subscriberWeatherArgs.Invocation.address);
+
+                if (subscribersGroupedByCacheId && subscribersGroupedByCacheId.has(weatherArgs.CacheId)) {
+                    subscribersGroupedByCacheId.delete(weatherArgs.CacheId);
+
+                    if (subscribersGroupedByCacheId.size === 0) {
+                        subscribersGroupedByCacheId = null;
+                    }
                 }
             }
+            catch {
+                // Retry
+                const timeout: NodeJS.Timeout = setTimeout(() => {
+                    try {
+                        clearTimeout(timeout);
+                        processSubscribersQueue(weatherArgs);
+                    }
+                    catch {
 
-            if (subscribersGroupedByCacheId && subscribersGroupedByCacheId.has(weatherArgs.CacheId)) {
-                subscribersGroupedByCacheId.delete(weatherArgs.CacheId);
-
-                if (subscribersGroupedByCacheId.size === 0) {
-                    subscribersGroupedByCacheId = null;
-                }
+                    }
+                }, 250);
             }
-        }
-        catch {
-            // Retry
-            const timer: NodeJS.Timeout = setTimeout(() => {
-                try {
-                    clearTimeout(timer);
-                    processSubscribersQueue(weatherArgs);
-                }
-                catch {
+        });
+    }
+    catch {
+        // Retry
+        const timeout: NodeJS.Timeout = setTimeout(() => {
+            try {
+                clearTimeout(timeout);
+                processSubscribersQueue(weatherArgs);
+            }
+            catch {
 
-                }
-            }, 250);
-        }
-    });
+            }
+        }, 250);
+    }
 }
 
 export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string | number | Date> {
@@ -155,6 +167,7 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
                 await context.sync();
 
                 weatherArgs.OriginalFormula = cell.formulas[0][0];
+                await clearArrayData(weatherArgs.Columns, weatherArgs.Rows, weatherArgs.OriginalFormula, weatherArgs.Invocation);
             }
         }
         catch (error: any) {
@@ -185,7 +198,7 @@ async function getDataFromCache(weatherArgs: WeatherArgs, cacheItemJsonString: s
     
     if (cacheItemObject.status === "Complete") {
         const arrayData: any[] | null = generateArrayData(weatherArgs, cacheItemObject.values);
-        printArrayDataWithoutFormula(arrayData, weatherArgs.Invocation, weatherArgs.PrintDirection);
+        printArrayData(arrayData, weatherArgs.OriginalFormula, weatherArgs.PrintDirection, weatherArgs.Invocation);
 
         return cacheItemObject.values[0].value;
     }
@@ -203,8 +216,16 @@ async function fetchTimelineData(apiKey: string | null | undefined, weatherArgs:
             .then(async (response: Response) => {
                 await onTimelineApiSuccessResponse(response, weatherArgs);
             })
-            .catch((error: any) => {
-                throw error;
+            .catch(async (error: any) => {
+                setCacheItem(weatherArgs.CacheId, JSON.stringify({ 
+                    "status": "Complete",
+                    "values":
+                      [
+                          {"name": "Error", "value": error}
+                      ]
+                }));
+
+                await processSubscribersQueue(weatherArgs);
             });
         
         return REQUESTING;
@@ -214,25 +235,40 @@ async function fetchTimelineData(apiKey: string | null | undefined, weatherArgs:
     }
 }
 
-async function onTimelineApiSuccessResponse(response: Response, weatherArgs: WeatherArgs) {
-    const NA_DATA: string = "#N/A Data";
-  
+async function onTimelineApiSuccessResponse(response: Response, weatherArgs: WeatherArgs): Promise<void> {
     if (!response) {
-    //   return NA_DATA;
+        setCacheItem(weatherArgs.CacheId, JSON.stringify({ 
+            "status": "Complete",
+            "values":
+              [
+                  {"name": NA_DATA, "value": NA_DATA}
+              ]
+        }));
+
+        await processSubscribersQueue(weatherArgs);
+
+        return;
     }
 
     await response.json()
         .then((jsonResponse: any) => {
             onTimelineApiSuccessJsonResponse(jsonResponse, weatherArgs);
         })
-        .catch((error: any) => {
-            throw error;
+        .catch(async (error: any) => {
+            setCacheItem(weatherArgs.CacheId, JSON.stringify({ 
+                "status": "Complete",
+                "values":
+                  [
+                      {"name": "Error", "value": error}
+                  ]
+            }));
+
+            await processSubscribersQueue(weatherArgs);
         });
 }
 
 async function onTimelineApiSuccessJsonResponse(jsonResponse: any, weatherArgs: WeatherArgs) {
     if (jsonResponse && jsonResponse.days && jsonResponse.days.length > 0 && jsonResponse.days[0]) {
-
         setCacheItem(weatherArgs.CacheId, JSON.stringify({ 
           "status": "Complete",
           "values":
@@ -244,10 +280,16 @@ async function onTimelineApiSuccessJsonResponse(jsonResponse: any, weatherArgs: 
                 {"name": "windspeed", "value": jsonResponse.days[0].windspeed}
             ]
         }));
-
-        await processSubscribersQueue(weatherArgs);
     }
     else {
-    // return NA_DATA;
+        setCacheItem(weatherArgs.CacheId, JSON.stringify({ 
+            "status": "Complete",
+            "values":
+              [
+                  {"name": NA_DATA, "value": NA_DATA}
+              ]
+        }));
     }
+
+    await processSubscribersQueue(weatherArgs);
 }
