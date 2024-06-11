@@ -8,6 +8,7 @@ export enum PrintDirections {
 
 export class WeatherArgs {
     CacheId: string;
+    OriginalFormula?: any;
     Args: any | null | undefined;
     Columns: number = 1;
     Rows: number = 1;

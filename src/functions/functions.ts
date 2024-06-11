@@ -1,7 +1,7 @@
 ﻿/* global clearInterval, console, CustomFunctions, setInterval */
 
 import { WeatherArgs, extractWeatherArgs } from "../helpers/helpers.args";
-import { clearArrayData, getOrRequestData, updateFormula } from "./functions.weather";
+import { clearArrayData, getOrRequestData } from "./functions.weather";
 
 /**
  * Offers complete, global weather data coverage both geographically and chronologically.
@@ -17,10 +17,10 @@ export async function Weather(location: any, date: any, optionalArgs: any | null
   try {
     const weatherArgs: WeatherArgs = await extractWeatherArgs(location, date, optionalArgs, invocation);
 
-    await clearArrayData(weatherArgs.Invocation, weatherArgs.Columns, weatherArgs.Rows);
+    await clearArrayData(weatherArgs.Columns, weatherArgs.Rows, weatherArgs.Invocation);
 
     if (!location) {
-      updateFormula(weatherArgs, 1, 1);
+      // updateFormula(weatherArgs, 1, 1);
 
       return "#Invalid Location!";
     }

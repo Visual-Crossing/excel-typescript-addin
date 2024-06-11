@@ -1,20 +1,20 @@
 import { PrintDirections, WeatherArgs } from "./helpers.args";
 
-export function getDataCols(cacheItemJson: any, printDirection: PrintDirections): number {
+export function getDataCols(values: any[], printDirection: PrintDirections): number {
     if (printDirection === PrintDirections.Horizontal) {
-        return cacheItemJson.values.length;
+        return values.length;
     }
     else {
         return 1;
     }
 }
 
-export function getDataRows(cacheItemJson: any, printDirection: PrintDirections): number {
+export function getDataRows(values: any[], printDirection: PrintDirections): number {
     if (printDirection === PrintDirections.Horizontal) {
         return 1;
     }
     else {
-        return cacheItemJson.values.length;
+        return values.length;
     }
 }
 
