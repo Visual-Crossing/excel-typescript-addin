@@ -6,11 +6,11 @@ import { DistinctQueue } from "../types/distinct-queue";
 import { getArrayDataCols, getArrayDataRows, getUpdatedFormula } from "../helpers/helpers.formulas";
 import { clearArrayData, generateArrayData } from "../helpers/helpers.array-data";
 import {  printArrayData } from "../helpers/helpers.printer";
+import { NA_DATA } from "../common/constants";
 
 var subscribersGroupedByCacheId: Map<string, DistinctQueue<string, WeatherArgs>> | null;
 
 const REQUESTING: string = "Requesting...";
-const NA_DATA: string = "#N/A Data";
 
 function subscribe(weatherArgs: WeatherArgs): void {
     if (!weatherArgs) {
@@ -225,9 +225,13 @@ async function getDataFromCache(weatherArgs: WeatherArgs, cacheItemJsonString: s
     
     if (cacheItemObject.status === "Complete") {
         const arrayData: any[] | null = generateArrayData(weatherArgs, cacheItemObject.values);
-        await printArrayData(arrayData, weatherArgs.OriginalFormula, weatherArgs.PrintDirection, weatherArgs.Invocation);
-
-        return cacheItemObject.values[0].value;
+             return await printArrayData(arrayData, weatherArgs.OriginalFormula, weatherArgs.PrintDirection, weatherArgs.Invocation)
+                .then((value: string | number | Date) => {
+                    return value;
+                })
+                .catch((error: any) => {
+                    throw error;
+                });
     }
 
     throw new Error("Unexpected error.");

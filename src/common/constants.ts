@@ -1,0 +1,1 @@
+export const NA_DATA: string = "#N/A Data";

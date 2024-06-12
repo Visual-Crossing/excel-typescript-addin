@@ -22,7 +22,7 @@ export function generateArrayData(weatherArgs: WeatherArgs, values: any[]): any[
     const arrayDataCols = getArrayDataCols(values, weatherArgs.PrintDirection);
     const arrayDataRows = getArrayDataRows(values, weatherArgs.PrintDirection);
 
-    arrayData[0] = getUpdatedFormula(weatherArgs, arrayDataCols, arrayDataRows);
+    // arrayData[0] = getUpdatedFormula(weatherArgs, arrayDataCols, arrayDataRows);
 
     return arrayData
 }
