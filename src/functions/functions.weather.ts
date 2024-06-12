@@ -4,44 +4,58 @@ import { getApiKeyFromSettingsAsync } from "../settings/settings";
 import { getCell } from "../helpers/helpers.excel";
 import { DistinctQueue } from "../types/distinct-queue";
 import { getArrayDataCols, getArrayDataRows, getUpdatedFormula } from "../helpers/helpers.formulas";
-import { clearArrayData, generateArrayData } from "../helpers/helpers.array-data";
+import { generateArrayData } from "../helpers/helpers.array-data";
 import {  printArrayData } from "../helpers/helpers.printer";
 import { NA_DATA } from "../common/constants";
 import { CleanUpJob, IJob } from "../types/job";
 import { Queue } from "queue-typescript";
 
 var subscribersGroupedByCacheId: Map<string, DistinctQueue<string, WeatherArgs>> | null;
-var jobs: Queue<IJob> | null;
+
+var jobs: Queue<IJob> | null = null;
+var isJobsProcessingInProgress: boolean = false;
 
 const REQUESTING: string = "Requesting...";
 
 async function processJobs(): Promise<void> {
-    if (jobs && jobs.length > 0) {
+    if (jobs && jobs.length > 0 && !isJobsProcessingInProgress) {
+        isJobsProcessingInProgress = true;
+
         const timeout: NodeJS.Timeout = setTimeout(async () => {
             try {
                 clearTimeout(timeout);
 
                 if (jobs && jobs.length > 0) {
-                    await Excel.run(async (context) => {
+                    return await Excel.run(async (context: Excel.RequestContext) => {
                         try {
                             while (jobs && jobs.length > 0) {
-                                const job = jobs.front;
+                                const job: IJob = jobs.front;
                                 
                                 if (await job.run(context)) {
                                     jobs.dequeue();
+                                }
+                                else {
+                                    const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); await processJobs(); }, 250);
+                                    return;
                                 }
                             }
 
                             jobs = null;
                         }
                         catch {
-                            await processJobs();
+                            const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); await processJobs(); }, 250);
+                        }
+                        finally {
+                            isJobsProcessingInProgress = false;
                         }
                     });
                 }
             }
             catch {
-                await processJobs();
+                const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); await processJobs(); }, 250);
+            }
+            finally {
+                isJobsProcessingInProgress = false;
             }
         }, 250);
     }
