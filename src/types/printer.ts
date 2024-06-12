@@ -9,7 +9,7 @@ export class ArrayDataVerticalPrinter implements IArrayDataPrinter {
                 const arrayDataForPrint: any[] = [];
     
                 for (let i = 0; i < arrayData.length; i++) {
-                    arrayDataForPrint.push([arrayData[i]]);
+                    arrayDataForPrint.push([arrayData[i].value]);
                 }
         
                 callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex + 1, callerCell.columnIndex, arrayDataForPrint.length, 1).values = arrayDataForPrint;

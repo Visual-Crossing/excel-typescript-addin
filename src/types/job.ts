@@ -97,7 +97,7 @@ export class PrintJob implements IJob {
 
             return true;
         }
-        catch {
+        catch (error: any) {
             return false;
         }
     }

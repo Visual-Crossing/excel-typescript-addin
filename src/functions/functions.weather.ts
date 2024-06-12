@@ -3,12 +3,10 @@ import { getCacheItem, setCacheItem } from "../cache/cache";
 import { getApiKeyFromSettingsAsync } from "../settings/settings";
 import { getCell } from "../helpers/helpers.excel";
 import { DistinctQueue } from "../types/distinct-queue";
-import { getArrayDataCols, getArrayDataRows, getUpdatedFormula } from "../helpers/helpers.formulas";
-import { generateArrayData } from "../helpers/helpers.array-data";
-import {  printArrayData } from "../helpers/helpers.printer";
 import { NA_DATA } from "../common/constants";
-import { CleanUpJob, IJob } from "../types/job";
+import { CleanUpJob, IJob, PrintJob } from "../types/job";
 import { Queue } from "queue-typescript";
+import { ArrayDataVerticalPrinter } from "../types/printer";
 
 var subscribersGroupedByCacheId: Map<string, DistinctQueue<string, WeatherArgs>> | null;
 
@@ -121,82 +119,41 @@ async function processSubscribersQueue(weatherArgs: WeatherArgs): Promise<void> 
         return;
     }
 
-    try {
-        return await Excel.run(async (context) => {
-            try {
-                while (subscribersForCacheId && subscribersForCacheId.getLength() > 0) {
-                    const subscriberWeatherArgs = subscribersForCacheId.getFront();
+    while (subscribersForCacheId && subscribersForCacheId.getLength() > 0) {
+        const subscriberWeatherArgs = subscribersForCacheId.getFront();
 
-                    if (subscriberWeatherArgs && subscriberWeatherArgs.Invocation && subscriberWeatherArgs.Invocation.address) {
-                        const caller = getCell(subscriberWeatherArgs.Invocation.address, context);
+        if (subscriberWeatherArgs && subscriberWeatherArgs.Invocation && subscriberWeatherArgs.Invocation.address) {
+            // if (subscriberWeatherArgs.OriginalFormula === caller.formulas[0][0]) {
+                const cacheItem = getCacheItem(subscriberWeatherArgs.CacheId);
+        
+                if (cacheItem) {
+                    const cacheItemString = cacheItem as string;
 
-                        caller.load();
-                        await context.sync();
+                    if (cacheItemString) {
+                        const cacheItemObject = JSON.parse(cacheItemString);
 
-                        if (subscriberWeatherArgs.OriginalFormula === caller.formulas[0][0]) {
-                            const cacheItem = getCacheItem(subscriberWeatherArgs.CacheId);
-                    
-                            if (cacheItem) {
-                                const cacheItemString = cacheItem as string;
-
-                                if (cacheItemString) {
-                                    const cacheItemObject = JSON.parse(cacheItemString);
-
-                                    if (cacheItemObject && cacheItemObject.status && cacheItemObject.status === "Complete" && cacheItemObject.values && cacheItemObject.values.length > 0) {
-                                        const arrayDataCols = getArrayDataCols(cacheItemObject.values, weatherArgs.PrintDirection);
-                                        const arrayDataRows = getArrayDataRows(cacheItemObject.values, weatherArgs.PrintDirection);
-
-                                        caller.values = getUpdatedFormula(weatherArgs, arrayDataCols, arrayDataRows) as any;
-                                        await context.sync();
-                                    }
-                                }
-                            }
+                        if (cacheItemObject && cacheItemObject.status && cacheItemObject.status === "Complete" && cacheItemObject.values && cacheItemObject.values.length > 0) {
+                            addJob(new PrintJob(subscriberWeatherArgs.OriginalFormula, cacheItemObject.values, new ArrayDataVerticalPrinter(), subscriberWeatherArgs.Invocation));
                         }
-                    }
-                    
-                    if (subscriberWeatherArgs && subscriberWeatherArgs.Invocation && subscriberWeatherArgs.Invocation.address) {
-                        subscribersForCacheId.dequeue(subscriberWeatherArgs.Invocation.address);
                     }
                 }
-
-                if (subscribersGroupedByCacheId && subscribersGroupedByCacheId.has(weatherArgs.CacheId)) {
-                    subscribersGroupedByCacheId.delete(weatherArgs.CacheId);
-
-                    if (subscribersGroupedByCacheId.size === 0) {
-                        subscribersGroupedByCacheId = null;
-                    }
-                }
-            }
-            catch {
-                // Retry
-                return await new Promise((resolve, reject) => {
-                    const timeout: NodeJS.Timeout = setTimeout(async () => {
-                        try {
-                            clearTimeout(timeout);
-                            return resolve(await processSubscribersQueue(weatherArgs));
-                        }
-                        catch (error: any) {
-                            return reject(error);
-                        }
-                    }, 250);
-                });
-            }
-        });
+            // }
+        }
+        
+        if (subscriberWeatherArgs && subscriberWeatherArgs.Invocation && subscriberWeatherArgs.Invocation.address) {
+            subscribersForCacheId.dequeue(subscriberWeatherArgs.Invocation.address);
+        }
     }
-    catch {
-        // Retry
-        return await new Promise((resolve, reject) => {
-            const timeout: NodeJS.Timeout = setTimeout(async () => {
-                try {
-                    clearTimeout(timeout);
-                    return resolve(await processSubscribersQueue(weatherArgs));
-                }
-                catch (error: any) {
-                    return reject(error);
-                }
-            }, 250);
-        });
+
+    if (subscribersGroupedByCacheId && subscribersGroupedByCacheId.has(weatherArgs.CacheId)) {
+        subscribersGroupedByCacheId.delete(weatherArgs.CacheId);
+
+        if (subscribersGroupedByCacheId.size === 0) {
+            subscribersGroupedByCacheId = null;
+        }
     }
+
+    await processJobs();
 }
 
 async function saveCallerFormula(weatherArgs: WeatherArgs): Promise<WeatherArgs> {
@@ -283,14 +240,15 @@ async function getDataFromCache(weatherArgs: WeatherArgs, cacheItemJsonString: s
     }
     
     if (cacheItemObject.status === "Complete") {
-        const arrayData: any[] | null = generateArrayData(weatherArgs, cacheItemObject.values);
-             return await printArrayData(arrayData, weatherArgs.OriginalFormula, weatherArgs.PrintDirection, weatherArgs.Invocation)
-                .then((value: string | number | Date) => {
-                    return value;
-                })
-                .catch((error: any) => {
-                    throw error;
-                });
+        return cacheItemObject.values[0].value;
+        // const arrayData: any[] | null = generateArrayData(weatherArgs, cacheItemObject.values);
+            //  return await printArrayData(arrayData, weatherArgs.OriginalFormula, weatherArgs.PrintDirection, weatherArgs.Invocation)
+            //     .then((value: string | number | Date) => {
+            //         return value;
+            //     })
+            //     .catch((error: any) => {
+            //         throw error;
+            //     });
     }
 
     throw new Error("Unexpected error.");
