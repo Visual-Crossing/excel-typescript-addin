@@ -7,10 +7,53 @@ import { getArrayDataCols, getArrayDataRows, getUpdatedFormula } from "../helper
 import { clearArrayData, generateArrayData } from "../helpers/helpers.array-data";
 import {  printArrayData } from "../helpers/helpers.printer";
 import { NA_DATA } from "../common/constants";
+import { CleanUpJob, IJob } from "../types/job";
+import { Queue } from "queue-typescript";
 
 var subscribersGroupedByCacheId: Map<string, DistinctQueue<string, WeatherArgs>> | null;
+var jobs: Queue<IJob> | null;
 
 const REQUESTING: string = "Requesting...";
+
+async function processJobs(): Promise<void> {
+    if (jobs && jobs.length > 0) {
+        const timeout: NodeJS.Timeout = setTimeout(async () => {
+            try {
+                clearTimeout(timeout);
+
+                if (jobs && jobs.length > 0) {
+                    await Excel.run(async (context) => {
+                        try {
+                            while (jobs && jobs.length > 0) {
+                                const job = jobs.front;
+                                
+                                if (await job.run(context)) {
+                                    jobs.dequeue();
+                                }
+                            }
+
+                            jobs = null;
+                        }
+                        catch {
+                            await processJobs();
+                        }
+                    });
+                }
+            }
+            catch {
+                await processJobs();
+            }
+        }, 250);
+    }
+}
+
+function addJob(job: IJob) : void {
+    if (!jobs) {
+        jobs = new Queue<IJob>();
+    }
+
+    jobs.enqueue(job);
+}
 
 function subscribe(weatherArgs: WeatherArgs): void {
     if (!weatherArgs) {
@@ -153,7 +196,9 @@ async function saveCallerFormula(weatherArgs: WeatherArgs): Promise<WeatherArgs>
                     await context.sync();
     
                     weatherArgs.OriginalFormula = cell.formulas[0][0];
-                    await clearArrayData(weatherArgs.Columns, weatherArgs.Rows, weatherArgs.OriginalFormula, weatherArgs.Invocation);
+                    addJob(new CleanUpJob(weatherArgs.OriginalFormula, weatherArgs.Columns, weatherArgs.Rows, weatherArgs.Invocation));
+                    await processJobs();
+                    // await clearArrayData(weatherArgs.Columns, weatherArgs.Rows, weatherArgs.OriginalFormula, weatherArgs.Invocation);
                 }
 
                 return weatherArgs;
