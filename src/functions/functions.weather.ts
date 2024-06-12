@@ -1,7 +1,6 @@
 import { WeatherArgs } from "../helpers/helpers.args";
 import { getCacheItem, setCacheItem } from "../cache/cache";
 import { getApiKeyFromSettingsAsync } from "../settings/settings";
-import semaphore from "semaphore";
 import { getCell } from "../helpers/helpers.excel";
 import { DistinctQueue } from "../types/distinct-queue";
 import { getArrayDataCols, getArrayDataRows, getUpdatedFormula } from "../helpers/helpers.formulas";
@@ -10,7 +9,6 @@ import {  printArrayData } from "../helpers/helpers.printer";
 
 var subscribersGroupedByCacheId: Map<string, DistinctQueue<string, WeatherArgs>> | null;
 
-const sem: semaphore.Semaphore = semaphore(1);
 const REQUESTING: string = "Requesting...";
 const NA_DATA: string = "#N/A Data";
 
@@ -67,7 +65,7 @@ async function processSubscribersQueue(weatherArgs: WeatherArgs): Promise<void> 
     }
 
     try {
-        await Excel.run(async (context) => {
+        return await Excel.run(async (context) => {
             try {
                 while (subscribersForCacheId && subscribersForCacheId.getLength() > 0) {
                     const subscriberWeatherArgs = subscribersForCacheId.getFront();
@@ -114,35 +112,39 @@ async function processSubscribersQueue(weatherArgs: WeatherArgs): Promise<void> 
             }
             catch {
                 // Retry
-                const timeout: NodeJS.Timeout = setTimeout(() => {
-                    try {
-                        clearTimeout(timeout);
-                        processSubscribersQueue(weatherArgs);
-                    }
-                    catch {
-
-                    }
-                }, 250);
+                return await new Promise((resolve, reject) => {
+                    const timeout: NodeJS.Timeout = setTimeout(async () => {
+                        try {
+                            clearTimeout(timeout);
+                            return resolve(await processSubscribersQueue(weatherArgs));
+                        }
+                        catch (error: any) {
+                            return reject(error);
+                        }
+                    }, 250);
+                });
             }
         });
     }
     catch {
         // Retry
-        const timeout: NodeJS.Timeout = setTimeout(() => {
-            try {
-                clearTimeout(timeout);
-                processSubscribersQueue(weatherArgs);
-            }
-            catch {
-
-            }
-        }, 250);
+        return await new Promise((resolve, reject) => {
+            const timeout: NodeJS.Timeout = setTimeout(async () => {
+                try {
+                    clearTimeout(timeout);
+                    return resolve(await processSubscribersQueue(weatherArgs));
+                }
+                catch (error: any) {
+                    return reject(error);
+                }
+            }, 250);
+        });
     }
 }
 
-async function saveCallerFormula(weatherArgs: WeatherArgs): Promise<void> {
+async function saveCallerFormula(weatherArgs: WeatherArgs): Promise<WeatherArgs> {
     try {
-        await Excel.run(async (context: Excel.RequestContext) => {
+        return await Excel.run(async (context: Excel.RequestContext) => {
             try {
                 if (weatherArgs && weatherArgs.Invocation && weatherArgs.Invocation.address) {
                     const cell = getCell(weatherArgs.Invocation.address, context);
@@ -153,55 +155,51 @@ async function saveCallerFormula(weatherArgs: WeatherArgs): Promise<void> {
                     weatherArgs.OriginalFormula = cell.formulas[0][0];
                     await clearArrayData(weatherArgs.Columns, weatherArgs.Rows, weatherArgs.OriginalFormula, weatherArgs.Invocation);
                 }
+
+                return weatherArgs;
             }
             catch {
                 // Retry
-                const timeout: NodeJS.Timeout = setTimeout(() => {
-                    try {
-                        clearTimeout(timeout);
-                        saveCallerFormula(weatherArgs);
-                    }
-                    catch {
-                        
-                    }
-                }, 250);
+                return await new Promise((resolve, reject) => {
+                    const timeout: NodeJS.Timeout = setTimeout(async () => {
+                        try {
+                            clearTimeout(timeout);
+                            return resolve(await saveCallerFormula(weatherArgs));
+                        }
+                        catch (error: any) {
+                            return reject(error);
+                        }
+                    }, 250);
+                });
             }
         });
     }
     catch {
         // Retry
-        const timeout: NodeJS.Timeout = setTimeout(() => {
-            try {
-                clearTimeout(timeout);
-                saveCallerFormula(weatherArgs);
-            }
-            catch {
-                
-            }
-        }, 250);
+        return await new Promise((resolve, reject) => {
+            const timeout: NodeJS.Timeout = setTimeout(async () => {
+                try {
+                    clearTimeout(timeout);
+                    return resolve(await saveCallerFormula(weatherArgs));
+                }
+                catch (error: any) {
+                    return reject(error);
+                }
+            }, 250);
+        });
     }
 }
 
 export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string | number | Date> {
-    let cacheItemJsonString: string | null | undefined = null;
+    const cacheItemJsonString: string | null | undefined = getCacheItem(weatherArgs.CacheId);
 
-    /**
-     * Use of semaphore ensures that only 1 request to the server is made for each unique cacheId (i.e. each unique combination of location, date & unit).
-     * Subsequent requests for the same data are retrieved from the cache i.e. a second request is NOT made to the server.
-     */
-    sem.take(function() {
-        cacheItemJsonString = getCacheItem(weatherArgs.CacheId);
-    
-        if (!cacheItemJsonString) {
-            setCacheItem(weatherArgs.CacheId, JSON.stringify({ 
-                "status": "Requesting",
-            }));
-        }
+    if (!cacheItemJsonString) {
+        setCacheItem(weatherArgs.CacheId, JSON.stringify({ 
+            "status": "Requesting",
+        }));
+    }
 
-        sem.leave();
-    });
-
-    await saveCallerFormula(weatherArgs);
+    weatherArgs = await saveCallerFormula(weatherArgs);
 
     if (cacheItemJsonString) {
         return await getDataFromCache(weatherArgs, cacheItemJsonString);
@@ -221,17 +219,18 @@ async function getDataFromCache(weatherArgs: WeatherArgs, cacheItemJsonString: s
     
     if (cacheItemObject.status === "Requesting") {
         subscribe(weatherArgs);
-        return REQUESTING;
+        // return REQUESTING;
+        return "Retrieving...";
     }
     
     if (cacheItemObject.status === "Complete") {
         const arrayData: any[] | null = generateArrayData(weatherArgs, cacheItemObject.values);
-        printArrayData(arrayData, weatherArgs.OriginalFormula, weatherArgs.PrintDirection, weatherArgs.Invocation);
+        await printArrayData(arrayData, weatherArgs.OriginalFormula, weatherArgs.PrintDirection, weatherArgs.Invocation);
 
         return cacheItemObject.values[0].value;
     }
 
-    throw new Error();
+    throw new Error("Unexpected error.");
 }
 
 async function fetchTimelineData(apiKey: string | null | undefined, weatherArgs: WeatherArgs): Promise<string> {
@@ -240,84 +239,62 @@ async function fetchTimelineData(apiKey: string | null | undefined, weatherArgs:
 
         const TIMELINE_API_URL:string = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${weatherArgs.Location}/${weatherArgs.Date}?key=${apiKey}&unitGroup=${weatherArgs.Unit}`
         
-        await fetch(TIMELINE_API_URL)
-            .then(async (response: Response) => {
-                await onTimelineApiSuccessResponse(response, weatherArgs);
-            })
-            .catch(async (error: any) => {
-                setCacheItem(weatherArgs.CacheId, JSON.stringify({ 
-                    "status": "Complete",
-                    "values":
-                      [
-                          {"name": "Error", "value": error}
-                      ]
-                }));
-
-                await processSubscribersQueue(weatherArgs);
-            });
-        
-        return REQUESTING;
+        return await new Promise(async (resolve, reject) => {
+            try {
+                const response: Response = await fetch(TIMELINE_API_URL);
+                return resolve (await onTimelineApiSuccessResponse(response, weatherArgs));
+            }
+            catch (error: any) {
+                return reject(error);
+            }
+        });
     }
     else {
         return "#Invalid API Key!";
     }
 }
 
-async function onTimelineApiSuccessResponse(response: Response, weatherArgs: WeatherArgs): Promise<void> {
-    if (!response) {
-        setCacheItem(weatherArgs.CacheId, JSON.stringify({ 
-            "status": "Complete",
-            "values":
-              [
-                  {"name": NA_DATA, "value": NA_DATA}
-              ]
-        }));
+async function onTimelineApiSuccessResponse(response: Response, weatherArgs: WeatherArgs): Promise<string> {
+    return await new Promise(async (resolve, reject) => {
+        try {
+            if (!response) {
+                return resolve(NA_DATA);
+            }
 
-        await processSubscribersQueue(weatherArgs);
-
-        return;
-    }
-
-    await response.json()
-        .then((jsonResponse: any) => {
-            onTimelineApiSuccessJsonResponse(jsonResponse, weatherArgs);
-        })
-        .catch(async (error: any) => {
-            setCacheItem(weatherArgs.CacheId, JSON.stringify({ 
-                "status": "Complete",
-                "values":
-                  [
-                      {"name": "Error", "value": error}
-                  ]
-            }));
-
-            await processSubscribersQueue(weatherArgs);
-        });
+            const jsonResponse: any = await response.json();
+            return resolve(await onTimelineApiSuccessJsonResponse(jsonResponse, weatherArgs));
+        }
+        catch (error: any) {
+            return reject(error);
+        }
+    });
 }
 
-async function onTimelineApiSuccessJsonResponse(jsonResponse: any, weatherArgs: WeatherArgs) {
-    if (jsonResponse && jsonResponse.days && jsonResponse.days.length > 0 && jsonResponse.days[0]) {
-        setCacheItem(weatherArgs.CacheId, JSON.stringify({ 
-          "status": "Complete",
-          "values":
-            [
-                {"name": "tempmax", "value": jsonResponse.days[0].tempmax},
-                {"name": "tempmin", "value": jsonResponse.days[0].tempmin},
-                {"name": "precip", "value": jsonResponse.days[0].precip},
-                {"name": "precipprob", "value": jsonResponse.days[0].precipprob},
-                {"name": "windspeed", "value": jsonResponse.days[0].windspeed}
-            ]
-        }));
-    }
-    else {
-        setCacheItem(weatherArgs.CacheId, JSON.stringify({ 
-            "status": "Complete",
-            "values":
-              [
-                  {"name": NA_DATA, "value": NA_DATA}
-              ]
-        }));
-    }
+async function onTimelineApiSuccessJsonResponse(jsonResponse: any, weatherArgs: WeatherArgs): Promise<string> {
+    return await new Promise(async (resolve, reject) => {
+        try {
+            if (jsonResponse && jsonResponse.days && jsonResponse.days.length > 0 && jsonResponse.days[0]) {
+                setCacheItem(weatherArgs.CacheId, JSON.stringify({ 
+                    "status": "Complete",
+                    "values":
+                      [
+                          {"name": "tempmax", "value": jsonResponse.days[0].tempmax},
+                          {"name": "tempmin", "value": jsonResponse.days[0].tempmin},
+                          {"name": "precip", "value": jsonResponse.days[0].precip},
+                          {"name": "precipprob", "value": jsonResponse.days[0].precipprob},
+                          {"name": "windspeed", "value": jsonResponse.days[0].windspeed}
+                      ]
+                }));
 
-    await processSubscribersQueue(weatherArgs);
+                await processSubscribersQueue(weatherArgs);
+                return resolve(REQUESTING);
+            }
+            else {
+                return resolve(NA_DATA);
+            }
+        }
+        catch (error: any) {
+            return reject(error);
+        }
+    });
 }

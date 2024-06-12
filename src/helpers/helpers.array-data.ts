@@ -30,7 +30,7 @@ export function generateArrayData(weatherArgs: WeatherArgs, values: any[]): any[
 export async function clearArrayData(cols: number, rows: number, originalFormula: any, invocation: CustomFunctions.Invocation): Promise<void> {
     if (originalFormula && invocation && invocation.address && (cols > 1 || rows > 1)) {
         try {
-            await Excel.run(async (context: Excel.RequestContext) => {
+            return await Excel.run(async (context: Excel.RequestContext) => {
                 try {
                     if (originalFormula && invocation && invocation.address && (cols > 1 || rows > 1)) {
                         const caller = getCell(invocation.address, context);

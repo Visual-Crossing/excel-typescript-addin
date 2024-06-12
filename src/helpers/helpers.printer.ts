@@ -4,7 +4,7 @@ import { getCell, getSheet } from "./helpers.excel";
 export async function printArrayData(values: any[] | null, originalFormula: any, printDirection: PrintDirections, invocation: CustomFunctions.Invocation): Promise<void> {
     if (values && values.length > 0 && invocation && invocation.address) {
         try {
-            await Excel.run(async (context) => {
+            return await Excel.run(async (context) => {
                 try {
                     if (values && values.length > 0 && invocation && invocation.address) {
                         const caller = getCell(invocation.address, context);
@@ -35,31 +35,45 @@ export async function printArrayData(values: any[] | null, originalFormula: any,
                         }
                     }
                 }
-                catch {
+                catch (error: any) {
                     // Retry
-                    const timeout: NodeJS.Timeout = setTimeout(() => {
+                    return await new Promise(async (resolve, reject) => {
                         try {
-                            clearTimeout(timeout);
-                            printArrayData(values, originalFormula, printDirection, invocation);
+                            const timeout: NodeJS.Timeout = setTimeout(async () => {
+                                try {
+                                    clearTimeout(timeout);
+                                    return resolve(await printArrayData(values, originalFormula, printDirection, invocation));
+                                }
+                                catch (error: any) {
+                                    return reject(error);
+                                }
+                            }, 250);
                         }
-                        catch {
-
+                        catch (error: any) {
+                            return reject(error);
                         }
-                    }, 250);
+                    });
                 }
             });
         }
         catch {
             // Retry
-            const timeout: NodeJS.Timeout = setTimeout(() => {
+            return await new Promise(async (resolve, reject) => {
                 try {
-                    clearTimeout(timeout);
-                    printArrayData(values, originalFormula, printDirection, invocation);
+                    const timeout: NodeJS.Timeout = setTimeout(async () => {
+                        try {
+                            clearTimeout(timeout);
+                            return resolve(await printArrayData(values, originalFormula, printDirection, invocation));
+                        }
+                        catch (error: any) {
+                            return reject(error);
+                        }
+                    }, 250);
                 }
-                catch {
-
+                catch (error: any) {
+                    return reject(error);
                 }
-            }, 250);
+            });
         }
     }
 }
