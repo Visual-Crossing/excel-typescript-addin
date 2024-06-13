@@ -204,7 +204,6 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
         return getReturnValue(cacheItemJsonString);
     }
     else {
-        addJob(new CleanUpJob(null, weatherArgs.Columns, weatherArgs.Rows, weatherArgs.Invocation));
         return "Processing...";
     }
 }
