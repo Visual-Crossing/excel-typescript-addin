@@ -182,9 +182,10 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
                     return;
                 }
                 
-                subscribe(weatherArgs);
-
-                if (cacheItemObject.status === "Complete") {
+                if (cacheItemObject.status === "Requesting") {
+                    subscribe(weatherArgs);
+                }
+                else {
                     await processSubscribersQueue(weatherArgs);
                     await processJobs();
                 }
