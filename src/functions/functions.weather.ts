@@ -123,25 +123,23 @@ async function processSubscribersQueue(weatherArgs: WeatherArgs): Promise<void> 
         const subscriberWeatherArgs = subscribersForCacheId.getFront();
 
         if (subscriberWeatherArgs && subscriberWeatherArgs.Invocation && subscriberWeatherArgs.Invocation.address) {
-            // if (subscriberWeatherArgs.OriginalFormula === caller.formulas[0][0]) {
-                const cacheItem = getCacheItem(subscriberWeatherArgs.CacheId);
-        
-                if (cacheItem) {
-                    const cacheItemString = cacheItem as string;
+            const cacheItem = getCacheItem(subscriberWeatherArgs.CacheId);
+    
+            if (cacheItem) {
+                const cacheItemString = cacheItem as string;
 
-                    if (cacheItemString) {
-                        const cacheItemObject = JSON.parse(cacheItemString);
+                if (cacheItemString) {
+                    const cacheItemObject = JSON.parse(cacheItemString);
 
-                        if (cacheItemObject && cacheItemObject.status && cacheItemObject.status === "Complete" && cacheItemObject.values && cacheItemObject.values.length > 0) {
-                            const arrayData: any[] | null = generateArrayData(subscriberWeatherArgs, cacheItemObject.values);
+                    if (cacheItemObject && cacheItemObject.status && cacheItemObject.status === "Complete" && cacheItemObject.values && cacheItemObject.values.length > 0) {
+                        const arrayData: any[] | null = generateArrayData(subscriberWeatherArgs, cacheItemObject.values);
 
-                            if (arrayData && arrayData.length > 0){
-                                addJob(new PrintJob(subscriberWeatherArgs.OriginalFormula, arrayData, new ArrayDataVerticalPrinter(), subscriberWeatherArgs.Invocation));
-                            }
+                        if (arrayData && arrayData.length > 0){
+                            addJob(new PrintJob(subscriberWeatherArgs.OriginalFormula, arrayData, new ArrayDataVerticalPrinter(), subscriberWeatherArgs.Invocation));
                         }
                     }
                 }
-            // }
+            }
         }
         
         if (subscriberWeatherArgs && subscriberWeatherArgs.Invocation && subscriberWeatherArgs.Invocation.address) {
