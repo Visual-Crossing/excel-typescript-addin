@@ -158,55 +158,6 @@ async function processSubscribersQueue(weatherArgs: WeatherArgs): Promise<void> 
     }
 }
 
-// async function saveCallerFormula(weatherArgs: WeatherArgs): Promise<WeatherArgs> {
-//     try {
-//         return await Excel.run(async (context: Excel.RequestContext) => {
-//             try {
-//                 if (weatherArgs && weatherArgs.Invocation && weatherArgs.Invocation.address) {
-//                     const cell = getCell(weatherArgs.Invocation.address, context);
-                    
-//                     cell.load();
-//                     await context.sync();
-    
-//                     weatherArgs.OriginalFormula = cell.formulas[0][0];
-//                     addJob(new CleanUpJob(weatherArgs.OriginalFormula, weatherArgs.Columns, weatherArgs.Rows, weatherArgs.Invocation));
-//                     await processJobs();
-//                 }
-
-//                 return weatherArgs;
-//             }
-//             catch {
-//                 // Retry
-//                 return await new Promise((resolve, reject) => {
-//                     const timeout: NodeJS.Timeout = setTimeout(async () => {
-//                         try {
-//                             clearTimeout(timeout);
-//                             return resolve(await saveCallerFormula(weatherArgs));
-//                         }
-//                         catch (error: any) {
-//                             return reject(error);
-//                         }
-//                     }, 250);
-//                 });
-//             }
-//         });
-//     }
-//     catch {
-//         // Retry
-//         return await new Promise((resolve, reject) => {
-//             const timeout: NodeJS.Timeout = setTimeout(async () => {
-//                 try {
-//                     clearTimeout(timeout);
-//                     return resolve(await saveCallerFormula(weatherArgs));
-//                 }
-//                 catch (error: any) {
-//                     return reject(error);
-//                 }
-//             }, 250);
-//         });
-//     }
-// }
-
 export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string | number | Date> {
     const cacheItemJsonString: string | null | undefined = getCacheItem(weatherArgs.CacheId);
 
@@ -217,65 +168,56 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
     }
 
     addJob(new FormulaJob(async (formula: any) => { 
-        weatherArgs.OriginalFormula = formula;
+        if (formula) {
+            weatherArgs.OriginalFormula = formula;
 
-        if (cacheItemJsonString) {
-            return await getDataFromCache(weatherArgs, cacheItemJsonString);
-        }
-        else {
-            const apiKey: string | null | undefined = await getApiKeyFromSettingsAsync();
-            return await fetchTimelineData(apiKey, weatherArgs);
+            addJob(new CleanUpJob(weatherArgs.OriginalFormula, weatherArgs.Columns, weatherArgs.Rows, weatherArgs.Invocation));
+
+            await processJobs();
+
+            if (cacheItemJsonString) {
+                const cacheItemObject = JSON.parse(cacheItemJsonString);
+
+                if (!cacheItemObject) {
+                    return;
+                }
+                
+                subscribe(weatherArgs);
+
+                if (cacheItemObject.status === "Complete") {
+                    await processSubscribersQueue(weatherArgs);
+                    await processJobs();
+                }
+            }
+            else {
+                const apiKey: string | null | undefined = await getApiKeyFromSettingsAsync();
+                await fetchTimelineData(apiKey, weatherArgs);
+            }
         }
      }, weatherArgs.Invocation));
-
-    addJob(new CleanUpJob(weatherArgs.OriginalFormula, weatherArgs.Columns, weatherArgs.Rows, weatherArgs.Invocation));
 
     await processJobs();
 
     if (cacheItemJsonString) {
-        const cacheItemObject = JSON.parse(cacheItemJsonString);
-
-        if (!cacheItemObject) {
-            throw new Error("Unable to deserialize cache item.");
-        }
-
-        if (cacheItemObject.status === "Complete") {
-            return cacheItemObject.values[0].value;
-        }
-        
-        return "Retrieving...";
+        return getReturnValue(cacheItemJsonString);
     }
     else {
         return REQUESTING;
     }
 }
 
-async function getDataFromCache(weatherArgs: WeatherArgs, cacheItemJsonString: string): Promise<string | number | Date> {
+function getReturnValue(cacheItemJsonString: string): string | number | Date {
     const cacheItemObject = JSON.parse(cacheItemJsonString);
 
     if (!cacheItemObject) {
         throw new Error("Unable to deserialize cache item.");
     }
     
-    if (cacheItemObject.status === "Requesting") {
-        subscribe(weatherArgs);
-        // return REQUESTING;
-        return "Retrieving...";
-    }
-    
     if (cacheItemObject.status === "Complete") {
         return cacheItemObject.values[0].value;
-        // const arrayData: any[] | null = generateArrayData(weatherArgs, cacheItemObject.values);
-            //  return await printArrayData(arrayData, weatherArgs.OriginalFormula, weatherArgs.PrintDirection, weatherArgs.Invocation)
-            //     .then((value: string | number | Date) => {
-            //         return value;
-            //     })
-            //     .catch((error: any) => {
-            //         throw error;
-            //     });
     }
 
-    throw new Error("Unexpected error.");
+    return "Retrieving...";
 }
 
 async function fetchTimelineData(apiKey: string | null | undefined, weatherArgs: WeatherArgs): Promise<string> {
