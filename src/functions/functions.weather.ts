@@ -171,10 +171,6 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
         if (formula) {
             weatherArgs.OriginalFormula = formula;
 
-            addJob(new CleanUpJob(weatherArgs.OriginalFormula, weatherArgs.Columns, weatherArgs.Rows, weatherArgs.Invocation));
-
-            await processJobs();
-
             if (cacheItemJsonString) {
                 const cacheItemObject = JSON.parse(cacheItemJsonString);
 
@@ -184,13 +180,18 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
                 
                 if (cacheItemObject.status === "Requesting") {
                     subscribe(weatherArgs);
+                    addJob(new CleanUpJob(weatherArgs.OriginalFormula, weatherArgs.Columns, weatherArgs.Rows, weatherArgs.Invocation));
                 }
                 else {
                     await processSubscribersQueue(weatherArgs);
-                    await processJobs();
                 }
+
+                await processJobs();
             }
             else {
+                addJob(new CleanUpJob(weatherArgs.OriginalFormula, weatherArgs.Columns, weatherArgs.Rows, weatherArgs.Invocation));
+                await processJobs();
+
                 const apiKey: string | null | undefined = await getApiKeyFromSettingsAsync();
                 await fetchTimelineData(apiKey, weatherArgs);
             }
@@ -203,7 +204,8 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
         return getReturnValue(cacheItemJsonString);
     }
     else {
-        return REQUESTING;
+        addJob(new CleanUpJob(null, weatherArgs.Columns, weatherArgs.Rows, weatherArgs.Invocation));
+        return "Processing...";
     }
 }
 

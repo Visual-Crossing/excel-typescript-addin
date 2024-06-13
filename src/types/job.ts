@@ -36,7 +36,7 @@ export class CleanUpJob implements IJob {
                 await context.sync();
 
                 // ToDo: Implement case insensitive and whitespace free comparison
-                if (callerCell.formulas[0][0] === this.CallerCellOriginalFormula) {
+                // if (callerCell.formulas[0][0] === this.CallerCellOriginalFormula) {
                     if (this.ArrayDataRowsCount > 1) {
                         callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex + 1, callerCell.columnIndex, this.ArrayDataRowsCount - 1, this.ArrayDataColsCount).clear(Excel.ClearApplyTo.contents);
                     }
@@ -46,7 +46,7 @@ export class CleanUpJob implements IJob {
                     }
 
                     await context.sync();
-                }
+                // }
             }
 
             return true;
