@@ -1,6 +1,5 @@
 import { getArrayDataCols, getArrayDataRows, getUpdatedFormula } from "./helpers.formulas";
 import { WeatherArgs } from "./helpers.args";
-import { getCell, getSheet } from "./helpers.excel";
 
 export function generateArrayData(weatherArgs: WeatherArgs, values: any[]): any[] | null {
     if (!weatherArgs) {
@@ -22,7 +21,7 @@ export function generateArrayData(weatherArgs: WeatherArgs, values: any[]): any[
     const arrayDataCols = getArrayDataCols(values, weatherArgs.PrintDirection);
     const arrayDataRows = getArrayDataRows(values, weatherArgs.PrintDirection);
 
-    // arrayData[0] = getUpdatedFormula(weatherArgs, arrayDataCols, arrayDataRows);
+    arrayData[0] = getUpdatedFormula(weatherArgs, arrayDataCols, arrayDataRows);
 
     return arrayData
 }

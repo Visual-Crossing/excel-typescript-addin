@@ -9,10 +9,10 @@ export class ArrayDataVerticalPrinter implements IArrayDataPrinter {
                 const arrayDataForPrint: any[] = [];
     
                 for (let i = 0; i < arrayData.length; i++) {
-                    arrayDataForPrint.push([arrayData[i].value]);
+                    arrayDataForPrint.push([arrayData[i]]);
                 }
         
-                callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex + 1, callerCell.columnIndex, arrayDataForPrint.length, 1).values = arrayDataForPrint;
+                callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex, arrayDataForPrint.length, 1).values = arrayDataForPrint;
             }
 
             return true;
@@ -33,7 +33,7 @@ export class ArrayDataHorizontalPrinter implements IArrayDataPrinter {
                 //     arrayDataForPrint.push(values[i]);
                 // }
 
-                callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex + 1, 1, arrayData.length).values = [arrayData];
+                callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex, 1, arrayData.length).values = [arrayData];
             }
 
             return true;

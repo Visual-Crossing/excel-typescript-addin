@@ -1,12 +1,12 @@
 import { WeatherArgs } from "../helpers/helpers.args";
 import { getCacheItem, setCacheItem } from "../cache/cache";
 import { getApiKeyFromSettingsAsync } from "../settings/settings";
-import { getCell } from "../helpers/helpers.excel";
 import { DistinctQueue } from "../types/distinct-queue";
 import { NA_DATA } from "../common/constants";
-import { CleanUpJob, IJob, PrintJob } from "../types/job";
+import { CleanUpJob, FormulaJob, IJob, PrintJob } from "../types/job";
 import { Queue } from "queue-typescript";
 import { ArrayDataVerticalPrinter } from "../types/printer";
+import { generateArrayData } from "../helpers/helpers.array-data";
 
 var subscribersGroupedByCacheId: Map<string, DistinctQueue<string, WeatherArgs>> | null;
 
@@ -133,7 +133,11 @@ async function processSubscribersQueue(weatherArgs: WeatherArgs): Promise<void> 
                         const cacheItemObject = JSON.parse(cacheItemString);
 
                         if (cacheItemObject && cacheItemObject.status && cacheItemObject.status === "Complete" && cacheItemObject.values && cacheItemObject.values.length > 0) {
-                            addJob(new PrintJob(subscriberWeatherArgs.OriginalFormula, cacheItemObject.values, new ArrayDataVerticalPrinter(), subscriberWeatherArgs.Invocation));
+                            const arrayData: any[] | null = generateArrayData(subscriberWeatherArgs, cacheItemObject.values);
+
+                            if (arrayData && arrayData.length > 0){
+                                addJob(new PrintJob(subscriberWeatherArgs.OriginalFormula, arrayData, new ArrayDataVerticalPrinter(), subscriberWeatherArgs.Invocation));
+                            }
                         }
                     }
                 }
@@ -152,59 +156,56 @@ async function processSubscribersQueue(weatherArgs: WeatherArgs): Promise<void> 
             subscribersGroupedByCacheId = null;
         }
     }
-
-    await processJobs();
 }
 
-async function saveCallerFormula(weatherArgs: WeatherArgs): Promise<WeatherArgs> {
-    try {
-        return await Excel.run(async (context: Excel.RequestContext) => {
-            try {
-                if (weatherArgs && weatherArgs.Invocation && weatherArgs.Invocation.address) {
-                    const cell = getCell(weatherArgs.Invocation.address, context);
+// async function saveCallerFormula(weatherArgs: WeatherArgs): Promise<WeatherArgs> {
+//     try {
+//         return await Excel.run(async (context: Excel.RequestContext) => {
+//             try {
+//                 if (weatherArgs && weatherArgs.Invocation && weatherArgs.Invocation.address) {
+//                     const cell = getCell(weatherArgs.Invocation.address, context);
                     
-                    cell.load();
-                    await context.sync();
+//                     cell.load();
+//                     await context.sync();
     
-                    weatherArgs.OriginalFormula = cell.formulas[0][0];
-                    addJob(new CleanUpJob(weatherArgs.OriginalFormula, weatherArgs.Columns, weatherArgs.Rows, weatherArgs.Invocation));
-                    await processJobs();
-                    // await clearArrayData(weatherArgs.Columns, weatherArgs.Rows, weatherArgs.OriginalFormula, weatherArgs.Invocation);
-                }
+//                     weatherArgs.OriginalFormula = cell.formulas[0][0];
+//                     addJob(new CleanUpJob(weatherArgs.OriginalFormula, weatherArgs.Columns, weatherArgs.Rows, weatherArgs.Invocation));
+//                     await processJobs();
+//                 }
 
-                return weatherArgs;
-            }
-            catch {
-                // Retry
-                return await new Promise((resolve, reject) => {
-                    const timeout: NodeJS.Timeout = setTimeout(async () => {
-                        try {
-                            clearTimeout(timeout);
-                            return resolve(await saveCallerFormula(weatherArgs));
-                        }
-                        catch (error: any) {
-                            return reject(error);
-                        }
-                    }, 250);
-                });
-            }
-        });
-    }
-    catch {
-        // Retry
-        return await new Promise((resolve, reject) => {
-            const timeout: NodeJS.Timeout = setTimeout(async () => {
-                try {
-                    clearTimeout(timeout);
-                    return resolve(await saveCallerFormula(weatherArgs));
-                }
-                catch (error: any) {
-                    return reject(error);
-                }
-            }, 250);
-        });
-    }
-}
+//                 return weatherArgs;
+//             }
+//             catch {
+//                 // Retry
+//                 return await new Promise((resolve, reject) => {
+//                     const timeout: NodeJS.Timeout = setTimeout(async () => {
+//                         try {
+//                             clearTimeout(timeout);
+//                             return resolve(await saveCallerFormula(weatherArgs));
+//                         }
+//                         catch (error: any) {
+//                             return reject(error);
+//                         }
+//                     }, 250);
+//                 });
+//             }
+//         });
+//     }
+//     catch {
+//         // Retry
+//         return await new Promise((resolve, reject) => {
+//             const timeout: NodeJS.Timeout = setTimeout(async () => {
+//                 try {
+//                     clearTimeout(timeout);
+//                     return resolve(await saveCallerFormula(weatherArgs));
+//                 }
+//                 catch (error: any) {
+//                     return reject(error);
+//                 }
+//             }, 250);
+//         });
+//     }
+// }
 
 export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string | number | Date> {
     const cacheItemJsonString: string | null | undefined = getCacheItem(weatherArgs.CacheId);
@@ -215,14 +216,37 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
         }));
     }
 
-    weatherArgs = await saveCallerFormula(weatherArgs);
+    addJob(new FormulaJob(async (formula: any) => { 
+        weatherArgs.OriginalFormula = formula;
+
+        if (cacheItemJsonString) {
+            return await getDataFromCache(weatherArgs, cacheItemJsonString);
+        }
+        else {
+            const apiKey: string | null | undefined = await getApiKeyFromSettingsAsync();
+            return await fetchTimelineData(apiKey, weatherArgs);
+        }
+     }, weatherArgs.Invocation));
+
+    addJob(new CleanUpJob(weatherArgs.OriginalFormula, weatherArgs.Columns, weatherArgs.Rows, weatherArgs.Invocation));
+
+    await processJobs();
 
     if (cacheItemJsonString) {
-        return await getDataFromCache(weatherArgs, cacheItemJsonString);
+        const cacheItemObject = JSON.parse(cacheItemJsonString);
+
+        if (!cacheItemObject) {
+            throw new Error("Unable to deserialize cache item.");
+        }
+
+        if (cacheItemObject.status === "Complete") {
+            return cacheItemObject.values[0].value;
+        }
+        
+        return "Retrieving...";
     }
     else {
-        const apiKey: string | null | undefined = await getApiKeyFromSettingsAsync();
-        return await fetchTimelineData(apiKey, weatherArgs);
+        return REQUESTING;
     }
 }
 
@@ -230,7 +254,7 @@ async function getDataFromCache(weatherArgs: WeatherArgs, cacheItemJsonString: s
     const cacheItemObject = JSON.parse(cacheItemJsonString);
 
     if (!cacheItemObject) {
-        throw new Error("Unable to deserialize cache.");
+        throw new Error("Unable to deserialize cache item.");
     }
     
     if (cacheItemObject.status === "Requesting") {
@@ -308,6 +332,8 @@ async function onTimelineApiSuccessJsonResponse(jsonResponse: any, weatherArgs: 
                 }));
 
                 await processSubscribersQueue(weatherArgs);
+                await processJobs();
+
                 return resolve(REQUESTING);
             }
             else {

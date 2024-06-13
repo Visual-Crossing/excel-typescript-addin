@@ -102,3 +102,40 @@ export class PrintJob implements IJob {
         }
     }
 }
+
+export class FormulaJob implements IJob {
+    private Callback: (callerCellFormula: any) => {};
+    private Invocation: CustomFunctions.Invocation;
+
+
+    public constructor(callback: (callerCellFormula: any) => {}, invocation: CustomFunctions.Invocation) {
+        this.Callback = callback;
+        this.Invocation = invocation;
+    }
+    
+    public async run(context: Excel.RequestContext): Promise<boolean> {
+        try {
+            if (context && this.Invocation && this.Invocation.address && this.Callback) {
+                let callerCell: Excel.Range;
+                
+                try {
+                    callerCell = getCell(this.Invocation.address, context);
+                }
+                catch {
+                    // Caller cell no longer exists
+                    return true;
+                }
+
+                callerCell.load();
+                await context.sync();
+
+                this.Callback(callerCell.formulas[0][0]);
+            }
+
+            return true;
+        }
+        catch (error: any) {
+            return false;
+        }
+    }
+}
