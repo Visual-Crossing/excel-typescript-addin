@@ -13,7 +13,7 @@ var subscribersGroupedByCacheId: Map<string, DistinctQueue<string, WeatherArgs>>
 var jobs: Queue<IJob> | null = null;
 var isJobsProcessingInProgress: boolean = false;
 
-const REQUESTING: string = "Requesting...";
+const PROCESSING: string = "Processing...";
 
 async function processJobs(): Promise<void> {
     if (jobs && jobs.length > 0 && !isJobsProcessingInProgress) {
@@ -204,7 +204,7 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
         return getReturnValue(cacheItemJsonString);
     }
     else {
-        return "Processing...";
+        return PROCESSING;
     }
 }
 
@@ -219,7 +219,7 @@ function getReturnValue(cacheItemJsonString: string): string | number | Date {
         return cacheItemObject.values[0].value;
     }
 
-    return "Retrieving...";
+    return PROCESSING;
 }
 
 async function fetchTimelineData(apiKey: string | null | undefined, weatherArgs: WeatherArgs): Promise<string> {
@@ -278,7 +278,7 @@ async function onTimelineApiSuccessJsonResponse(jsonResponse: any, weatherArgs: 
                 await processSubscribersQueue(weatherArgs);
                 await processJobs();
 
-                return resolve(REQUESTING);
+                return resolve(PROCESSING);
             }
             else {
                 return resolve(NA_DATA);
