@@ -11,6 +11,18 @@ export class DistinctQueue<T, U> {
         this.queue = new Queue<U>();
     }
 
+    public hasKey(key: T): boolean {
+        if (!key) {
+            throw new Error("Invalid key.");
+        }
+
+        if (!this.keys) {
+            return false;
+        }
+
+        return this.keys.has(key);
+    }
+
     public getLength(): number {
         if (!this.keys && !this.queue) {
             return 0;
@@ -27,9 +39,9 @@ export class DistinctQueue<T, U> {
         return this.queue.length;
     }
 
-    public getFront(): U | null {
+    public getFront(): U {
         if (!this.queue) {
-            return null;
+            throw new Error(INVALID_QUEUE_STATE_ERROR_MSG);
         }
 
         return this.queue.front;

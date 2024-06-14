@@ -13,49 +13,51 @@ var subscribersGroupedByCacheId: Map<string, DistinctQueue<string, WeatherArgs>>
 var jobs: Queue<IJob> | null = null;
 var isJobsProcessingInProgress: boolean = false;
 
+var printer: Map<string, string> | null = null;
+
 const PROCESSING: string = "Processing...";
 
 async function processJobs(): Promise<void> {
     if (jobs && jobs.length > 0 && !isJobsProcessingInProgress) {
         isJobsProcessingInProgress = true;
+        
+        try {
+            return await Excel.run(async (context: Excel.RequestContext) => {
+                try {
+                    while (jobs && jobs.length > 0) {
+                        const job: IJob = jobs.front;
 
-        const timeout: NodeJS.Timeout = setTimeout(async () => {
-            try {
-                clearTimeout(timeout);
-
-                if (jobs && jobs.length > 0) {
-                    return await Excel.run(async (context: Excel.RequestContext) => {
-                        try {
-                            while (jobs && jobs.length > 0) {
-                                const job: IJob = jobs.front;
-                                
-                                if (await job.run(context)) {
-                                    jobs.dequeue();
-                                }
-                                else {
-                                    const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); await processJobs(); }, 250);
-                                    return;
-                                }
-                            }
-
-                            jobs = null;
+                        if (!printer) {
+                            printer = new Map<string, string>();
                         }
-                        catch {
+
+                        printer.set(job.getAddress(), "Processing");
+
+                        if (await job.run(context)) {
+                            jobs.dequeue();
+                        }
+                        else {
                             const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); await processJobs(); }, 250);
+                            return;
                         }
-                        finally {
-                            isJobsProcessingInProgress = false;
-                        }
-                    });
+                    }
+
+                    jobs = null;
                 }
-            }
-            catch {
-                const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); await processJobs(); }, 250);
-            }
-            finally {
-                isJobsProcessingInProgress = false;
-            }
-        }, 250);
+                catch {
+                    const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); await processJobs(); }, 250);
+                }
+                finally {
+                    isJobsProcessingInProgress = false;
+                }
+            });
+        }
+        catch {
+            const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); await processJobs(); }, 250);
+        }
+        finally {
+            isJobsProcessingInProgress = false;
+        }
     }
 }
 
@@ -199,14 +201,14 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
     await processJobs();
 
     if (cacheItemJsonString) {
-        return getReturnValue(cacheItemJsonString);
+        return getReturnValue(cacheItemJsonString, weatherArgs.Invocation.address!);
     }
     else {
         return PROCESSING;
     }
 }
 
-function getReturnValue(cacheItemJsonString: string): string | number | Date {
+function getReturnValue(cacheItemJsonString: string, address: string): string | number | Date {
     const cacheItemObject = JSON.parse(cacheItemJsonString);
 
     if (!cacheItemObject) {
@@ -214,6 +216,19 @@ function getReturnValue(cacheItemJsonString: string): string | number | Date {
     }
     
     if (cacheItemObject.status === "Complete") {
+        if (printer && printer.has(address)) {
+            ;
+        }
+        else {
+            if (!printer) {
+                printer = new Map<string, string>();
+            }
+
+            ;
+        }
+
+        printer.set(address, "Printed");
+
         return cacheItemObject.values[0].value;
     }
 
