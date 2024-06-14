@@ -5,7 +5,7 @@ import { DistinctQueue } from "../types/distinct-queue";
 import { NA_DATA } from "../common/constants";
 import { CleanUpJob, FormulaJob, IJob, PrintJob } from "../types/job";
 import { Queue } from "queue-typescript";
-import { ArrayDataVerticalPrinter } from "../types/printer";
+import { ArrayDataExcludeCallerVerticalPrinter, ArrayDataVerticalPrinter } from "../types/printer";
 import { generateArrayData } from "../helpers/helpers.array-data";
 
 var subscribersGroupedByCacheId: Map<string, DistinctQueue<string, WeatherArgs>> | null;
@@ -13,7 +13,7 @@ var subscribersGroupedByCacheId: Map<string, DistinctQueue<string, WeatherArgs>>
 var jobs: Queue<IJob> | null = null;
 var isJobsProcessingInProgress: boolean = false;
 
-var printer: Map<string, string> | null = null;
+var processor: Map<string, string> | null = null;
 
 const PROCESSING: string = "Processing...";
 
@@ -27,11 +27,13 @@ async function processJobs(): Promise<void> {
                     while (jobs && jobs.length > 0) {
                         const job: IJob = jobs.front;
 
-                        if (!printer) {
-                            printer = new Map<string, string>();
-                        }
+                        if (job instanceof PrintJob) {
+                            if (!processor) {
+                                processor = new Map<string, string>();
+                            }
 
-                        printer.set(job.getAddress(), "Processing");
+                            processor.set(job.getAddress(), "Processing");
+                        }
 
                         if (await job.run(context)) {
                             jobs.dequeue();
@@ -184,6 +186,23 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
                 }
                 else {
                     await processSubscribersQueue(weatherArgs);
+
+                    if (processor && processor.has(weatherArgs.Invocation.address!)) {
+                        if (processor.get(weatherArgs.Invocation.address!) !== "Processing") {
+                            const arrayData: any[] | null = generateArrayData(weatherArgs, cacheItemObject.values, false);
+            
+                            if (arrayData && arrayData.length > 0) {
+                                addJob(new PrintJob(weatherArgs.OriginalFormula, arrayData, new ArrayDataExcludeCallerVerticalPrinter(), weatherArgs.Invocation));
+                            }
+                        }
+                    }
+                    else {
+                        const arrayData: any[] | null = generateArrayData(weatherArgs, cacheItemObject.values, false);
+            
+                        if (arrayData && arrayData.length > 0) {
+                            addJob(new PrintJob(weatherArgs.OriginalFormula, arrayData, new ArrayDataExcludeCallerVerticalPrinter(), weatherArgs.Invocation));
+                        }
+                    }
                 }
 
                 await processJobs();
@@ -201,14 +220,14 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
     await processJobs();
 
     if (cacheItemJsonString) {
-        return getReturnValue(cacheItemJsonString, weatherArgs.Invocation.address!);
+        return await getReturnValue(cacheItemJsonString, weatherArgs);
     }
     else {
         return PROCESSING;
     }
 }
 
-function getReturnValue(cacheItemJsonString: string, address: string): string | number | Date {
+async function getReturnValue(cacheItemJsonString: string, weatherArgs: WeatherArgs): Promise<string | number | Date> {
     const cacheItemObject = JSON.parse(cacheItemJsonString);
 
     if (!cacheItemObject) {
@@ -216,18 +235,11 @@ function getReturnValue(cacheItemJsonString: string, address: string): string | 
     }
     
     if (cacheItemObject.status === "Complete") {
-        if (printer && printer.has(address)) {
-            ;
-        }
-        else {
-            if (!printer) {
-                printer = new Map<string, string>();
-            }
-
-            ;
+        if (!processor) {
+            processor = new Map<string, string>();
         }
 
-        printer.set(address, "Printed");
+        processor.set(weatherArgs.Invocation.address!, "Printed");
 
         return cacheItemObject.values[0].value;
     }

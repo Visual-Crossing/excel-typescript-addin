@@ -1,7 +1,7 @@
 import { getArrayDataCols, getArrayDataRows, getUpdatedFormula } from "./helpers.formulas";
 import { WeatherArgs } from "./helpers.args";
 
-export function generateArrayData(weatherArgs: WeatherArgs, values: any[]): any[] | null {
+export function generateArrayData(weatherArgs: WeatherArgs, values: any[], useFormulaForCaller: boolean = true): any[] | null {
     if (!weatherArgs) {
         throw new Error();
     }
@@ -21,7 +21,9 @@ export function generateArrayData(weatherArgs: WeatherArgs, values: any[]): any[
     const arrayDataCols = getArrayDataCols(values, weatherArgs.PrintDirection);
     const arrayDataRows = getArrayDataRows(values, weatherArgs.PrintDirection);
 
-    arrayData[0] = getUpdatedFormula(weatherArgs, arrayDataCols, arrayDataRows);
+    if (useFormulaForCaller) {
+        arrayData[0] = getUpdatedFormula(weatherArgs, arrayDataCols, arrayDataRows);
+    }
 
     return arrayData
 }

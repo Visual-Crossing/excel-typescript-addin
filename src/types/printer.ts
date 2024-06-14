@@ -23,6 +23,27 @@ export class ArrayDataVerticalPrinter implements IArrayDataPrinter {
     }
 }
 
+export class ArrayDataExcludeCallerVerticalPrinter implements IArrayDataPrinter {
+    public async print(callerCell: Excel.Range, arrayData: any[]): Promise<boolean> {
+        try {
+            if (callerCell && arrayData && arrayData.length > 0) {
+                const arrayDataForPrint: any[] = [];
+    
+                for (let i = 1; i < arrayData.length; i++) {
+                    arrayDataForPrint.push([arrayData[i]]);
+                }
+        
+                callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex + 1, callerCell.columnIndex, arrayDataForPrint.length, 1).values = arrayDataForPrint;
+            }
+
+            return true;
+        }
+        catch {
+            return false;
+        }
+    }
+}
+
 export class ArrayDataHorizontalPrinter implements IArrayDataPrinter {
     public async print(callerCell: Excel.Range, arrayData: any[]): Promise<boolean> {
         try {
