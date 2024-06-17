@@ -106,7 +106,7 @@ export class ArrayDataExcludeCallerHorizontalPrinter implements IArrayDataPrinte
                     arrayDataForPrint.push(arrayData[i]);
                 }
 
-                callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex, 1, arrayData.length).values = [arrayDataForPrint];
+                callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex + 1, 1, arrayDataForPrint.length).values = [arrayDataForPrint];
             }
 
             return true;
