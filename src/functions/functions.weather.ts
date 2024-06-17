@@ -5,7 +5,7 @@ import { DistinctQueue } from "../types/distinct-queue";
 import { NA_DATA } from "../common/constants";
 import { CleanUpJob, FormulaJob, IJob, PrintJob } from "../types/job";
 import { Queue } from "queue-typescript";
-import { ArrayDataExcludeCallerVerticalPrinter, ArrayDataVerticalPrinter } from "../types/printer";
+import { ArrayDataExcludeCallerVerticalPrinter, ArrayDataVerticalPrinter, IArrayDataPrinter, IArrayDataPrinterWithCaller } from "../types/printer";
 import { generateArrayData } from "../helpers/helpers.array-data";
 
 var subscribersGroupedByCacheId: Map<string, DistinctQueue<string, WeatherArgs>> | null;
@@ -139,7 +139,7 @@ async function processSubscribersQueue(weatherArgs: WeatherArgs): Promise<void> 
                         const arrayData: any[] | null = generateArrayData(subscriberWeatherArgs, cacheItemObject.values);
 
                         if (arrayData && arrayData.length > 0){
-                            addJob(new PrintJob(subscriberWeatherArgs.OriginalFormula, arrayData, new ArrayDataVerticalPrinter(), subscriberWeatherArgs.Invocation));
+                            addJob(new PrintJob(subscriberWeatherArgs.OriginalFormula, arrayData, subscriberWeatherArgs.Printer, subscriberWeatherArgs.Invocation));
                         }
                     }
                 }
@@ -196,7 +196,7 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
                         const arrayData: any[] | null = generateArrayData(weatherArgs, cacheItemObject.values, false);
                 
                         if (arrayData && arrayData.length > 0) {
-                            addJob(new PrintJob(weatherArgs.OriginalFormula, arrayData, new ArrayDataExcludeCallerVerticalPrinter(), weatherArgs.Invocation));
+                            addJob(new PrintJob(weatherArgs.OriginalFormula, arrayData, weatherArgs.Printer.getPrinterExcludingCaller(), weatherArgs.Invocation));
                         }
                     }
 

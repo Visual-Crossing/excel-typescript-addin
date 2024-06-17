@@ -18,8 +18,8 @@ export function generateArrayData(weatherArgs: WeatherArgs, values: any[], useFo
         throw new Error();
     }
 
-    const arrayDataCols = getArrayDataCols(values, weatherArgs.PrintDirection);
-    const arrayDataRows = getArrayDataRows(values, weatherArgs.PrintDirection);
+    const arrayDataCols = getArrayDataCols(values, weatherArgs.Printer.getPrintDirection());
+    const arrayDataRows = getArrayDataRows(values, weatherArgs.Printer.getPrintDirection());
 
     if (useFormulaForCaller) {
         arrayData[0] = getUpdatedFormula(weatherArgs, arrayDataCols, arrayDataRows);

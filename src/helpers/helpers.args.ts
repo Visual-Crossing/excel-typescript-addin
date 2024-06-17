@@ -1,3 +1,4 @@
+import { ArrayDataHorizontalPrinter, ArrayDataVerticalPrinter, IArrayDataPrinterWithCaller } from "../types/printer";
 import { generateCacheId } from "../cache/cache";
 import { getUnitFromSettingsAsync } from "../settings/settings";
 
@@ -16,7 +17,7 @@ export class WeatherArgs {
     Date: string;
     Unit: string;
     Invocation: CustomFunctions.Invocation;
-    PrintDirection: PrintDirections = PrintDirections.Vertical;
+    Printer: IArrayDataPrinterWithCaller = new ArrayDataVerticalPrinter();
 
     public constructor(location: any, date: any, unit: string, args: any | null | undefined, invocation: CustomFunctions.Invocation) {
         this.Location = location as string;
@@ -79,10 +80,10 @@ export async function extractWeatherArgs(location: any, date: any, args: any | n
 
             if (argName === "dir") {
                 if (argValue === "v") {
-                    weatherArgs.PrintDirection = PrintDirections.Vertical;
+                    weatherArgs.Printer = new ArrayDataVerticalPrinter();
                 }
                 else if (argValue === "h") {
-                    weatherArgs.PrintDirection = PrintDirections.Horizontal;
+                    weatherArgs.Printer = new ArrayDataHorizontalPrinter();
                 }
                 else {
                     throw new Error(`${INVALID_PARAMETER_VALUE} '${arg[1]}' for parameter name '${arg[0]}'. Valid values are 'v' or 'h' only.`);
