@@ -1,11 +1,10 @@
 import { WeatherArgs } from "../helpers/helpers.args";
-import { getCacheItem, setCacheItem } from "../cache/cache";
+import { getCacheItem, removeCacheItem, setCacheItem } from "../cache/cache";
 import { getApiKeyFromSettingsAsync } from "../settings/settings";
 import { DistinctQueue } from "../types/distinct-queue";
 import { NA_DATA } from "../common/constants";
 import { CleanUpJob, FormulaJob, IJob, PrintJob } from "../types/job";
 import { Queue } from "queue-typescript";
-import { ArrayDataExcludeCallerVerticalPrinter, ArrayDataVerticalPrinter, IArrayDataPrinter, IArrayDataPrinterWithCaller } from "../types/printer";
 import { generateArrayData } from "../helpers/helpers.array-data";
 
 var subscribersGroupedByCacheId: Map<string, DistinctQueue<string, WeatherArgs>> | null;
@@ -235,6 +234,10 @@ async function getReturnValue(cacheItemJsonString: string, weatherArgs: WeatherA
     }
     
     if (cacheItemObject.status === "Complete") {
+        if (cacheItemObject.type === "Temporary") {
+            removeCacheItem(weatherArgs.CacheId);
+        }
+
         return cacheItemObject.values[0].value;
     }
 
@@ -255,7 +258,19 @@ async function fetchTimelineData(apiKey: string | null | undefined, weatherArgs:
                     return resolve (await onTimelineApiSuccessResponse(response, weatherArgs));
                 }
                 else {
-                    return reject("API Error");
+                    setCacheItem(weatherArgs.CacheId, JSON.stringify({ 
+                        status: "Complete",
+                        type: "Temporaru",
+                        values:
+                          [
+                              { name: "Error", value: "API Error" },
+                          ]
+                    }));
+    
+                    await processSubscribersQueue(weatherArgs);
+                    await processJobs();
+
+                    return reject();
                 }
             }
             catch (error: any) {

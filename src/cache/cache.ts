@@ -19,3 +19,7 @@ export function getCacheItem(cacheId: string): string | null {
 export function setCacheItem(cacheId: string, value: string): void {
     return window.sessionStorage.setItem(cacheId, value);
 }
+
+export function removeCacheItem(cacheId: string): void {
+    window.sessionStorage.removeItem(cacheId);
+}
