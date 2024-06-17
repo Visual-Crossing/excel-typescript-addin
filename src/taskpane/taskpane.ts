@@ -53,7 +53,7 @@ async function tryInitialiseApiKey(): Promise<boolean> {
   } else {
     apiKeyTextBox.oninput = updateBtnOkState;
 
-    const apiKey: string | null = await getApiKeyFromSettingsAsync();
+    const apiKey: string | null | undefined = await getApiKeyFromSettingsAsync();
     
     if (apiKey && apiKey.length > 0) {
       apiKeyTextBox.value = apiKey;
@@ -225,7 +225,7 @@ function getUnitAsyncFromInput(): string {
 }
 
 async function loadUnit() {
-  const unit: string | null = await getUnitFromSettingsAsync();
+  const unit: string | null | undefined = await getUnitFromSettingsAsync();
   let unitLabel: HTMLElement | null = null;
 
   if (!unit) {

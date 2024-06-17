@@ -12,10 +12,6 @@ export function getCell(address: string, context: Excel.RequestContext): Excel.R
 export async function getSheetColumnCount(address: string, context: Excel.RequestContext): Promise<number> {
     const sheet = getSheet(address, context);
 
-    // sheet.load();
-    // await context.sync();
-    // sheet.getRange().load();
-    // await context.sync();
     const range: Excel.Range = sheet.getRange();
     range.load("columnCount");
 
@@ -27,10 +23,6 @@ export async function getSheetColumnCount(address: string, context: Excel.Reques
 export async function getSheetRowCount(address: string, context: Excel.RequestContext): Promise<number>  {
     const sheet = getSheet(address, context);
 
-    // sheet.load();
-    // await context.sync();
-    // sheet.getRange().load();
-    // await context.sync();
     const range: Excel.Range = sheet.getRange();
     range.load("rowCount");
 

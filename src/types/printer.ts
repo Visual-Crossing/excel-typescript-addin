@@ -31,6 +31,7 @@ export class ArrayDataVerticalPrinter implements IArrayDataPrinterWithCaller {
                     callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex, arrayDataForPrint.length, 1).values = arrayDataForPrint;
                 }
                 else {
+                    // ToDo: Update formula columns and rows
                     callerCell.formulas[0][0] = callerCell.formulas[0][0];
                 }
             }
@@ -61,6 +62,7 @@ export class ArrayDataExcludeCallerVerticalPrinter implements IArrayDataPrinter 
                     callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex + 1, callerCell.columnIndex, arrayDataForPrint.length, 1).values = arrayDataForPrint;
                 }
                 else {
+                    // ToDo: Update formula columns and rows
                     callerCell.formulas[0][0] = callerCell.formulas[0][0];
                 }
             }
@@ -89,6 +91,7 @@ export class ArrayDataHorizontalPrinter implements IArrayDataPrinterWithCaller {
                     callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex, 1, arrayData.length).values = [arrayData];
                 }
                 else {
+                    // ToDo: Update formula columns and rows
                     callerCell.formulas[0][0] = callerCell.formulas[0][0];
                 }
             }
@@ -119,6 +122,7 @@ export class ArrayDataExcludeCallerHorizontalPrinter implements IArrayDataPrinte
                     callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex + 1, 1, arrayDataForPrint.length).values = [arrayDataForPrint];
                 }
                 else {
+                    // ToDo: Update formula columns and rows
                     callerCell.formulas[0][0] = callerCell.formulas[0][0];
                 }
             }
