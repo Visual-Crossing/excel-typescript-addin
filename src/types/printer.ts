@@ -2,7 +2,7 @@ import { PrintDirections } from "../helpers/helpers.args";
 
 export interface IArrayDataPrinter {
     getPrintDirection(): PrintDirections;
-    print(callerCell: Excel.Range, arrayData: any[]): Promise<boolean>;
+    print(callerCell: Excel.Range, arrayData: any[]): boolean;
 }
 
 export interface IArrayDataPrinterWithCaller extends IArrayDataPrinter {
@@ -18,7 +18,7 @@ export class ArrayDataVerticalPrinter implements IArrayDataPrinterWithCaller {
         return new ArrayDataExcludeCallerVerticalPrinter();
     }
 
-    public async print(callerCell: Excel.Range, arrayData: any[]): Promise<boolean> {
+    public print(callerCell: Excel.Range, arrayData: any[]): boolean {
         try {
             if (callerCell && arrayData && arrayData.length > 0) {
                 const arrayDataForPrint: any[] = [];
@@ -43,7 +43,7 @@ export class ArrayDataExcludeCallerVerticalPrinter implements IArrayDataPrinter 
         return PrintDirections.Vertical;
     }
 
-    public async print(callerCell: Excel.Range, arrayData: any[]): Promise<boolean> {
+    public print(callerCell: Excel.Range, arrayData: any[]): boolean {
         try {
             if (callerCell && arrayData && arrayData.length > 0) {
                 const arrayDataForPrint: any[] = [];
@@ -72,7 +72,7 @@ export class ArrayDataHorizontalPrinter implements IArrayDataPrinterWithCaller {
         return new ArrayDataExcludeCallerHorizontalPrinter();
     }
 
-    public async print(callerCell: Excel.Range, arrayData: any[]): Promise<boolean> {
+    public print(callerCell: Excel.Range, arrayData: any[]): boolean {
         try {
             if (callerCell && arrayData && arrayData.length > 0) {
                 callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex, 1, arrayData.length).values = [arrayData];
@@ -91,7 +91,7 @@ export class ArrayDataExcludeCallerHorizontalPrinter implements IArrayDataPrinte
         return PrintDirections.Horizontal;
     }
 
-    public async print(callerCell: Excel.Range, arrayData: any[]): Promise<boolean> {
+    public print(callerCell: Excel.Range, arrayData: any[]): boolean {
         try {
             if (callerCell && arrayData && arrayData.length > 0) {
                 const arrayDataForPrint: any[] = [];

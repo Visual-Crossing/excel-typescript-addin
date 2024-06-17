@@ -114,7 +114,7 @@ export class PrintJob implements IJob {
 
                 // ToDo: Implement case insensitive and whitespace free comparison
                 if (callerCell.formulas[0][0] === this.CallerCellOriginalFormula) {
-                    if (await this.ArrayDataPrinter.print(callerCell, this.ArrayData)) {
+                    if (this.ArrayDataPrinter.print(callerCell, this.ArrayData)) {
                         await context.sync();
                     }
                 }
