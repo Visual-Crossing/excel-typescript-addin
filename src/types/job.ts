@@ -1,5 +1,5 @@
 import { getCell, getSheet } from "../helpers/helpers.excel";
-import { ArrayDataExcludeCallerVerticalPrinter, IArrayDataPrinter } from "./printer";
+import { ArrayDataExcludeCallerHorizontalPrinter, ArrayDataExcludeCallerVerticalPrinter, IArrayDataPrinter } from "./printer";
 
 export interface IJob {
     getId(): string;
@@ -93,7 +93,7 @@ export class PrintJob implements IJob {
     }
 
     public getIsCallerAffected() : boolean {
-        return !(this.ArrayDataPrinter instanceof ArrayDataExcludeCallerVerticalPrinter);
+        return !(this.ArrayDataPrinter instanceof ArrayDataExcludeCallerVerticalPrinter) && !(this.ArrayDataPrinter instanceof ArrayDataExcludeCallerHorizontalPrinter);
     }
     
     public async run(context: Excel.RequestContext): Promise<boolean> {

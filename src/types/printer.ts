@@ -69,7 +69,7 @@ export class ArrayDataHorizontalPrinter implements IArrayDataPrinterWithCaller {
     }
 
     public getPrinterExcludingCaller(): IArrayDataPrinter {
-        return new ArrayDataExcludingCallerHorizontalPrinter();
+        return new ArrayDataExcludeCallerHorizontalPrinter();
     }
 
     public async print(callerCell: Excel.Range, arrayData: any[]): Promise<boolean> {
@@ -92,7 +92,7 @@ export class ArrayDataHorizontalPrinter implements IArrayDataPrinterWithCaller {
     }
 }
 
-export class ArrayDataExcludingCallerHorizontalPrinter implements IArrayDataPrinter {
+export class ArrayDataExcludeCallerHorizontalPrinter implements IArrayDataPrinter {
     public getPrintDirection(): PrintDirections {
         return PrintDirections.Horizontal;
     }
