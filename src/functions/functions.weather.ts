@@ -19,20 +19,20 @@ const PROCESSING: string = "Processing...";
 
 async function processJobs(): Promise<void> {
     if (jobs && jobs.length > 0 && !isJobsProcessingInProgress) {
-        isJobsProcessingInProgress = true;
-        
         try {
+            isJobsProcessingInProgress = true;
+
             return await Excel.run(async (context: Excel.RequestContext) => {
                 try {
                     while (jobs && jobs.length > 0) {
                         const job: IJob = jobs.front;
 
-                        if (job instanceof PrintJob) {
+                        if (job.getIsCallerAffected()) {
                             if (!processor) {
                                 processor = new Map<string, string>();
                             }
 
-                            processor.set(job.getAddress(), "Processing");
+                            processor.set(job.getAddress(), JSON.stringify({ status: "Printing" }));
                         }
 
                         if (await job.run(context)) {
@@ -165,7 +165,7 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
 
     if (!cacheItemJsonString) {
         setCacheItem(weatherArgs.CacheId, JSON.stringify({ 
-            "status": "Requesting",
+            status: "Requesting",
         }));
     }
 
@@ -185,24 +185,22 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
                     addJob(new CleanUpJob(weatherArgs.OriginalFormula, weatherArgs.Columns, weatherArgs.Rows, weatherArgs.Invocation));
                 }
                 else {
-                    await processSubscribersQueue(weatherArgs);
-
                     if (processor && processor.has(weatherArgs.Invocation.address!)) {
-                        if (processor.get(weatherArgs.Invocation.address!) !== "Processing") {
-                            const arrayData: any[] | null = generateArrayData(weatherArgs, cacheItemObject.values, false);
-            
-                            if (arrayData && arrayData.length > 0) {
-                                addJob(new PrintJob(weatherArgs.OriginalFormula, arrayData, new ArrayDataExcludeCallerVerticalPrinter(), weatherArgs.Invocation));
-                            }
+                        processor.delete(weatherArgs.Invocation.address!);
+
+                        if (processor.size === 0) {
+                            processor = null;
                         }
                     }
                     else {
                         const arrayData: any[] | null = generateArrayData(weatherArgs, cacheItemObject.values, false);
-            
+                
                         if (arrayData && arrayData.length > 0) {
                             addJob(new PrintJob(weatherArgs.OriginalFormula, arrayData, new ArrayDataExcludeCallerVerticalPrinter(), weatherArgs.Invocation));
                         }
                     }
+
+                    await processSubscribersQueue(weatherArgs);
                 }
 
                 await processJobs();
@@ -235,12 +233,6 @@ async function getReturnValue(cacheItemJsonString: string, weatherArgs: WeatherA
     }
     
     if (cacheItemObject.status === "Complete") {
-        if (!processor) {
-            processor = new Map<string, string>();
-        }
-
-        processor.set(weatherArgs.Invocation.address!, "Printed");
-
         return cacheItemObject.values[0].value;
     }
 

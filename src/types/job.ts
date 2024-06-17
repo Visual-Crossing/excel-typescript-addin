@@ -1,9 +1,10 @@
 import { getCell, getSheet } from "../helpers/helpers.excel";
-import { IArrayDataPrinter } from "./printer";
+import { ArrayDataExcludeCallerVerticalPrinter, IArrayDataPrinter } from "./printer";
 
 export interface IJob {
     getId(): string;
     getAddress(): string;
+    getIsCallerAffected() : boolean;
     run(context: Excel.RequestContext): Promise<boolean>;
 }
 
@@ -26,6 +27,10 @@ export class CleanUpJob implements IJob {
 
     public getAddress(): string {
         return this.Invocation.address!;
+    }
+
+    public getIsCallerAffected() : boolean {
+        return false;
     }
 
     public async run(context: Excel.RequestContext): Promise<boolean> {
@@ -86,6 +91,10 @@ export class PrintJob implements IJob {
     public getAddress(): string {
         return this.Invocation.address!;
     }
+
+    public getIsCallerAffected() : boolean {
+        return !(this.ArrayDataPrinter instanceof ArrayDataExcludeCallerVerticalPrinter);
+    }
     
     public async run(context: Excel.RequestContext): Promise<boolean> {
         try {
@@ -135,6 +144,10 @@ export class FormulaJob implements IJob {
 
     public getAddress(): string {
         return this.Invocation.address!;
+    }
+
+    public getIsCallerAffected() : boolean {
+        return false;
     }
     
     public async run(context: Excel.RequestContext): Promise<boolean> {
