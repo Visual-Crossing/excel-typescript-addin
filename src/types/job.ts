@@ -1,4 +1,4 @@
-import { getCell, getSheet } from "../helpers/helpers.excel";
+import { getCell, getSheetColumnCount, getSheetRowCount } from "../helpers/helpers.excel";
 import { ArrayDataExcludeCallerHorizontalPrinter, ArrayDataExcludeCallerVerticalPrinter, IArrayDataPrinter } from "./printer";
 
 export interface IJob {
@@ -75,12 +75,16 @@ export class PrintJob implements IJob {
     private CallerCellOriginalFormula: any;
     private ArrayData: any[];
     private ArrayDataPrinter: IArrayDataPrinter;
+    private SheetColumnCount: number;
+    private SheetRowCount: number;
     private Invocation: CustomFunctions.Invocation;
 
-    public constructor(callerCellOriginalFormula: any, arrayData: any[], arrayDataPrinter: IArrayDataPrinter, invocation: CustomFunctions.Invocation) {
+    public constructor(callerCellOriginalFormula: any, arrayData: any[], arrayDataPrinter: IArrayDataPrinter, sheetColumnCount: number, sheetRowCount: number, invocation: CustomFunctions.Invocation) {
         this.CallerCellOriginalFormula = callerCellOriginalFormula;
         this.ArrayData = arrayData;
         this.ArrayDataPrinter = arrayDataPrinter;
+        this.SheetColumnCount = sheetColumnCount;
+        this.SheetRowCount = sheetRowCount;
         this.Invocation = invocation;
     }
 
@@ -114,7 +118,7 @@ export class PrintJob implements IJob {
 
                 // ToDo: Implement case insensitive and whitespace free comparison
                 if (callerCell.formulas[0][0] === this.CallerCellOriginalFormula) {
-                    if (this.ArrayDataPrinter.print(callerCell, this.ArrayData)) {
+                    if (this.ArrayDataPrinter.print(callerCell, this.SheetColumnCount, this.SheetRowCount, this.ArrayData)) {
                         await context.sync();
                     }
                 }
@@ -129,11 +133,11 @@ export class PrintJob implements IJob {
 }
 
 export class FormulaJob implements IJob {
-    private Callback: (callerCellFormula: any) => {};
+    private Callback: (callerCellFormula: any, sheetColsCount: number, sheetRowsCount: number) => {};
     private Invocation: CustomFunctions.Invocation;
 
 
-    public constructor(callback: (callerCellFormula: any) => {}, invocation: CustomFunctions.Invocation) {
+    public constructor(callback: (callerCellFormula: any, sheetColsCount: number, sheetRowsCount: number) => {}, invocation: CustomFunctions.Invocation) {
         this.Callback = callback;
         this.Invocation = invocation;
     }
@@ -163,10 +167,17 @@ export class FormulaJob implements IJob {
                     return true;
                 }
 
+                if (!callerCell) {
+                    return true;
+                }
+
                 callerCell.load();
                 await context.sync();
 
-                this.Callback(callerCell.formulas[0][0]);
+                const sheetColumnCount: number = await getSheetColumnCount(this.Invocation.address, context);
+                const sheetRowCount: number = await getSheetRowCount(this.Invocation.address, context);
+
+                this.Callback(callerCell.formulas[0][0], sheetColumnCount, sheetRowCount);
             }
 
             return true;

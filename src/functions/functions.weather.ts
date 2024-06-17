@@ -139,7 +139,7 @@ async function processSubscribersQueue(weatherArgs: WeatherArgs): Promise<void> 
                         const arrayData: any[] | null = generateArrayData(subscriberWeatherArgs, cacheItemObject.values);
 
                         if (arrayData && arrayData.length > 0){
-                            addJob(new PrintJob(subscriberWeatherArgs.OriginalFormula, arrayData, subscriberWeatherArgs.Printer, subscriberWeatherArgs.Invocation));
+                            addJob(new PrintJob(subscriberWeatherArgs.OriginalFormula, arrayData, subscriberWeatherArgs.Printer, subscriberWeatherArgs.SheetColumnCount!, subscriberWeatherArgs.SheetRowCount!, subscriberWeatherArgs.Invocation));
                         }
                     }
                 }
@@ -169,9 +169,11 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
         }));
     }
 
-    addJob(new FormulaJob(async (formula: any) => { 
-        if (formula) {
+    addJob(new FormulaJob(async (formula: any, sheetColumnCount: number, sheetRowCount: number) => { 
+        if (formula && sheetColumnCount && sheetRowCount) {
             weatherArgs.OriginalFormula = formula;
+            weatherArgs.SheetColumnCount = sheetColumnCount;
+            weatherArgs.SheetRowCount = sheetRowCount;
 
             if (cacheItemJsonString) {
                 const cacheItemObject = JSON.parse(cacheItemJsonString);
@@ -196,7 +198,7 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
                         const arrayData: any[] | null = generateArrayData(weatherArgs, cacheItemObject.values, false);
                 
                         if (arrayData && arrayData.length > 0) {
-                            addJob(new PrintJob(weatherArgs.OriginalFormula, arrayData, weatherArgs.Printer.getPrinterExcludingCaller(), weatherArgs.Invocation));
+                            addJob(new PrintJob(weatherArgs.OriginalFormula, arrayData, weatherArgs.Printer.getPrinterExcludingCaller(), weatherArgs.SheetColumnCount!, weatherArgs.SheetRowCount!,weatherArgs.Invocation));
                         }
                     }
 

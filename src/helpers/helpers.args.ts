@@ -13,6 +13,8 @@ export class WeatherArgs {
     Args: any | null | undefined;
     Columns: number = 1;
     Rows: number = 1;
+    SheetColumnCount?: number;
+    SheetRowCount?: number;
     Location: string;
     Date: string;
     Unit: string;

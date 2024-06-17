@@ -2,7 +2,7 @@ import { PrintDirections } from "../helpers/helpers.args";
 
 export interface IArrayDataPrinter {
     getPrintDirection(): PrintDirections;
-    print(callerCell: Excel.Range, arrayData: any[]): boolean;
+    print(callerCell: Excel.Range, sheetColumnCount: number, sheetRowCount: number, arrayData: any[]): boolean;
 }
 
 export interface IArrayDataPrinterWithCaller extends IArrayDataPrinter {
@@ -18,7 +18,7 @@ export class ArrayDataVerticalPrinter implements IArrayDataPrinterWithCaller {
         return new ArrayDataExcludeCallerVerticalPrinter();
     }
 
-    public print(callerCell: Excel.Range, arrayData: any[]): boolean {
+    public print(callerCell: Excel.Range, sheetColumnCount: number, sheetRowCount: number, arrayData: any[]): boolean {
         try {
             if (callerCell && arrayData && arrayData.length > 0) {
                 const arrayDataForPrint: any[] = [];
@@ -27,7 +27,12 @@ export class ArrayDataVerticalPrinter implements IArrayDataPrinterWithCaller {
                     arrayDataForPrint.push([arrayData[i]]);
                 }
         
-                callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex, arrayDataForPrint.length, 1).values = arrayDataForPrint;
+                if (callerCell.rowIndex + (arrayDataForPrint.length - 1) <= sheetRowCount) {
+                    callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex, arrayDataForPrint.length, 1).values = arrayDataForPrint;
+                }
+                else {
+                    callerCell.formulas[0][0] = callerCell.formulas[0][0];
+                }
             }
 
             return true;
@@ -43,7 +48,7 @@ export class ArrayDataExcludeCallerVerticalPrinter implements IArrayDataPrinter 
         return PrintDirections.Vertical;
     }
 
-    public print(callerCell: Excel.Range, arrayData: any[]): boolean {
+    public print(callerCell: Excel.Range, sheetColumnCount: number, sheetRowCount: number, arrayData: any[]): boolean {
         try {
             if (callerCell && arrayData && arrayData.length > 0) {
                 const arrayDataForPrint: any[] = [];
@@ -52,7 +57,12 @@ export class ArrayDataExcludeCallerVerticalPrinter implements IArrayDataPrinter 
                     arrayDataForPrint.push([arrayData[i]]);
                 }
         
-                callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex + 1, callerCell.columnIndex, arrayDataForPrint.length, 1).values = arrayDataForPrint;
+                if (callerCell.rowIndex + (arrayDataForPrint.length - 1) <= sheetRowCount) {
+                    callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex + 1, callerCell.columnIndex, arrayDataForPrint.length, 1).values = arrayDataForPrint;
+                }
+                else {
+                    callerCell.formulas[0][0] = callerCell.formulas[0][0];
+                }
             }
 
             return true;
@@ -72,10 +82,15 @@ export class ArrayDataHorizontalPrinter implements IArrayDataPrinterWithCaller {
         return new ArrayDataExcludeCallerHorizontalPrinter();
     }
 
-    public print(callerCell: Excel.Range, arrayData: any[]): boolean {
+    public print(callerCell: Excel.Range, sheetColumnCount: number, sheetRowCount: number, arrayData: any[]): boolean {
         try {
             if (callerCell && arrayData && arrayData.length > 0) {
-                callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex, 1, arrayData.length).values = [arrayData];
+                if (callerCell.columnIndex + (arrayData.length - 1) <= sheetColumnCount) {
+                    callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex, 1, arrayData.length).values = [arrayData];
+                }
+                else {
+                    callerCell.formulas[0][0] = callerCell.formulas[0][0];
+                }
             }
 
             return true;
@@ -91,7 +106,7 @@ export class ArrayDataExcludeCallerHorizontalPrinter implements IArrayDataPrinte
         return PrintDirections.Horizontal;
     }
 
-    public print(callerCell: Excel.Range, arrayData: any[]): boolean {
+    public print(callerCell: Excel.Range, sheetColumnCount: number, sheetRowCount: number, arrayData: any[]): boolean {
         try {
             if (callerCell && arrayData && arrayData.length > 0) {
                 const arrayDataForPrint: any[] = [];
@@ -100,7 +115,12 @@ export class ArrayDataExcludeCallerHorizontalPrinter implements IArrayDataPrinte
                     arrayDataForPrint.push(arrayData[i]);
                 }
 
-                callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex + 1, 1, arrayDataForPrint.length).values = [arrayDataForPrint];
+                if (callerCell.columnIndex + (arrayDataForPrint.length - 1) <= sheetColumnCount) {
+                    callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex + 1, 1, arrayDataForPrint.length).values = [arrayDataForPrint];
+                }
+                else {
+                    callerCell.formulas[0][0] = callerCell.formulas[0][0];
+                }
             }
 
             return true;

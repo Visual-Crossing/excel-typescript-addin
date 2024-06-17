@@ -9,6 +9,36 @@ export function getCell(address: string, context: Excel.RequestContext): Excel.R
     return caller;
 }
 
+export async function getSheetColumnCount(address: string, context: Excel.RequestContext): Promise<number> {
+    const sheet = getSheet(address, context);
+
+    // sheet.load();
+    // await context.sync();
+    // sheet.getRange().load();
+    // await context.sync();
+    const range: Excel.Range = sheet.getRange();
+    range.load("columnCount");
+
+    await context.sync();
+
+    return range.columnCount;
+}
+
+export async function getSheetRowCount(address: string, context: Excel.RequestContext): Promise<number>  {
+    const sheet = getSheet(address, context);
+
+    // sheet.load();
+    // await context.sync();
+    // sheet.getRange().load();
+    // await context.sync();
+    const range: Excel.Range = sheet.getRange();
+    range.load("rowCount");
+
+    await context.sync();
+
+    return range.rowCount;
+}
+
 export function getSheet(address: string, context: Excel.RequestContext): Excel.Worksheet {
     if (!context ||
         !context.workbook ||
