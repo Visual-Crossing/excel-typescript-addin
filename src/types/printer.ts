@@ -75,12 +75,6 @@ export class ArrayDataHorizontalPrinter implements IArrayDataPrinterWithCaller {
     public async print(callerCell: Excel.Range, arrayData: any[]): Promise<boolean> {
         try {
             if (callerCell && arrayData && arrayData.length > 0) {
-                // const arrayDataForPrint: any[] = [];
-    
-                // for (let i = 1; i < values.length; i++) {
-                //     arrayDataForPrint.push(values[i]);
-                // }
-
                 callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex, 1, arrayData.length).values = [arrayData];
             }
 
