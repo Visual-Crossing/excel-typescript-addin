@@ -250,7 +250,13 @@ async function fetchTimelineData(apiKey: string | null | undefined, weatherArgs:
         return await new Promise(async (resolve, reject) => {
             try {
                 const response: Response = await fetch(TIMELINE_API_URL);
-                return resolve (await onTimelineApiSuccessResponse(response, weatherArgs));
+
+                if (response.status === 200) {
+                    return resolve (await onTimelineApiSuccessResponse(response, weatherArgs));
+                }
+                else {
+                    return reject("API Error");
+                }
             }
             catch (error: any) {
                 return reject(error);
@@ -283,14 +289,15 @@ async function onTimelineApiSuccessJsonResponse(jsonResponse: any, weatherArgs: 
         try {
             if (jsonResponse && jsonResponse.days && jsonResponse.days.length > 0 && jsonResponse.days[0]) {
                 setCacheItem(weatherArgs.CacheId, JSON.stringify({ 
-                    "status": "Complete",
-                    "values":
+                    status: "Complete",
+                    type: "Permanent",
+                    values:
                       [
-                          {"name": "tempmax", "value": jsonResponse.days[0].tempmax},
-                          {"name": "tempmin", "value": jsonResponse.days[0].tempmin},
-                          {"name": "precip", "value": jsonResponse.days[0].precip},
-                          {"name": "precipprob", "value": jsonResponse.days[0].precipprob},
-                          {"name": "windspeed", "value": jsonResponse.days[0].windspeed}
+                          { name: "tempmax", value: jsonResponse.days[0].tempmax },
+                          { name: "tempmin", value: jsonResponse.days[0].tempmin },
+                          { name: "precip", value: jsonResponse.days[0].precip },
+                          { name: "precipprob", value: jsonResponse.days[0].precipprob },
+                          { name: "windspeed", value: jsonResponse.days[0].windspeed }
                       ]
                 }));
 
