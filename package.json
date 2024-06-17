@@ -10,6 +10,7 @@
     "build": "webpack --mode production",
     "build:dev": "webpack --mode development",
     "dev-server": "webpack serve --mode development",
+    "dev-server-no-overlay": "webpack serve --mode development --no-client-overlay",
     "lint": "office-addin-lint check",
     "lint:fix": "office-addin-lint fix",
     "prestart": "npm run build",
