@@ -248,7 +248,7 @@ async function fetchTimelineData(apiKey: string | null | undefined, weatherArgs:
     if (apiKey) {
         subscribe(weatherArgs);
 
-        const TIMELINE_API_URL:string = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${weatherArgs.Location}/${weatherArgs.Date}?key=${apiKey}&unitGroup=${weatherArgs.Unit}`
+        const TIMELINE_API_URL:string = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${weatherArgs.Location}/${weatherArgs.Date.toISOString()}?key=${apiKey}&unitGroup=${weatherArgs.Unit}`
         
         return await new Promise(async (resolve, reject) => {
             try {
