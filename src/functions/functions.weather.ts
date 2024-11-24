@@ -260,7 +260,7 @@ async function fetchTimelineData(apiKey: string | null | undefined, weatherArgs:
                 else {
                     setCacheItem(weatherArgs.CacheId, JSON.stringify({ 
                         status: "Complete",
-                        type: "Temporaru",
+                        type: "Temporary",
                         values:
                           [
                               { name: "Error", value: "API Error" },
