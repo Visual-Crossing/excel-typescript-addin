@@ -4,7 +4,6 @@ import { ArrayDataExcludeCallerHorizontalPrinter, ArrayDataExcludeCallerVertical
 export interface IJob {
     getId(): string;
     getAddress(): string;
-    getIsCallerAffected() : boolean;
     run(context: Excel.RequestContext): Promise<boolean>;
 }
 
@@ -27,10 +26,6 @@ export class CleanUpJob implements IJob {
 
     public getAddress(): string {
         return this.Invocation.address!;
-    }
-
-    public getIsCallerAffected() : boolean {
-        return false;
     }
 
     public async run(context: Excel.RequestContext): Promise<boolean> {

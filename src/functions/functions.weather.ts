@@ -2,73 +2,16 @@ import { WeatherArgs } from "../helpers/helpers.args";
 import { getCacheItem, removeCacheItem, setCacheItem } from "../cache/cache";
 import { getApiKeyFromSettingsAsync } from "../settings/settings";
 import { DistinctQueue } from "../types/distinct-queue";
-import { NA_DATA } from "../common/constants";
-import { CleanUpJob, FormulaJob, IJob, PrintJob } from "../types/job";
-import { Queue } from "queue-typescript";
+import { CleanUpJob, FormulaJob, PrintJob } from "../types/job";
 import { generateArrayData } from "../helpers/helpers.array-data";
+import { addJob, processJobs } from "src/helpers/helpers.jobs";
+import { NA_DATA } from "src/shared/constants";
 
 var subscribersGroupedByCacheId: Map<string, DistinctQueue<string, WeatherArgs>> | null;
-
-var jobs: Queue<IJob> | null = null;
-var isJobsProcessingInProgress: boolean = false;
 
 var processor: Map<string, string> | null = null;
 
 const PROCESSING: string = "Processing...";
-
-async function processJobs(): Promise<void> {
-    if (jobs && jobs.length > 0 && !isJobsProcessingInProgress) {
-        try {
-            isJobsProcessingInProgress = true;
-
-            return await Excel.run(async (context: Excel.RequestContext) => {
-                try {
-                    while (jobs && jobs.length > 0) {
-                        const job: IJob = jobs.front;
-
-                        if (job.getIsCallerAffected()) {
-                            if (!processor) {
-                                processor = new Map<string, string>();
-                            }
-
-                            processor.set(job.getAddress(), JSON.stringify({ status: "Printing" }));
-                        }
-
-                        if (await job.run(context)) {
-                            jobs.dequeue();
-                        }
-                        else {
-                            const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); await processJobs(); }, 250);
-                            return;
-                        }
-                    }
-
-                    jobs = null;
-                }
-                catch {
-                    const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); await processJobs(); }, 250);
-                }
-                finally {
-                    isJobsProcessingInProgress = false;
-                }
-            });
-        }
-        catch {
-            const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); await processJobs(); }, 250);
-        }
-        finally {
-            isJobsProcessingInProgress = false;
-        }
-    }
-}
-
-function addJob(job: IJob) : void {
-    if (!jobs) {
-        jobs = new Queue<IJob>();
-    }
-
-    jobs.enqueue(job);
-}
 
 function subscribe(weatherArgs: WeatherArgs): void {
     if (!weatherArgs) {

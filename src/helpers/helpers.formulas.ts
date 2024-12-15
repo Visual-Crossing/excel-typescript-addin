@@ -118,7 +118,7 @@ export function extractFormulaArgsSection(formula: string): string | null {
 }
 
 export function getUpdatedFormula(weatherArgs: WeatherArgs, arrayCols: number, arrayRows: number): string {
-    if (weatherArgs && weatherArgs.Args && weatherArgs.OriginalFormula) {
+    if (weatherArgs && weatherArgs.OptionalArg1 && weatherArgs.OriginalFormula) {
         const formulaArgsSection: string | null = extractFormulaArgsSection(weatherArgs.OriginalFormula);
 
         if (!formulaArgsSection) {

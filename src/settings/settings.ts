@@ -1,6 +1,8 @@
 const API_KEY_SETTING: string = "Visual Crossing API Key";
 const UNIT_SETTING: string = "Visual Crossing Unit";
 
+export const DEFAULT_UNIT: string = "us";
+
 export async function getApiKeyFromSettingsAsync(): Promise<string | null | undefined> {
     return await OfficeRuntime.storage.getItem(API_KEY_SETTING);
 }

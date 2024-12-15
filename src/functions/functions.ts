@@ -8,12 +8,24 @@ import { getOrRequestData } from "./functions.weather";
  * @customfunction
  * @param location Location
  * @param date Date
- * @param optionalArgs Optional Parameters
+ * @param optionalArg1 Optional Parameter1
+ * @param optionalArg2 Optional Parameter2
+ * @param optionalArg3 Optional Parameter3
+ * @param optionalArg4 Optional Parameter4 
  * @param invocation
  * @requiresAddress
  * @returns Weather data.
  */
-export async function Weather(location: any, date: any, optionalArgs: any | null | undefined = null, invocation: CustomFunctions.Invocation): Promise<string | number | Date> {
+export async function Weather(
+  location: any, 
+  date: any, 
+  optionalArg1: any | null | undefined = null, 
+  optionalArg2: any | null | undefined = null,
+  optionalArg3: any | null | undefined = null,
+  optionalArg4: any | null | undefined = null, 
+  invocation: CustomFunctions.Invocation
+): Promise<string | number | Date> {
+  
   try {
     if (!location) {
       return "#Invalid Location!";
@@ -23,7 +35,7 @@ export async function Weather(location: any, date: any, optionalArgs: any | null
       return "#Invalid Date!";
     }
 
-    const weatherArgs: WeatherArgs = await extractWeatherArgs(location, date, optionalArgs, invocation);
+    const weatherArgs: WeatherArgs = await extractWeatherArgs(location, date, optionalArg1, optionalArg2, optionalArg3, optionalArg4, invocation);
 
     return await getOrRequestData(weatherArgs)
   }

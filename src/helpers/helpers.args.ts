@@ -1,6 +1,6 @@
 import { ArrayDataHorizontalPrinter, ArrayDataVerticalPrinter, IArrayDataPrinterWithCaller } from "../types/printer";
 import { generateCacheId } from "../cache/cache";
-import { getUnitFromSettingsAsync } from "../settings/settings";
+import { DEFAULT_UNIT, getUnitFromSettingsAsync } from "../settings/settings";
 
 const INVALID_DATE: string = "Invalid date.";
 
@@ -11,7 +11,6 @@ export enum PrintDirections {
 export class WeatherArgs {
     CacheId: string;
     OriginalFormula?: any;
-    Args: any | null | undefined;
     Columns: number = 1;
     Rows: number = 1;
     SheetColumnCount?: number;
@@ -21,8 +20,18 @@ export class WeatherArgs {
     Unit: string;
     Invocation: CustomFunctions.Invocation;
     Printer: IArrayDataPrinterWithCaller = new ArrayDataVerticalPrinter();
+    OptionalArg1?: any | null | undefined;
+    OptionalArg2?: any | null | undefined;
 
-    public constructor(location: any, date: any, unit: string, args: any | null | undefined, invocation: CustomFunctions.Invocation) {
+    public constructor(
+        location: any, 
+        date: any, unit: string, 
+        optionalArg1: any | null | undefined,
+        optionalArg2: any | null | undefined,
+        optionalArg3: any | null | undefined,
+        optionalArg4: any | null | undefined, 
+        invocation: CustomFunctions.Invocation) {
+        
         const dateConverted = this.toDate(date);
 
         if (!this.isValidDate(dateConverted)) {
@@ -32,7 +41,8 @@ export class WeatherArgs {
         this.Location = location as string;
         this.Date = dateConverted;
         this.Unit = unit;
-        this.Args = args;
+        this.OptionalArg1 = optionalArg1;
+        this.OptionalArg2 = optionalArg2;
         this.Invocation = invocation;
 
         this.CacheId = generateCacheId(this.Location, this.Date.toDateString(), this.Unit)
@@ -67,30 +77,38 @@ export class WeatherArgs {
     }
 }
 
-export async function extractWeatherArgs(location: any, date: any, args: any | null | undefined, invocation: CustomFunctions.Invocation): Promise<WeatherArgs> {
+export async function extractWeatherArgs(
+    location: any, 
+    date: any, 
+    optionalArg1: any | null | undefined, 
+    optionalArg2: any | null | undefined,
+    optionalArg3: any | null | undefined,
+    optionalArg4: any | null | undefined, 
+    invocation: CustomFunctions.Invocation): Promise<WeatherArgs> {
+    
     const INVALID_PARAMETERS: string = "Invalid parameters.";
 
-    if (args && typeof args !== 'string') {
+    if ((optionalArg1 && typeof optionalArg1 !== 'string') ||
+        (optionalArg2 && typeof optionalArg2 !== 'string')) {
         throw new Error(INVALID_PARAMETERS);
     }
 
     let unit: string | null | undefined = await getUnitFromSettingsAsync();
 
     if (!unit) {
-        //Default unit = us
-        unit = "us";
+        unit = DEFAULT_UNIT;
     }
 
-    const weatherArgs: WeatherArgs = new WeatherArgs(location, date, unit, args, invocation);
+    const weatherArgs: WeatherArgs = new WeatherArgs(location, date, unit, optionalArg1, optionalArg2, optionalArg3, optionalArg4, invocation);
     
-    if (!weatherArgs.Args) {
+    if (!weatherArgs.OptionalArg1 && !weatherArgs.OptionalArg2) {
         return weatherArgs;
     }
 
     const INVALID_PARAMETER_NAME: string = "Invalid parameter name";
     const INVALID_PARAMETER_VALUE: string = "Invalid parameter value";
 
-    const argsArray: string[] = weatherArgs.Args.split(";");
+    const argsArray: string[] = weatherArgs.OptionalArg1.split(";");
 
     if (argsArray && argsArray.length > 0) {
         argsArray.forEach(element => {
@@ -119,17 +137,9 @@ export async function extractWeatherArgs(location: any, date: any, args: any | n
                 }
             }
             else if (argName === "cols") {
-                // if (typeof arg[1] !== 'number'){
-                //     throw new Error(`${INVALID_PARAMETER_VALUE} '${arg[1]}' for parameter name '${arg[0]}'. This value is set automatically and should not be altered manually.`);
-                // }
-
                 weatherArgs.Columns = parseInt(arg[1], 10);
             }
             else if (argName === "rows") {
-                // if (typeof arg[1] !== 'number'){
-                //     throw new Error(`${INVALID_PARAMETER_VALUE} '${arg[1]}' for parameter name '${arg[0]}'. This value is set automatically and should not be altered manually.`);
-                // }
-
                 weatherArgs.Rows = parseInt(arg[1], 10);
             }
             else {
