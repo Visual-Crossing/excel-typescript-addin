@@ -1,3 +1,3 @@
 export interface IDateService {
-    toDate(value: any): Date;
+    parseDate(value: any): Date;
 }

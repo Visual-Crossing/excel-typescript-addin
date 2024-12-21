@@ -1,32 +1,32 @@
-import { getCacheItem, removeCacheItem, setCacheItem } from "../cache/cache";
-import { getApiKeyFromSettingsAsync } from "../settings/settings";
-import { DistinctQueue } from "../types/queues/distinct.queue.type";
-import { generateArrayData } from "../helpers/helpers.array-data";
-import { addJob, processJobs } from "src/helpers/helpers.jobs";
-import { NA_DATA } from "src/shared/constants";
-import { PrintJobService } from "src/services/jobs/print.job.service";
-import { FormulaJobService } from "src/services/jobs/formula.job.service";
-import { CleanUpJobService } from "src/services/jobs/cleanup.job.service";
-import { WeatherObserver } from "src/types/observers/weather.observer.type";
+import { getCacheItem, removeCacheItem, setCacheItem } from '../cache/cache';
+import { getApiKeyFromSettingsAsync } from '../settings/settings';
+import { DistinctQueue } from '../types/queues/distinct.queue.type';
+import { generateArrayData } from '../helpers/helpers.array-data';
+import { addJob, processJobs } from '../helpers/helpers.jobs';
+import { NA_DATA } from '../shared/constants';
+import { PrintJobService } from '../services/jobs/print.job.service';
+import { FormulaJobService } from '../services/jobs/formula.job.service';
+import { CleanUpJobService } from '../services/jobs/cleanup.job.service';
+import { WeatherObserver } from '../types/observers/weather.observer.type';
 
 var subscribersGroupedByCacheId: Map<string, DistinctQueue<string, WeatherObserver>> | null;
 
 var processor: Map<string, string> | null = null;
 
-const PROCESSING: string = "Processing...";
+const PROCESSING: string = 'Processing...';
 
 function subscribe(weatherObserver: WeatherObserver): void {
     if (!weatherObserver) {
-        throw new Error("Invalid args.");
+        throw new Error('Invalid args.');
     }
 
     if (!weatherObserver.CacheId) {
-        throw new Error("Invalid cache id.");
+        throw new Error('Invalid cache id.');
     }
 
     if (!weatherObserver.Invocation ||
         !weatherObserver.Invocation.address) {
-            throw new Error("Invalid invocation.");
+            throw new Error('Invalid invocation.');
     }
 
     if (!subscribersGroupedByCacheId) {
@@ -40,7 +40,7 @@ function subscribe(weatherObserver: WeatherObserver): void {
     const subscribersForCacheId: DistinctQueue<string, WeatherObserver> = subscribersGroupedByCacheId.get(weatherObserver.CacheId)!;
 
     if (!subscribersForCacheId) {
-        throw new Error("Invalid internal state.");
+        throw new Error('Invalid internal state.');
     }
 
     subscribersForCacheId.enqueue(weatherObserver.Invocation.address, weatherObserver);
@@ -48,7 +48,7 @@ function subscribe(weatherObserver: WeatherObserver): void {
 
 async function processSubscribersQueue(weatherObserver: WeatherObserver): Promise<void> {
     if (!weatherObserver || !weatherObserver.CacheId) {
-        throw new Error("Invalid args.");
+        throw new Error('Invalid args.');
     }
     
     if (!subscribersGroupedByCacheId || !subscribersGroupedByCacheId.has(weatherObserver.CacheId)) {
@@ -79,7 +79,7 @@ async function processSubscribersQueue(weatherObserver: WeatherObserver): Promis
                 if (cacheItemString) {
                     const cacheItemObject = JSON.parse(cacheItemString);
 
-                    if (cacheItemObject && cacheItemObject.status && cacheItemObject.status === "Complete" && cacheItemObject.values && cacheItemObject.values.length > 0) {
+                    if (cacheItemObject && cacheItemObject.status && cacheItemObject.status === 'Complete' && cacheItemObject.values && cacheItemObject.values.length > 0) {
                         const arrayData: any[] | null = generateArrayData(subscriberWeatherArgs, cacheItemObject.values);
 
                         if (arrayData && arrayData.length > 0){
@@ -109,7 +109,7 @@ export async function getOrRequestData(weatherObserver: WeatherObserver): Promis
 
     if (!cacheItemJsonString) {
         setCacheItem(weatherObserver.CacheId, JSON.stringify({ 
-            status: "Requesting",
+            status: 'Requesting',
         }));
     }
 
@@ -126,7 +126,7 @@ export async function getOrRequestData(weatherObserver: WeatherObserver): Promis
                     return;
                 }
                 
-                if (cacheItemObject.status === "Requesting") {
+                if (cacheItemObject.status === 'Requesting') {
                     subscribe(weatherObserver);
                     addJob(new CleanUpJobService(weatherObserver.OriginalFormula, weatherObserver.Columns, weatherObserver.Rows, weatherObserver.Invocation));
                 }
@@ -175,11 +175,11 @@ async function getReturnValue(cacheItemJsonString: string, weatherObserver: Weat
     const cacheItemObject = JSON.parse(cacheItemJsonString);
 
     if (!cacheItemObject) {
-        throw new Error("Unable to deserialize cache item.");
+        throw new Error('Unable to deserialize cache item.');
     }
     
-    if (cacheItemObject.status === "Complete") {
-        if (cacheItemObject.type === "Temporary") {
+    if (cacheItemObject.status === 'Complete') {
+        if (cacheItemObject.type === 'Temporary') {
             removeCacheItem(weatherObserver.CacheId);
         }
 
@@ -204,11 +204,11 @@ async function fetchTimelineData(apiKey: string | null | undefined, weatherObser
                 }
                 else {
                     setCacheItem(weatherObserver.CacheId, JSON.stringify({ 
-                        status: "Complete",
-                        type: "Temporary",
+                        status: 'Complete',
+                        type: 'Temporary',
                         values:
                           [
-                              { name: "Error", value: "API Error" },
+                              { name: 'Error', value: 'API Error' },
                           ]
                     }));
     
@@ -224,7 +224,7 @@ async function fetchTimelineData(apiKey: string | null | undefined, weatherObser
         });
     }
     else {
-        return "#Invalid API Key!";
+        return '#Invalid API Key!';
     }
 }
 
@@ -249,15 +249,15 @@ async function onTimelineApiSuccessJsonResponse(jsonResponse: any, weatherObserv
         try {
             if (jsonResponse && jsonResponse.days && jsonResponse.days.length > 0 && jsonResponse.days[0]) {
                 setCacheItem(weatherObserver.CacheId, JSON.stringify({ 
-                    status: "Complete",
-                    type: "Permanent",
+                    status: 'Complete',
+                    type: 'Permanent',
                     values:
                       [
-                          { name: "tempmax", value: jsonResponse.days[0].tempmax },
-                          { name: "tempmin", value: jsonResponse.days[0].tempmin },
-                          { name: "precip", value: jsonResponse.days[0].precip },
-                          { name: "precipprob", value: jsonResponse.days[0].precipprob },
-                          { name: "windspeed", value: jsonResponse.days[0].windspeed }
+                          { name: 'tempmax', value: jsonResponse.days[0].tempmax },
+                          { name: 'tempmin', value: jsonResponse.days[0].tempmin },
+                          { name: 'precip', value: jsonResponse.days[0].precip },
+                          { name: 'precipprob', value: jsonResponse.days[0].precipprob },
+                          { name: 'windspeed', value: jsonResponse.days[0].windspeed }
                       ]
                 }));
 

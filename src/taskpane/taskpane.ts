@@ -3,8 +3,8 @@
  * See LICENSE in the project root for license information.
  */
 
-import { DI } from "src/services/container";
-import { getApiKeyFromSettingsAsync, getUnitFromSettingsAsync, storeApiKeyAsync, setUnitAsync } from "../settings/settings";
+import { DI } from '../services/container';
+import { getApiKeyFromSettingsAsync, getUnitFromSettingsAsync, storeApiKeyAsync, setUnitAsync } from '../settings/settings';
 
 /* global console, document, Excel, Office */
 
@@ -19,11 +19,11 @@ Office.onReady(async () => {
       return;
     }
 
-    if (!trySetBtnOnClickHandler("btn-ok", "ok", () => btnOkOnClickHandler())) {
+    if (!trySetBtnOnClickHandler('btn-ok', 'ok', () => btnOkOnClickHandler())) {
       return;
     }
 
-    if (!trySetBtnOnClickHandler("btn-cancel", "cancel", () => btnCancelOnClickHandler())) {
+    if (!trySetBtnOnClickHandler('btn-cancel', 'cancel', () => btnCancelOnClickHandler())) {
       return;
     }
 
@@ -78,7 +78,7 @@ function trySetBtnOnClickHandler(btnId: string, btnName: string, btnOnClickHandl
 }
 
 function tryInitialiseUnitLabels(): boolean {
-  const unitLabels = document.querySelectorAll<HTMLInputElement>(".btn-group > label > input");
+  const unitLabels = document.querySelectorAll<HTMLInputElement>('.btn-group > label > input');
 
   if (unitLabels) {
     unitLabels.forEach((inputLabel) => {
@@ -89,16 +89,16 @@ function tryInitialiseUnitLabels(): boolean {
   }
   else
   {
-    console.error("Could not find the unit labels.");
+    console.error('Could not find the unit labels.');
     return false;
   }
 }
 
 function getApiKeyTextBox(): HTMLInputElement | null {
-  const textBox: HTMLElement | null = document.getElementById("api-key-input");
+  const textBox: HTMLElement | null = document.getElementById('api-key-input');
 
   if (!textBox) {
-    console.error("Could not find the API key text box.");
+    console.error('Could not find the API key text box.');
     return null;
   }
 
@@ -125,7 +125,7 @@ function updateBtnOkState() {
       return;
     }
 
-    const okButton: HTMLButtonElement | null = getButton("btn-ok", "ok");
+    const okButton: HTMLButtonElement | null = getButton('btn-ok', 'ok');
 
     if (!okButton) {
       return;
@@ -134,13 +134,13 @@ function updateBtnOkState() {
     const apiKeyFromInput: string = apiKeyTextBox.value;
 
     if (apiKeyFromInput && apiKeyFromInput.length > 0) {
-        okButton.classList.remove("disabled");
-        okButton.classList.remove("btn-secondary");
-        okButton.classList.add("btn-primary");
+        okButton.classList.remove('disabled');
+        okButton.classList.remove('btn-secondary');
+        okButton.classList.add('btn-primary');
     } else {
-        okButton.classList.remove("btn-primary");
-        okButton.classList.add("disabled");
-        okButton.classList.add("btn-secondary");
+        okButton.classList.remove('btn-primary');
+        okButton.classList.add('disabled');
+        okButton.classList.add('btn-secondary');
     }
   }
   catch (e: unknown) {
@@ -166,7 +166,7 @@ async function btnOkOnClickHandler() {
       await setUnitAsync(unit);
 
       Office.context.ui.messageParent(JSON.stringify({ apiKey: apiKeyFromInput, unit: unit}));
-      // Office.context.ui.messageParent("");
+      // Office.context.ui.messageParent('');
     }
   }
   catch (e: unknown) {
@@ -177,7 +177,7 @@ async function btnOkOnClickHandler() {
 function btnCancelOnClickHandler() {
   try
   {
-    Office.context.ui.messageParent("");
+    Office.context.ui.messageParent('');
   }
   catch (e: unknown) {
     console.error(`Unexpected error: ${e}`);
@@ -189,20 +189,20 @@ function unitLabelOnClickHandler(ev: MouseEvent, inputLabel: HTMLInputElement) {
   {
     ev.preventDefault();
 
-    const labels = document.querySelectorAll<HTMLInputElement>(".btn-group > label");
+    const labels = document.querySelectorAll<HTMLInputElement>('.btn-group > label');
 
     if (labels) {
-      $(labels).removeClass("active");
+      $(labels).removeClass('active');
     }
     else {
-      console.error("Unable to find the unit labels.");
+      console.error('Unable to find the unit labels.');
     }
 
     if (inputLabel) {
-      $(inputLabel).parent().addClass("active");
+      $(inputLabel).parent().addClass('active');
     }
     else {
-      console.error("Unable to select the unit label.");
+      console.error('Unable to select the unit label.');
     }
   }
   catch (e: unknown) {
@@ -211,17 +211,17 @@ function unitLabelOnClickHandler(ev: MouseEvent, inputLabel: HTMLInputElement) {
 }
 
 function getUnitAsyncFromInput(): string {
-  const labelUk = document.getElementById("label-uk");
+  const labelUk = document.getElementById('label-uk');
 
-  if (labelUk && labelUk.classList.contains("active")) {
-    return "uk";
+  if (labelUk && labelUk.classList.contains('active')) {
+    return 'uk';
   } else {
-    const labelMetric = document.getElementById("label-metric");
+    const labelMetric = document.getElementById('label-metric');
 
-    if (labelMetric && labelMetric.classList.contains("active")) {
-      return "metric";
+    if (labelMetric && labelMetric.classList.contains('active')) {
+      return 'metric';
     } else {
-      return "us";
+      return 'us';
     }
   }
 }
@@ -231,21 +231,21 @@ async function loadUnit() {
   let unitLabel: HTMLElement | null = null;
 
   if (!unit) {
-    unitLabel = document.getElementById("label-us");
+    unitLabel = document.getElementById('label-us');
   }
-  else if (unit === "uk") {
-    unitLabel = document.getElementById("label-uk");
-  } else if (unit === "metric") {
-    unitLabel = document.getElementById("label-metric");
+  else if (unit === 'uk') {
+    unitLabel = document.getElementById('label-uk');
+  } else if (unit === 'metric') {
+    unitLabel = document.getElementById('label-metric');
   } else {
-    unitLabel = document.getElementById("label-us");
+    unitLabel = document.getElementById('label-us');
   }
 
   if (unitLabel) {
-    unitLabel.classList.add("active");
+    unitLabel.classList.add('active');
   }
   else {
-    console.error("Unable to load the unit.");
+    console.error('Unable to load the unit.');
   }
 }
 

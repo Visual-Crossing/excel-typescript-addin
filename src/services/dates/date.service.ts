@@ -1,10 +1,10 @@
-import { IDateService } from "src/types/dates/date-service.type";
-import { Service } from "typedi";
+import { IDateService } from '../../types/dates/date-service.type';
+import { Service } from 'typedi';
 
 @Service({ global: true })
 export class DateService implements IDateService {
-    public toDate(value: any) : Date {
-        const INVALID_DATE: string = "Invalid date.";
+    public parseDate(value: any) : Date {
+        const INVALID_DATE: string = '#Invalid date!';
 
         if (!value) {
             throw new Error(INVALID_DATE);

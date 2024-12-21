@@ -1,5 +1,5 @@
 import { Service } from 'typedi';
-import { ICache } from 'src/types/cache/cache.type';
+import { ICache } from '../../types/cache/cache.type';
 
 @Service({ global: true })
 export class BrowserSessionCacheService implements ICache {

@@ -1,9 +1,9 @@
-import { getCell } from "src/helpers/helpers.excel";
-import { IJob } from "src/types/jobs/job.type";
-import { IArrayDataPrinter } from "src/types/printers/printer.type";
-import { ArrayDataExcludeCallerVerticalPrinterService } from "../printers/vertical.printer.service";
-import { ArrayDataExcludeCallerHorizontalPrinterService } from "../printers/horizontal.printer.service";
-import { Service } from "typedi";
+import { getCell } from '../../helpers/helpers.excel';
+import { IJob } from '../../types/jobs/job.type';
+import { IArrayDataPrinter } from '../../types/printers/printer.type';
+import { ArrayDataExcludeCallerVerticalPrinterService } from '../printers/vertical.printer.service';
+import { ArrayDataExcludeCallerHorizontalPrinterService } from '../printers/horizontal.printer.service';
+import { Service } from 'typedi';
 
 @Service({ transient: true })
 export class PrintJobService implements IJob {

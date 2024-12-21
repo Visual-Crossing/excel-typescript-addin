@@ -1,8 +1,8 @@
-import { DEFAULT_UNIT } from "src/settings/settings";
-import { ISettings } from "src/types/settings/settings.type";
+import { DEFAULT_UNIT } from '../../settings/settings';
+import { ISettings } from '../../types/settings/settings.type';
 
-const API_KEY_SETTING: string = "Visual Crossing API Key";
-const UNIT_SETTING: string = "Visual Crossing Unit";
+const API_KEY_SETTING: string = 'Visual Crossing API Key';
+const UNIT_SETTING: string = 'Visual Crossing Unit';
 
 export class OfficeSettingsService implements ISettings {
     public getApiKey(onSuccess: (apiKey: string | null | undefined) => void, onError?: (error: any) => void): void {

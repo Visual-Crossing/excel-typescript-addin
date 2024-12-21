@@ -1,8 +1,8 @@
-import { IArrayDataPrinterWithCaller } from "src/types/printers/printer.type";
-import { INVALID_PARAMETER_VALUE } from "src/shared/constants";
-import { IParameterProcessor } from "src/types/parameters/parameter-processor.type";
-import { WeatherObserver } from "src/types/observers/weather.observer.type";
-import Container from "typedi";
+import { IArrayDataPrinterWithCaller } from '../../types/printers/printer.type';
+import { INVALID_PARAMETER_VALUE } from '../../shared/constants';
+import { IParameterProcessor } from '../../types/parameters/parameter-processor.type';
+import { WeatherObserver } from '../../types/observers/weather.observer.type';
+import Container from 'typedi';
 
 export class PrintDirectionParameterService implements IParameterProcessor {
     public process(value: any, weatherObserver: WeatherObserver): void {

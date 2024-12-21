@@ -1,5 +1,5 @@
-import { PrintDirections } from "src/helpers/helpers.args";
-import { IArrayDataPrinter, IArrayDataPrinterWithCaller } from "src/types/printers/printer.type";
+import { PrintDirections } from '../../helpers/helpers.args';
+import { IArrayDataPrinter, IArrayDataPrinterWithCaller } from '../../types/printers/printer.type';
 
 export class ArrayDataHorizontalPrinterService implements IArrayDataPrinterWithCaller {
     public getPrintDirection(): PrintDirections {

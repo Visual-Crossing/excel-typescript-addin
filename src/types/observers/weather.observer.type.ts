@@ -1,4 +1,4 @@
-import { IArrayDataPrinterWithCaller } from "../printers/printer.type";
+import { IArrayDataPrinterWithCaller } from '../printers/printer.type';
 
 export type WeatherObserver = {
     CacheId: string;
@@ -16,6 +16,7 @@ export type WeatherObserver = {
     OptionalArg2?: any | null | undefined;
     OptionalArg3?: any | null | undefined;
     OptionalArg4?: any | null | undefined;
+    OptionalArg5?: any | null | undefined;
 
     SheetColumnCount?: number;
     SheetRowCount?: number;

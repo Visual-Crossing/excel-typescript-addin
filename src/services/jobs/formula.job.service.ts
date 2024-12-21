@@ -1,6 +1,6 @@
-import { getCell, getSheetColumnCount, getSheetRowCount } from "src/helpers/helpers.excel";
-import { IJob } from "src/types/jobs/job.type";
-import { Service } from "typedi";
+import { getCell, getSheetColumnCount, getSheetRowCount } from '../../helpers/helpers.excel';
+import { IJob } from '../../types/jobs/job.type';
+import { Service } from 'typedi';
 
 @Service({ transient: true })
 export class FormulaJobService implements IJob {

@@ -1,5 +1,5 @@
 import { Container } from 'typedi';
-import { ICache } from 'src/types/cache/cache.type';
+import { ICache } from '../types/cache/cache.type';
 import { BrowserSessionCacheService } from './cache/browser-session.cache.service';
 import { PrecipitationFieldService } from './fields/precipitation.field.service';
 import { PrintDirectionParameterService } from './parameters/print-direction.parameter-processor.service';
@@ -7,10 +7,10 @@ import { ArrayDataVerticalPrinterService } from './printers/vertical.printer.ser
 import { ArrayDataHorizontalPrinterService } from './printers/horizontal.printer.service';
 import { ColumnsParameterService } from './parameters/columns.parameter-processor.service';
 import { RowsParameterService } from './parameters/rows.parameter-processor.service';
-import { ISettings } from 'src/types/settings/settings.type';
+import { ISettings } from '../types/settings/settings.type';
 import { OfficeSettingsService } from './settings/office-settings.service';
-import { WeatherObserverService } from './observers/weather.observer';
-import { IDateService } from 'src/types/dates/date-service.type';
+import { WeatherObserverService } from './observers/weather.observer.service';
+import { IDateService } from '../types/dates/date-service.type';
 import { DateService } from './dates/date.service';
 
 export class DI {

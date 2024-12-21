@@ -1,9 +1,9 @@
 ﻿/* global clearInterval, console, CustomFunctions, setInterval */
 
-import { WeatherObserver } from "src/types/observers/weather.observer.type";
-import { getOrRequestData } from "./functions.weather";
-import Container from "typedi";
-import { WeatherObserverService } from "src/services/observers/weather.observer";
+import { WeatherObserver } from '../types/observers/weather.observer.type';
+import { getOrRequestData } from './functions.weather';
+import Container from 'typedi';
+import { WeatherObserverService } from '../services/observers/weather.observer.service';
 
 /**
  * Offers complete, global weather data coverage both geographically and chronologically.
@@ -32,11 +32,11 @@ export async function Weather(
   
   try {
     // if (!location) {
-    //   return "#Invalid Location!";
+    //   return '#Invalid Location!';
     // }
 
     // if (!date) {
-    //   return "#Invalid Date!";
+    //   return '#Invalid Date!';
     // }
 
     const weatherObserverService = Container.get(WeatherObserverService);
@@ -49,6 +49,6 @@ export async function Weather(
       return `#Error! - (${error.message})`;
     }
 
-    return "#Error!";
+    return '#Error!';
   }
 }
