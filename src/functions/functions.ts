@@ -1,6 +1,6 @@
 ﻿/* global clearInterval, console, CustomFunctions, setInterval */
 
-import { WeatherArgs, extractWeatherArgs } from "../helpers/helpers.args";
+import { WeatherObserver, extractWeatherArgs } from "../helpers/helpers.args";
 import { getOrRequestData } from "./functions.weather";
 
 /**
@@ -35,9 +35,9 @@ export async function Weather(
       return "#Invalid Date!";
     }
 
-    const weatherArgs: WeatherArgs = await extractWeatherArgs(location, date, optionalArg1, optionalArg2, optionalArg3, optionalArg4, invocation);
+    const weatherObserver: WeatherObserver = await extractWeatherArgs(location, date, optionalArg1, optionalArg2, optionalArg3, optionalArg4, invocation);
 
-    return await getOrRequestData(weatherArgs)
+    return await getOrRequestData(weatherObserver)
   }
   catch (error: any) {
     if (error && error.message) {

@@ -3,6 +3,8 @@ import { generateCacheId } from "../cache/cache";
 import { DEFAULT_UNIT, getUnitFromSettingsAsync } from "../settings/settings";
 import { ArrayDataVerticalPrinterService } from "src/services/printers/vertical.printer.service";
 import { ArrayDataHorizontalPrinterService } from "src/services/printers/horizontal.printer.service";
+import { getService } from "src/services/container";
+import { IParameterProcessor } from "src/types/parameters/parameter-processor.type";
 
 const INVALID_DATE: string = "Invalid date.";
 
@@ -10,7 +12,7 @@ export enum PrintDirections {
     Horizontal,
     Vertical
 }  
-export class WeatherArgs {
+export class WeatherObserver {
     CacheId: string;
     OriginalFormula?: any;
     Columns: number = 1;
@@ -86,7 +88,7 @@ export async function extractWeatherArgs(
     optionalArg2: any | null | undefined,
     optionalArg3: any | null | undefined,
     optionalArg4: any | null | undefined, 
-    invocation: CustomFunctions.Invocation): Promise<WeatherArgs> {
+    invocation: CustomFunctions.Invocation): Promise<WeatherObserver> {
     
     const INVALID_PARAMETERS: string = "Invalid parameters.";
 
@@ -101,16 +103,16 @@ export async function extractWeatherArgs(
         unit = DEFAULT_UNIT;
     }
 
-    const weatherArgs: WeatherArgs = new WeatherArgs(location, date, unit, optionalArg1, optionalArg2, optionalArg3, optionalArg4, invocation);
+    const weatherObserver: WeatherObserver = new WeatherObserver(location, date, unit, optionalArg1, optionalArg2, optionalArg3, optionalArg4, invocation);
     
-    if (!weatherArgs.OptionalArg1 && !weatherArgs.OptionalArg2) {
-        return weatherArgs;
+    if (!weatherObserver.OptionalArg1 && !weatherObserver.OptionalArg2) {
+        return weatherObserver;
     }
 
     const INVALID_PARAMETER_NAME: string = "Invalid parameter name";
     const INVALID_PARAMETER_VALUE: string = "Invalid parameter value";
 
-    const argsArray: string[] = weatherArgs.OptionalArg1.split(";");
+    const argsArray: string[] = weatherObserver.OptionalArg1.split(";");
 
     if (argsArray && argsArray.length > 0) {
         argsArray.forEach(element => {
@@ -127,31 +129,39 @@ export async function extractWeatherArgs(
             const argName = arg[0].trim().toLowerCase();
             const argValue = arg[1].trim().toLowerCase();
 
-            if (argName === "dir") {
-                if (argValue === "v") {
-                    weatherArgs.Printer = new ArrayDataVerticalPrinterService();
-                }
-                else if (argValue === "h") {
-                    weatherArgs.Printer = new ArrayDataHorizontalPrinterService();
-                }
-                else {
-                    throw new Error(`${INVALID_PARAMETER_VALUE} '${arg[1]}' for parameter name '${arg[0]}'. Valid values are 'v' or 'h' only.`);
-                }
-            }
-            else if (argName === "cols") {
-                weatherArgs.Columns = parseInt(arg[1], 10);
-            }
-            else if (argName === "rows") {
-                weatherArgs.Rows = parseInt(arg[1], 10);
-            }
-            else {
+            const parameterProcessor: IParameterProcessor = getService(argName);
+
+            if (!parameterProcessor) {
                 throw new Error(`${INVALID_PARAMETER_NAME} '${arg[0]}'.`);
             }
+
+            parameterProcessor.process(argValue, weatherObserver);
+
+            // if (argName === "dir") {
+            //     if (argValue === "v") {
+            //         weatherObserver.Printer = new ArrayDataVerticalPrinterService();
+            //     }
+            //     else if (argValue === "h") {
+            //         weatherObserver.Printer = new ArrayDataHorizontalPrinterService();
+            //     }
+            //     else {
+            //         throw new Error(`${INVALID_PARAMETER_VALUE} '${arg[1]}' for parameter name '${arg[0]}'. Valid values are 'v' or 'h' only.`);
+            //     }
+            // }
+            // else if (argName === "cols") {
+            //     weatherObserver.Columns = parseInt(arg[1], 10);
+            // }
+            // else if (argName === "rows") {
+            //     weatherObserver.Rows = parseInt(arg[1], 10);
+            // }
+            // else {
+            //     throw new Error(`${INVALID_PARAMETER_NAME} '${arg[0]}'.`);
+            // }
         });
     }
     else {
         throw new Error(INVALID_PARAMETERS);
     }
 
-    return weatherArgs;
+    return weatherObserver;
 }

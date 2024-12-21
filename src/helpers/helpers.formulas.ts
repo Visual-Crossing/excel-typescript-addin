@@ -1,4 +1,4 @@
-import { PrintDirections, WeatherArgs } from "./helpers.args";
+import { PrintDirections, WeatherObserver } from "./helpers.args";
 
 export function getArrayDataCols(values: any[], printDirection: PrintDirections): number {
     if (printDirection === PrintDirections.Horizontal) {
@@ -117,9 +117,9 @@ export function extractFormulaArgsSection(formula: string): string | null {
     return null;
 }
 
-export function getUpdatedFormula(weatherArgs: WeatherArgs, arrayCols: number, arrayRows: number): string {
-    if (weatherArgs && weatherArgs.OptionalArg1 && weatherArgs.OriginalFormula) {
-        const formulaArgsSection: string | null = extractFormulaArgsSection(weatherArgs.OriginalFormula);
+export function getUpdatedFormula(weatherObserver: WeatherObserver, arrayCols: number, arrayRows: number): string {
+    if (weatherObserver && weatherObserver.OptionalArg1 && weatherObserver.OriginalFormula) {
+        const formulaArgsSection: string | null = extractFormulaArgsSection(weatherObserver.OriginalFormula);
 
         if (!formulaArgsSection) {
             throw new Error("Unexpected formula error.");
@@ -128,11 +128,11 @@ export function getUpdatedFormula(weatherArgs: WeatherArgs, arrayCols: number, a
         let updatedArgs = replaceOrInsertArgs(formulaArgsSection, "cols", `cols=${arrayCols};`);
         updatedArgs = replaceOrInsertArgs(updatedArgs, "rows", `rows=${arrayRows};`);
 
-        const updatedFormula = weatherArgs.OriginalFormula.replace(formulaArgsSection, updatedArgs);
+        const updatedFormula = weatherObserver.OriginalFormula.replace(formulaArgsSection, updatedArgs);
         return updatedFormula;
     }
-    else if (weatherArgs && weatherArgs.OriginalFormula) {
-        const originalFormulaTrimmed = weatherArgs.OriginalFormula.trim();
+    else if (weatherObserver && weatherObserver.OriginalFormula) {
+        const originalFormulaTrimmed = weatherObserver.OriginalFormula.trim();
         const updatedFormula = `${originalFormulaTrimmed.substring(0, originalFormulaTrimmed.length - 1)}, "cols=${arrayCols};rows=${arrayRows};")`;
 
         return updatedFormula;

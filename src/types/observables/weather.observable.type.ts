@@ -1,19 +1,19 @@
-import { WeatherArgs } from "src/helpers/helpers.args";
+import { WeatherObserver } from "src/helpers/helpers.args";
 import { Observable } from "./observable.type";
 import { getCacheItem } from "src/cache/cache";
 import { generateArrayData } from "src/helpers/helpers.array-data";
 import { addJob } from "src/helpers/helpers.jobs";
 import { PrintJobService } from "src/services/jobs/print.job.service";
 
-export class WeatherObservable extends Observable<WeatherArgs> {
+export class WeatherObservable extends Observable<WeatherObserver> {
     private constructor() {
         super();
 
-        this.onValidate = ((observer: WeatherArgs) => this.onValidateHandler(observer));
-        this.onUpdate = ((observer: WeatherArgs) => this.onUpdateHandler(observer));
+        this.onValidate = ((observer: WeatherObserver) => this.onValidateHandler(observer));
+        this.onUpdate = ((observer: WeatherObserver) => this.onUpdateHandler(observer));
     }
 
-    private onValidateHandler(observer: WeatherArgs) {
+    private onValidateHandler(observer: WeatherObserver) {
         if (observer && observer.Invocation && observer.Invocation.address) { 
             return true; 
         } else { 
@@ -21,7 +21,7 @@ export class WeatherObservable extends Observable<WeatherArgs> {
         } 
     }
 
-    private onUpdateHandler(observer: WeatherArgs) {
+    private onUpdateHandler(observer: WeatherObserver) {
         if (!observer) {
             return;
         }
