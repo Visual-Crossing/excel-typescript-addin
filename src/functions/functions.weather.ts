@@ -1,11 +1,13 @@
 import { WeatherArgs } from "../helpers/helpers.args";
 import { getCacheItem, removeCacheItem, setCacheItem } from "../cache/cache";
 import { getApiKeyFromSettingsAsync } from "../settings/settings";
-import { DistinctQueue } from "../types/distinct-queue";
-import { CleanUpJob, FormulaJob, PrintJob } from "../types/job";
+import { DistinctQueue } from "../types/queues/distinct.queue.type";
 import { generateArrayData } from "../helpers/helpers.array-data";
 import { addJob, processJobs } from "src/helpers/helpers.jobs";
 import { NA_DATA } from "src/shared/constants";
+import { PrintJobService } from "src/services/jobs/print.job.service";
+import { FormulaJobService } from "src/services/jobs/formula.job.service";
+import { CleanUpJobService } from "src/services/jobs/cleanup.job.service";
 
 var subscribersGroupedByCacheId: Map<string, DistinctQueue<string, WeatherArgs>> | null;
 
@@ -81,7 +83,7 @@ async function processSubscribersQueue(weatherArgs: WeatherArgs): Promise<void> 
                         const arrayData: any[] | null = generateArrayData(subscriberWeatherArgs, cacheItemObject.values);
 
                         if (arrayData && arrayData.length > 0){
-                            addJob(new PrintJob(subscriberWeatherArgs.OriginalFormula, arrayData, subscriberWeatherArgs.Printer, subscriberWeatherArgs.SheetColumnCount!, subscriberWeatherArgs.SheetRowCount!, subscriberWeatherArgs.Invocation));
+                            addJob(new PrintJobService(subscriberWeatherArgs.OriginalFormula, arrayData, subscriberWeatherArgs.Printer, subscriberWeatherArgs.SheetColumnCount!, subscriberWeatherArgs.SheetRowCount!, subscriberWeatherArgs.Invocation));
                         }
                     }
                 }
@@ -111,7 +113,7 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
         }));
     }
 
-    addJob(new FormulaJob(async (formula: any, sheetColumnCount: number, sheetRowCount: number) => { 
+    addJob(new FormulaJobService(async (formula: any, sheetColumnCount: number, sheetRowCount: number) => { 
         if (formula && sheetColumnCount && sheetRowCount) {
             weatherArgs.OriginalFormula = formula;
             weatherArgs.SheetColumnCount = sheetColumnCount;
@@ -126,7 +128,7 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
                 
                 if (cacheItemObject.status === "Requesting") {
                     subscribe(weatherArgs);
-                    addJob(new CleanUpJob(weatherArgs.OriginalFormula, weatherArgs.Columns, weatherArgs.Rows, weatherArgs.Invocation));
+                    addJob(new CleanUpJobService(weatherArgs.OriginalFormula, weatherArgs.Columns, weatherArgs.Rows, weatherArgs.Invocation));
                 }
                 else {
                     if (processor && processor.has(weatherArgs.Invocation.address!)) {
@@ -140,7 +142,7 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
                         const arrayData: any[] | null = generateArrayData(weatherArgs, cacheItemObject.values, false);
                 
                         if (arrayData && arrayData.length > 0) {
-                            addJob(new PrintJob(weatherArgs.OriginalFormula, arrayData, weatherArgs.Printer.getPrinterExcludingCaller(), weatherArgs.SheetColumnCount!, weatherArgs.SheetRowCount!,weatherArgs.Invocation));
+                            addJob(new PrintJobService(weatherArgs.OriginalFormula, arrayData, weatherArgs.Printer.getPrinterExcludingCaller(), weatherArgs.SheetColumnCount!, weatherArgs.SheetRowCount!,weatherArgs.Invocation));
                         }
                     }
 
@@ -150,7 +152,7 @@ export async function getOrRequestData(weatherArgs: WeatherArgs): Promise<string
                 await processJobs();
             }
             else {
-                addJob(new CleanUpJob(weatherArgs.OriginalFormula, weatherArgs.Columns, weatherArgs.Rows, weatherArgs.Invocation));
+                addJob(new CleanUpJobService(weatherArgs.OriginalFormula, weatherArgs.Columns, weatherArgs.Rows, weatherArgs.Invocation));
                 await processJobs();
 
                 const apiKey: string | null | undefined = await getApiKeyFromSettingsAsync();

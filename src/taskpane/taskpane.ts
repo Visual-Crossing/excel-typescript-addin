@@ -3,6 +3,7 @@
  * See LICENSE in the project root for license information.
  */
 
+import { registerServices } from "src/services/container";
 import { getApiKeyFromSettingsAsync, getUnitFromSettingsAsync, storeApiKeyAsync, storeUnitAsync } from "../settings/settings";
 
 /* global console, document, Excel, Office */
@@ -12,6 +13,7 @@ Office.onReady(async () => {
   try
   {
     Office.addin.setStartupBehavior(Office.StartupBehavior.load);
+    registerServices();
 
     if (!await tryInitialiseApiKey()) {
       return;

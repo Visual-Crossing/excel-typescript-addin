@@ -34,7 +34,8 @@
     "core-js": "^3.36.0",
     "node-polyfill-webpack-plugin": "^4.0.0",
     "queue-typescript": "^1.0.1",
-    "regenerator-runtime": "^0.14.1"
+    "regenerator-runtime": "^0.14.1",
+    "typedi": "^0.10.0"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",

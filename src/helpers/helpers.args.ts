@@ -1,6 +1,8 @@
-import { ArrayDataHorizontalPrinter, ArrayDataVerticalPrinter, IArrayDataPrinterWithCaller } from "../types/printer";
+import { IArrayDataPrinterWithCaller } from "../types/printers/printer.type";
 import { generateCacheId } from "../cache/cache";
 import { DEFAULT_UNIT, getUnitFromSettingsAsync } from "../settings/settings";
+import { ArrayDataVerticalPrinterService } from "src/services/printers/vertical.printer.service";
+import { ArrayDataHorizontalPrinterService } from "src/services/printers/horizontal.printer.service";
 
 const INVALID_DATE: string = "Invalid date.";
 
@@ -19,7 +21,7 @@ export class WeatherArgs {
     Date: Date;
     Unit: string;
     Invocation: CustomFunctions.Invocation;
-    Printer: IArrayDataPrinterWithCaller = new ArrayDataVerticalPrinter();
+    Printer: IArrayDataPrinterWithCaller = new ArrayDataVerticalPrinterService();
     OptionalArg1?: any | null | undefined;
     OptionalArg2?: any | null | undefined;
 
@@ -127,10 +129,10 @@ export async function extractWeatherArgs(
 
             if (argName === "dir") {
                 if (argValue === "v") {
-                    weatherArgs.Printer = new ArrayDataVerticalPrinter();
+                    weatherArgs.Printer = new ArrayDataVerticalPrinterService();
                 }
                 else if (argValue === "h") {
-                    weatherArgs.Printer = new ArrayDataHorizontalPrinter();
+                    weatherArgs.Printer = new ArrayDataHorizontalPrinterService();
                 }
                 else {
                     throw new Error(`${INVALID_PARAMETER_VALUE} '${arg[1]}' for parameter name '${arg[0]}'. Valid values are 'v' or 'h' only.`);

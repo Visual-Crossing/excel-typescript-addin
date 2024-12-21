@@ -1,4 +1,4 @@
-import { DistinctQueue } from "../distinct-queue";
+import { DistinctQueue } from "../queues/distinct.queue.type";
 
 export class Observable<T> {
     private observers: Map<string, DistinctQueue<string, T>> | null = null;

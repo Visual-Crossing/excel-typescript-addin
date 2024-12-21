@@ -1,5 +1,5 @@
-import { IJob } from "../types/job";
 import { Queue } from "queue-typescript";
+import { IJob } from "src/types/jobs/job.type";
 
 var jobs: Queue<IJob> | null = null;
 var isJobsProcessingInProgress: boolean = false;
