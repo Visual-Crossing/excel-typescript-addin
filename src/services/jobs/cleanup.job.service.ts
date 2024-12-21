@@ -1,11 +1,13 @@
 import { getCell } from "src/helpers/helpers.excel";
 import { IJob } from "src/types/jobs/job.type";
+import { Service } from "typedi";
 
+@Service({ transient: true })
 export class CleanUpJobService implements IJob {
-    private CallerCellOriginalFormula: any;
-    private ArrayDataColsCount: number;
-    private ArrayDataRowsCount: number;
-    private Invocation: CustomFunctions.Invocation;
+    private readonly CallerCellOriginalFormula: any;
+    private readonly ArrayDataColsCount: number;
+    private readonly ArrayDataRowsCount: number;
+    private readonly Invocation: CustomFunctions.Invocation;
 
     public constructor(callerCellOriginalFormula: any, arrayDataColsCount: number, arrayDataRowsCount: number, invocation: CustomFunctions.Invocation) {
         this.CallerCellOriginalFormula = callerCellOriginalFormula;

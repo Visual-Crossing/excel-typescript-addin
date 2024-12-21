@@ -3,14 +3,16 @@ import { IJob } from "src/types/jobs/job.type";
 import { IArrayDataPrinter } from "src/types/printers/printer.type";
 import { ArrayDataExcludeCallerVerticalPrinterService } from "../printers/vertical.printer.service";
 import { ArrayDataExcludeCallerHorizontalPrinterService } from "../printers/horizontal.printer.service";
+import { Service } from "typedi";
 
+@Service({ transient: true })
 export class PrintJobService implements IJob {
-    private CallerCellOriginalFormula: any;
-    private ArrayData: any[];
-    private ArrayDataPrinter: IArrayDataPrinter;
-    private SheetColumnCount: number;
-    private SheetRowCount: number;
-    private Invocation: CustomFunctions.Invocation;
+    private readonly CallerCellOriginalFormula: any;
+    private readonly ArrayData: any[];
+    private readonly ArrayDataPrinter: IArrayDataPrinter;
+    private readonly SheetColumnCount: number;
+    private readonly SheetRowCount: number;
+    private readonly Invocation: CustomFunctions.Invocation;
 
     public constructor(callerCellOriginalFormula: any, arrayData: any[], arrayDataPrinter: IArrayDataPrinter, sheetColumnCount: number, sheetRowCount: number, invocation: CustomFunctions.Invocation) {
         this.CallerCellOriginalFormula = callerCellOriginalFormula;

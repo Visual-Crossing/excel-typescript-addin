@@ -1,9 +1,11 @@
 import { getCell, getSheetColumnCount, getSheetRowCount } from "src/helpers/helpers.excel";
 import { IJob } from "src/types/jobs/job.type";
+import { Service } from "typedi";
 
+@Service({ transient: true })
 export class FormulaJobService implements IJob {
-    private Callback: (callerCellFormula: any, sheetColsCount: number, sheetRowsCount: number) => {};
-    private Invocation: CustomFunctions.Invocation;
+    private readonly Callback: (callerCellFormula: any, sheetColsCount: number, sheetRowsCount: number) => {};
+    private readonly Invocation: CustomFunctions.Invocation;
 
     public constructor(callback: (callerCellFormula: any, sheetColsCount: number, sheetRowsCount: number) => {}, invocation: CustomFunctions.Invocation) {
         this.Callback = callback;

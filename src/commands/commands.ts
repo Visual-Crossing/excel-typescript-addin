@@ -3,7 +3,7 @@
  * See LICENSE in the project root for license information.
  */
 
-import { storeApiKeyAsync, storeUnitAsync } from "../settings/settings";
+import { storeApiKeyAsync, setUnitAsync } from "../settings/settings";
 
 /**
  * Displays the API key dialog.
@@ -53,7 +53,7 @@ async function displaySettingsDialog(event: Office.AddinCommands.Event) {
                 }
 
                 if (json.unit) {
-                  await storeUnitAsync(json.unit);
+                  await setUnitAsync(json.unit);
                 }
               }
             }

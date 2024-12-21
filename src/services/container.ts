@@ -7,35 +7,48 @@ import { ArrayDataVerticalPrinterService } from './printers/vertical.printer.ser
 import { ArrayDataHorizontalPrinterService } from './printers/horizontal.printer.service';
 import { ColumnsParameterService } from './parameters/columns.parameter-processor.service';
 import { RowsParameterService } from './parameters/rows.parameter-processor.service';
+import { ISettings } from 'src/types/settings/settings.type';
+import { OfficeSettingsService } from './settings/office-settings.service';
+import { WeatherObserverService } from './observers/weather.observer';
+import { IDateService } from 'src/types/dates/date-service.type';
+import { DateService } from './dates/date.service';
 
-export function registerServices() {
-    Container.set<ICache>({ value: new BrowserSessionCacheService() });
+export class DI {
+  static registerServices() {
+      Container.set<ICache>({ value: new BrowserSessionCacheService() });
+      Container.set<ISettings>({ value: new OfficeSettingsService() });
+      Container.set<IDateService>({ value: new DateService() });
 
-    // or for named services
-    
-    Container.set([
-      { id: 'dir', value: new PrintDirectionParameterService() }
-    ]);
+      Container.set({ value: new WeatherObserverService() });
 
-    Container.set([
-      { id: 'v', value: new ArrayDataVerticalPrinterService() },
-      { id: 'h', value: new ArrayDataHorizontalPrinterService() }
-    ]);
+      Container.set([
+        { id: 'dir', value: new PrintDirectionParameterService() }
+      ]);
 
-    Container.set([
-      { id: 'cols', value: new ColumnsParameterService() },
-      { id: 'rows', value: new RowsParameterService() }
-    ]);
+      Container.set([
+        { id: 'v', value: new ArrayDataVerticalPrinterService() },
+        { id: 'h', value: new ArrayDataHorizontalPrinterService() }
+      ]);
 
-    Container.set([
-      { id: 'precip', value: new PrecipitationFieldService() }
-    ]);
-}
+      Container.set([
+        { id: 'cols', value: new ColumnsParameterService() },
+        { id: 'rows', value: new RowsParameterService() }
+      ]);
 
-export function hasService(id: string): boolean {
-  return Container.has(id);
-}
+      Container.set([
+        { id: 'precip', value: new PrecipitationFieldService() }
+      ]);
+  }
 
-export function getService<T>(id: string): T {
-    return Container.get<T>(id);
+  // static hasService(id: string): boolean {
+  //   return Container.has(id);
+  // }
+
+  // static getService<T>(id: string): T {
+  //     return Container.get<T>(id);
+  // }
+
+  // static getService<T>(type: T): T {
+  //   return Container.get<T>(typeof type);
+  // }
 }

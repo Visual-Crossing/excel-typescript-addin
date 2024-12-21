@@ -1,4 +1,4 @@
-import { WeatherObserver } from "src/helpers/helpers.args";
+import { WeatherObserver } from "src/types/observers/weather.observer.type";
 import { IParameterProcessor } from "src/types/parameters/parameter-processor.type";
 
 export class RowsParameterService implements IParameterProcessor {

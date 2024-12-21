@@ -1,4 +1,3 @@
-import { WeatherObserver } from "../helpers/helpers.args";
 import { getCacheItem, removeCacheItem, setCacheItem } from "../cache/cache";
 import { getApiKeyFromSettingsAsync } from "../settings/settings";
 import { DistinctQueue } from "../types/queues/distinct.queue.type";
@@ -8,6 +7,7 @@ import { NA_DATA } from "src/shared/constants";
 import { PrintJobService } from "src/services/jobs/print.job.service";
 import { FormulaJobService } from "src/services/jobs/formula.job.service";
 import { CleanUpJobService } from "src/services/jobs/cleanup.job.service";
+import { WeatherObserver } from "src/types/observers/weather.observer.type";
 
 var subscribersGroupedByCacheId: Map<string, DistinctQueue<string, WeatherObserver>> | null;
 

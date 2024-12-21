@@ -3,6 +3,14 @@ import { ICache } from 'src/types/cache/cache.type';
 
 @Service({ global: true })
 export class BrowserSessionCacheService implements ICache {
+  public generateId(keys: string[]): string {
+    if (!keys || keys.length !== 2) {
+      throw new Error('Invalid cache keys.');
+    }
+
+    return `${keys[0].toLowerCase()}_${keys[1].toLowerCase()}_${keys[2].toLowerCase()}`;
+  }
+
   public has(id: string): boolean {
     const cacheItem: string | null = window.sessionStorage.getItem(id);
     

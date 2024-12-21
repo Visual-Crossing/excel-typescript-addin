@@ -3,8 +3,8 @@
  * See LICENSE in the project root for license information.
  */
 
-import { registerServices } from "src/services/container";
-import { getApiKeyFromSettingsAsync, getUnitFromSettingsAsync, storeApiKeyAsync, storeUnitAsync } from "../settings/settings";
+import { DI } from "src/services/container";
+import { getApiKeyFromSettingsAsync, getUnitFromSettingsAsync, storeApiKeyAsync, setUnitAsync } from "../settings/settings";
 
 /* global console, document, Excel, Office */
 
@@ -13,7 +13,7 @@ Office.onReady(async () => {
   try
   {
     Office.addin.setStartupBehavior(Office.StartupBehavior.load);
-    registerServices();
+    DI.registerServices();
 
     if (!await tryInitialiseApiKey()) {
       return;
@@ -163,7 +163,7 @@ async function btnOkOnClickHandler() {
       const unit: string = getUnitAsyncFromInput();
 
       await storeApiKeyAsync(apiKeyFromInput);
-      await storeUnitAsync(unit);
+      await setUnitAsync(unit);
 
       Office.context.ui.messageParent(JSON.stringify({ apiKey: apiKeyFromInput, unit: unit}));
       // Office.context.ui.messageParent("");

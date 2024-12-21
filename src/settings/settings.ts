@@ -35,6 +35,6 @@ export function getUnitFromSettings(callback: (unit: string | null | undefined) 
         });
 }
 
-export async function storeUnitAsync(unit: string): Promise<void> {
+export async function setUnitAsync(unit: string): Promise<void> {
     await OfficeRuntime.storage.setItem(UNIT_SETTING, unit);
 }

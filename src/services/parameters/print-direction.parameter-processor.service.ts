@@ -1,8 +1,8 @@
-import { WeatherObserver } from "src/helpers/helpers.args";
-import { getService } from "../container";
 import { IArrayDataPrinterWithCaller } from "src/types/printers/printer.type";
 import { INVALID_PARAMETER_VALUE } from "src/shared/constants";
 import { IParameterProcessor } from "src/types/parameters/parameter-processor.type";
+import { WeatherObserver } from "src/types/observers/weather.observer.type";
+import Container from "typedi";
 
 export class PrintDirectionParameterService implements IParameterProcessor {
     public process(value: any, weatherObserver: WeatherObserver): void {
@@ -12,7 +12,7 @@ export class PrintDirectionParameterService implements IParameterProcessor {
             throw new Error(`${INVALID_PARAMETER_VALUE} ${ERROR_MSG}`);
         }
         
-        const printer: IArrayDataPrinterWithCaller = getService(value); 
+        const printer: IArrayDataPrinterWithCaller = Container.get(value); 
         
         if (!printer) {
             throw new Error(`${INVALID_PARAMETER_VALUE} '${value}' ${ERROR_MSG}`);

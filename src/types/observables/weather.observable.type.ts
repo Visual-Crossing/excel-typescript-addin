@@ -1,9 +1,9 @@
-import { WeatherObserver } from "src/helpers/helpers.args";
 import { Observable } from "./observable.type";
 import { getCacheItem } from "src/cache/cache";
 import { generateArrayData } from "src/helpers/helpers.array-data";
 import { addJob } from "src/helpers/helpers.jobs";
 import { PrintJobService } from "src/services/jobs/print.job.service";
+import { WeatherObserver } from "../observers/weather.observer.type";
 
 export class WeatherObservable extends Observable<WeatherObserver> {
     private constructor() {
