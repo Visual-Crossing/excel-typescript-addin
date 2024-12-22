@@ -1,5 +1,5 @@
 import { WeatherObserver } from "../observers/weather.observer.type";
 
-export interface IOptionalArgParser {
+export interface IOptionalArgParserService {
     tryParse(value: string, weatherObserver: WeatherObserver): boolean;
 }

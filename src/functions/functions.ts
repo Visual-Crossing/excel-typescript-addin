@@ -1,10 +1,10 @@
 ﻿/* global clearInterval, console, CustomFunctions, setInterval */
 
+import Container from 'typedi';
+import { DI } from '../services/container';
 import { WeatherObserver } from '../types/observers/weather.observer.type';
 import { getOrRequestData } from './functions.weather';
-import Container from 'typedi';
-import { WeatherObserverService } from '../services/observers/weather.observer.service';
-import { DI } from '../services/container';
+import { IWeatherObserverService } from 'src/types/observers/weather.observer.service.type';
 
 /**
  * Offers complete, global weather data coverage both geographically and chronologically.
@@ -32,19 +32,11 @@ export async function Weather(
 ): Promise<string | number | Date> {
   
   try {
-    // if (!location) {
-    //   return '#Invalid Location!';
-    // }
-
-    // if (!date) {
-    //   return '#Invalid Date!';
-    // }
-
     if (!Container.has('service.settings')) {
       DI.registerServices();
     }
 
-    const weatherObserverService = Container.get(WeatherObserverService);
+    const weatherObserverService = Container.get<IWeatherObserverService>('service.observer.weather');
     const weatherObserver: WeatherObserver = await weatherObserverService.process(location, date, invocation, optionalArg1, optionalArg2, optionalArg3, optionalArg4, optionalArg5);
 
     return await getOrRequestData(weatherObserver)

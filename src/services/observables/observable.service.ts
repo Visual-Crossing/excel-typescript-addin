@@ -1,6 +1,6 @@
-import { DistinctQueue } from "../queues/distinct.queue.type";
+import { DistinctQueue } from "../../types/queues/distinct.queue.type";
 
-export abstract class Observable<T> {
+export abstract class ObservableService<T> {
     private observers: Map<string, DistinctQueue<string, T>> | null = null;
 
     public onValidate: ((observer: T) => boolean) | undefined;

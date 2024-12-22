@@ -1,9 +1,9 @@
 import { INVALID_PARAMETER_VALUE } from '../../../../shared/constants';
-import { IOptionalArgParser } from '../../../../types/optional-args/parser.type';
+import { IOptionalArgParserService } from '../../../../types/parsers/parser.type';
 import { WeatherObserver } from '../../../../types/observers/weather.observer.type';
-import { ArrayDataHorizontalPrinterService } from '../../../../services/printers/horizontal.printer.service';
+import { ArrayDataHorizontalPrinterService } from '../../../printers/horizontal.printer.service';
 
-export class HorizontalPrinterOptionalArgParserService implements IOptionalArgParser {
+export class HorizontalPrinterOptionalArgParserService implements IOptionalArgParserService {
     public tryParse(value: string, weatherObserver: WeatherObserver): boolean {
         if (value && value === 'dir=h') {
             weatherObserver.Printer = new ArrayDataHorizontalPrinterService();

@@ -1,9 +1,9 @@
 import { INVALID_PARAMETER_VALUE } from '../../../../shared/constants';
-import { IOptionalArgParser } from '../../../../types/optional-args/parser.type';
+import { IOptionalArgParserService } from '../../../../types/parsers/parser.type';
 import { WeatherObserver } from '../../../../types/observers/weather.observer.type';
-import { ArrayDataVerticalPrinterService } from '../../../../services/printers/vertical.printer.service';
+import { ArrayDataVerticalPrinterService } from '../../../printers/vertical.printer.service';
 
-export class VerticalPrinterOptionalArgParserService implements IOptionalArgParser {
+export class VerticalPrinterOptionalArgParserService implements IOptionalArgParserService {
     public tryParse(value: string, weatherObserver: WeatherObserver): boolean {
         if (value && value === 'dir=v') {
             weatherObserver.Printer = new ArrayDataVerticalPrinterService();

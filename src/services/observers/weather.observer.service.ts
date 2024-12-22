@@ -1,13 +1,14 @@
 import { WeatherObserver } from '../../types/observers/weather.observer.type';
-import { IOptionalArgParser } from '../../types/optional-args/parser.type';
+import { IOptionalArgParserService } from '../../types/parsers/parser.type';
 import { ArrayDataVerticalPrinterService } from '../printers/vertical.printer.service';
 import Container, { Service } from 'typedi';
-import { IDateParserService } from '../../types/dates/date.parser.type';
+import { IDateParserService } from '../../types/parsers/date.parser.type';
 import { ISettingsService } from 'src/types/settings/settings.service.type';
 import { ICacheService } from 'src/types/cache/cache.service.type';
+import { IWeatherObserverService } from 'src/types/observers/weather.observer.service.type';
 
 @Service()
-export class WeatherObserverService {
+export class WeatherObserverService implements IWeatherObserverService {
     public async process(
         location: any, 
         date: any,
@@ -38,7 +39,7 @@ export class WeatherObserverService {
         const cacheService = Container.get<ICacheService>('service.cache');
         const dateService = Container.get<IDateParserService>('service.parser.date');
 
-        const dateValue: Date = dateService.parseDate(date);
+        const dateValue: Date = dateService.parse(date);
         const unit: string = await settingsService.getUnitAsync();
 
         const cacheId = cacheService.generateId([ locationString, dateValue.toDateString(), unit ]);
@@ -69,6 +70,12 @@ export class WeatherObserverService {
 
         const optionalArgs: any[] | null[] | undefined[] = [weatherObserver.OptionalArg1, weatherObserver.OptionalArg2, weatherObserver.OptionalArg3, weatherObserver.OptionalArg4, weatherObserver.OptionalArg5];
 
+        this.processOptionalArgs(optionalArgs, weatherObserver);
+
+        return weatherObserver;
+    }
+
+    private processOptionalArgs(optionalArgs: any[] | null[] | undefined[], weatherObserver: WeatherObserver): void {
         optionalArgs.forEach(optionalArg => {
             if (optionalArg) {
                 let isOptionalArgParseSuccess: boolean = false;
@@ -79,10 +86,10 @@ export class WeatherObserverService {
                     const optionalArgStringLower = optionalArgString.toLowerCase().replace(' ', '');
 
                     if (optionalArgStringLower && optionalArgStringLower.length > 0) {
-                        const optionalArgParsers = Container.getMany<IOptionalArgParser>('service.parser.arg');
+                        const optionalArgParsers = Container.getMany<IOptionalArgParserService>('service.parser.arg');
                         
                         let index: number = -1;
-                        let optionalArgParser: IOptionalArgParser;
+                        let optionalArgParser: IOptionalArgParserService;
 
                         do {
                             optionalArgParser = optionalArgParsers[++index];
@@ -96,7 +103,5 @@ export class WeatherObserverService {
                 }
             }
         });
-
-        return weatherObserver;
     }
 }

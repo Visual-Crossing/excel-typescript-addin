@@ -1,9 +1,9 @@
 import Container from "typedi";
 import { WeatherObserver } from "src/types/observers/weather.observer.type";
-import { IOptionalArgParser } from "src/types/optional-args/parser.type";
-import { OptionalArgParserService } from "../parser.service";
+import { IOptionalArgParserService } from "src/types/parsers/parser.type";
+import { OptionalArgParserService } from "../../parser.service";
 
-export class ArraySizeOptionalArgParserService extends OptionalArgParserService implements IOptionalArgParser {
+export class ArraySizeOptionalArgParserService extends OptionalArgParserService implements IOptionalArgParserService {
     public tryParse(value: string, weatherObserver: WeatherObserver): boolean {
         if (value && value.includes(';') && value.includes('cols=') && value.includes('rows=')) {
             const args: string[] = value.split(';');
@@ -13,12 +13,12 @@ export class ArraySizeOptionalArgParserService extends OptionalArgParserService 
             }
 
             args.forEach(arg => {
-                const sizeArgParsers = Container.getMany<IOptionalArgParser>('service.parser.arg.size');
+                const sizeArgParsers = Container.getMany<IOptionalArgParserService>('service.parser.arg.size');
 
                 let isSizeArgParseSuccess: boolean = false;
                 let index: number = -1;
 
-                let sizeArgParser: IOptionalArgParser;
+                let sizeArgParser: IOptionalArgParserService;
 
                 do {
                     sizeArgParser = sizeArgParsers[++index];

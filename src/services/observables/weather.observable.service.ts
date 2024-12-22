@@ -1,11 +1,11 @@
-import { Observable } from "./observable.type";
+import { ObservableService } from "./observable.service";
 import { getCacheItem } from "src/cache/cache";
 import { generateArrayData } from "src/helpers/helpers.array-data";
 import { addJob } from "src/helpers/helpers.jobs";
 import { PrintJobService } from "src/services/jobs/print.job.service";
-import { WeatherObserver } from "../observers/weather.observer.type";
+import { WeatherObserver } from "../../types/observers/weather.observer.type";
 
-export class WeatherObservable extends Observable<WeatherObserver> {
+export class WeatherObservableService extends ObservableService<WeatherObserver> {
     private constructor() {
         super();
 

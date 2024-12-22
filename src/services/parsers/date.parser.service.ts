@@ -1,9 +1,9 @@
 import { Service } from 'typedi';
-import { IDateParserService } from '../../types/dates/date.parser.type';
+import { IDateParserService } from '../../types/parsers/date.parser.type';
 
 @Service()
 export class DateParserService implements IDateParserService {
-    public parseDate(value: any) : Date {
+    public parse(value: any) : Date {
         const INVALID_DATE: string = '#Invalid date!';
 
         if (!value) {
