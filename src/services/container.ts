@@ -1,18 +1,13 @@
 import { Container } from 'typedi';
 import { PrecipitationFieldService } from './fields/precipitation.field.service';
-import { PrintDirectionParameterService } from './parameters/print-direction.parameter-processor.service';
-import { ArrayDataVerticalPrinterService } from './printers/vertical.printer.service';
-import { ArrayDataHorizontalPrinterService } from './printers/horizontal.printer.service';
-import { ArrayColSizeOptionalArgParserService } from './parameters/parsers/array-col-size.parser.service';
-import { ArrayRowSizeOptionalArgParserService } from './parameters/parsers/array-row-size.parser.service';
-import { WeatherObserverService } from './observers/weather.observer.service';
-import { IDateParserService } from '../types/dates/date.parser.type';
-import { IPrintJob } from 'src/types/jobs/print.job.type';
-import { PrintJobService } from './jobs/print.job.service';
+import { VerticalPrinterOptionalArgParserService } from './optional-args/parsers/printers/vertical-printer.parser.service';
+import { ArrayColSizeOptionalArgParserService } from './optional-args/parsers/array-size/array-col-size.parser.service';
+import { ArrayRowSizeOptionalArgParserService } from './optional-args/parsers/array-size/array-row-size.parser.service';
 import { OfficeSettingsService } from './settings/office-settings.service';
 import { BrowserSessionCacheService } from './cache/browser-session.cache.service';
 import { DateParserService } from './dates/date.parser.service';
-import { ArraySizeOptionalArgParserService } from './parameters/parsers/array-size.parser.service';
+import { ArraySizeOptionalArgParserService } from './optional-args/parsers/array-size/array-size.parser.service';
+import { HorizontalPrinterOptionalArgParserService } from './optional-args/parsers/printers/horizontal-printer.parser.service';
 
 export class DI {
   static registerServices() {
@@ -23,9 +18,8 @@ export class DI {
       ]);
 
       Container.set([
-        { id: 'service.parser.arg', value: new PrintDirectionParameterService() },
-        { id: 'service.parser.arg', value: new ArrayDataVerticalPrinterService() },
-        { id: 'service.parser.arg', value: new ArrayDataHorizontalPrinterService() },
+        { id: 'service.parser.arg', value: new VerticalPrinterOptionalArgParserService() },
+        { id: 'service.parser.arg', value: new HorizontalPrinterOptionalArgParserService() },
         { id: 'service.parser.arg', value: new ArraySizeOptionalArgParserService() },
         { id: 'service.parser.arg', value: new PrecipitationFieldService() }
       ]);
@@ -33,20 +27,6 @@ export class DI {
       Container.set([
         { id: 'service.parser.arg.size', value: new ArrayColSizeOptionalArgParserService() },
         { id: 'service.parser.arg.size', value: new ArrayRowSizeOptionalArgParserService() }
-      ]);
-
-      Container.set([
-        { id: 'dir', value: new PrintDirectionParameterService() }
-      ]);
-
-      Container.set([
-        { id: 'v', value: new ArrayDataVerticalPrinterService() },
-        { id: 'h', value: new ArrayDataHorizontalPrinterService() }
-      ]);
-      
-      Container.set([
-        { id: 'cols', value: new ArrayColSizeOptionalArgParserService() },
-        { id: 'rows', value: new ArrayRowSizeOptionalArgParserService() }
       ]);
 
       Container.set([

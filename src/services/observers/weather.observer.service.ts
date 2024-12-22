@@ -1,29 +1,13 @@
-import 'reflect-metadata';
 import { WeatherObserver } from '../../types/observers/weather.observer.type';
-import { IOptionalArgParser } from '../../types/parameters/parser.type';
+import { IOptionalArgParser } from '../../types/optional-args/parser.type';
 import { ArrayDataVerticalPrinterService } from '../printers/vertical.printer.service';
-import Container, { Inject, Service } from 'typedi';
+import Container, { Service } from 'typedi';
 import { IDateParserService } from '../../types/dates/date.parser.type';
 import { ISettingsService } from 'src/types/settings/settings.service.type';
 import { ICacheService } from 'src/types/cache/cache.service.type';
 
 @Service()
 export class WeatherObserverService {
-    // @Inject()
-    private readonly SettingsService: ISettingsService;
-
-    // @Inject()
-    private readonly CacheService: ICacheService;
-
-    // @Inject()
-    private readonly DateService: IDateParserService;
-
-    public constructor() {
-        this.SettingsService = Container.get<ISettingsService>('service.settings');
-        this.CacheService = Container.get<ICacheService>('service.cache');
-        this.DateService = Container.get<IDateParserService>('service.parser.date');
-    }
-
     public async process(
         location: any, 
         date: any,
@@ -44,16 +28,20 @@ export class WeatherObserverService {
             throw new Error(INVALID_PARAMETERS);
         }
 
-        const locationString = location as string;
+        const locationString = (location as string)?.trim();
 
         if (!locationString || locationString.length === 0) {
             throw new Error('#Invalid Location!');
         }
 
-        const dateValue: Date = this.DateService.parseDate(date);
-        const unit: string = await this.SettingsService.getUnitAsync();
+        const settingsService = Container.get<ISettingsService>('service.settings');
+        const cacheService = Container.get<ICacheService>('service.cache');
+        const dateService = Container.get<IDateParserService>('service.parser.date');
 
-        const cacheId = this.CacheService.generateId([ locationString, dateValue.toDateString(), unit ]);
+        const dateValue: Date = dateService.parseDate(date);
+        const unit: string = await settingsService.getUnitAsync();
+
+        const cacheId = cacheService.generateId([ locationString, dateValue.toDateString(), unit ]);
         
         const weatherObserver: WeatherObserver = { 
             CacheId: cacheId,
@@ -78,8 +66,6 @@ export class WeatherObserverService {
             !weatherObserver.OptionalArg5) {
             return weatherObserver;
         }
-
-        // const INVALID_PARAMETER_NAME: string = '#Invalid parameter name:';
 
         const optionalArgs: any[] | null[] | undefined[] = [weatherObserver.OptionalArg1, weatherObserver.OptionalArg2, weatherObserver.OptionalArg3, weatherObserver.OptionalArg4, weatherObserver.OptionalArg5];
 
@@ -110,36 +96,6 @@ export class WeatherObserverService {
                 }
             }
         });
-
-        // const argsArray: string[] = weatherObserver.OptionalArg1.split(';');
-
-        // if (argsArray && argsArray.length > 0) {
-        //     argsArray.forEach(element => {
-        //         if (!element) {
-        //             return;
-        //         }
-
-        //         const arg: string[] = element.split('=');
-
-        //         if (!arg || arg.length !== 2 || !arg[0] || !arg[1]) {
-        //             throw new Error(INVALID_PARAMETERS);
-        //         }
-
-        //         const argName = arg[0].trim().toLowerCase();
-        //         const argValue = arg[1].trim().toLowerCase();
-
-        //         const parameterProcessor: IOptionalArgParser = Container.get(argName);
-
-        //         if (!parameterProcessor) {
-        //             throw new Error(`${INVALID_PARAMETER_NAME} '${arg[0]}'.`);
-        //         }
-
-        //         parameterProcessor.process(argValue, weatherObserver);
-        //     });
-        // }
-        // else {
-        //     throw new Error(INVALID_PARAMETERS);
-        // }
 
         return weatherObserver;
     }

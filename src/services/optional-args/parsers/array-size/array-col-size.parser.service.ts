@@ -1,13 +1,10 @@
 import { WeatherObserver } from "src/types/observers/weather.observer.type";
-import { IOptionalArgParser } from "src/types/parameters/parser.type";
+import { IOptionalArgParser } from "src/types/optional-args/parser.type";
+import { OptionalArgParserService } from "../parser.service";
 
-export class ArrayRowSizeOptionalArgParserService implements IOptionalArgParser {
-    private getErrorMessage(value: string): string {
-        return `#Invalid parameter: '${value}'!`;
-    }
-
+export class ArrayColSizeOptionalArgParserService extends OptionalArgParserService implements IOptionalArgParser {
     public tryParse(value: string, weatherObserver: WeatherObserver): boolean {
-        if (value && value.includes('rows=')) {
+        if (value && value.startsWith('cols=')) {
             const args: string[] = value.split('=');
 
             if (args.length !== 2) {
@@ -15,7 +12,7 @@ export class ArrayRowSizeOptionalArgParserService implements IOptionalArgParser 
             }
 
             try {
-                weatherObserver.Rows = parseInt(args[1], 10);
+                weatherObserver.Columns = parseInt(args[1], 10);
             }
             catch {
                 throw new Error(this.getErrorMessage(value));
