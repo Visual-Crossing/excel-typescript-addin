@@ -1,10 +1,11 @@
+import { ICacheService } from 'src/types/cache/cache.service.type';
 import { Service } from 'typedi';
-import { ICache } from '../../types/cache/cache.type';
 
-@Service({ global: true })
-export class BrowserSessionCacheService implements ICache {
+
+@Service()
+export class BrowserSessionCacheService implements ICacheService {
   public generateId(keys: string[]): string {
-    if (!keys || keys.length !== 2) {
+    if (!keys || keys.length !== 3) {
       throw new Error('Invalid cache keys.');
     }
 

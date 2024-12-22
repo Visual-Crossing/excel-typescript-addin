@@ -1,10 +1,12 @@
+import { Service } from 'typedi';
 import { DEFAULT_UNIT } from '../../settings/settings';
-import { ISettings } from '../../types/settings/settings.type';
+import { ISettingsService } from 'src/types/settings/settings.service.type';
 
 const API_KEY_SETTING: string = 'Visual Crossing API Key';
 const UNIT_SETTING: string = 'Visual Crossing Unit';
 
-export class OfficeSettingsService implements ISettings {
+@Service()
+export class OfficeSettingsService implements ISettingsService {
     public getApiKey(onSuccess: (apiKey: string | null | undefined) => void, onError?: (error: any) => void): void {
         OfficeRuntime.storage.getItem(API_KEY_SETTING)
             .then((apiKey: string | null) => {

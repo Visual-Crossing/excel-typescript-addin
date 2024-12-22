@@ -1,11 +1,11 @@
 import { IArrayDataPrinterWithCaller } from '../../types/printers/printer.type';
 import { INVALID_PARAMETER_VALUE } from '../../shared/constants';
-import { IParameterProcessor } from '../../types/parameters/parameter-processor.type';
+import { IOptionalArgParser } from '../../types/parameters/parser.type';
 import { WeatherObserver } from '../../types/observers/weather.observer.type';
 import Container from 'typedi';
 
-export class PrintDirectionParameterService implements IParameterProcessor {
-    public process(value: any, weatherObserver: WeatherObserver): void {
+export class PrintDirectionParameterService implements IOptionalArgParser {
+    public tryParse(value: any, weatherObserver: WeatherObserver): boolean {
         const ERROR_MSG: string = "for parameter name 'dir'. Valid values are 'v' or 'h' only.";
         
         if (!value) {
@@ -19,5 +19,7 @@ export class PrintDirectionParameterService implements IParameterProcessor {
         }
 
         weatherObserver.Printer = printer;
+        
+        return true;
     }
 }

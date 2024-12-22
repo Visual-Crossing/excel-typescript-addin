@@ -4,9 +4,10 @@ import { IArrayDataPrinter } from '../../types/printers/printer.type';
 import { ArrayDataExcludeCallerVerticalPrinterService } from '../printers/vertical.printer.service';
 import { ArrayDataExcludeCallerHorizontalPrinterService } from '../printers/horizontal.printer.service';
 import { Service } from 'typedi';
+import { IPrintJob } from 'src/types/jobs/print.job.type';
 
-@Service({ transient: true })
-export class PrintJobService implements IJob {
+//@Service({ transient: true })
+export class PrintJobService implements IPrintJob, IJob {
     private readonly CallerCellOriginalFormula: any;
     private readonly ArrayData: any[];
     private readonly ArrayDataPrinter: IArrayDataPrinter;

@@ -4,6 +4,7 @@ import { WeatherObserver } from '../types/observers/weather.observer.type';
 import { getOrRequestData } from './functions.weather';
 import Container from 'typedi';
 import { WeatherObserverService } from '../services/observers/weather.observer.service';
+import { DI } from '../services/container';
 
 /**
  * Offers complete, global weather data coverage both geographically and chronologically.
@@ -39,6 +40,10 @@ export async function Weather(
     //   return '#Invalid Date!';
     // }
 
+    if (!Container.has('service.settings')) {
+      DI.registerServices();
+    }
+
     const weatherObserverService = Container.get(WeatherObserverService);
     const weatherObserver: WeatherObserver = await weatherObserverService.process(location, date, invocation, optionalArg1, optionalArg2, optionalArg3, optionalArg4, optionalArg5);
 
@@ -47,6 +52,8 @@ export async function Weather(
   catch (error: any) {
     if (error && error.message) {
       return `#Error! - (${error.message})`;
+    } else if (error && error.name) {
+      return `#Error! - (${error.name})`;
     }
 
     return '#Error!';

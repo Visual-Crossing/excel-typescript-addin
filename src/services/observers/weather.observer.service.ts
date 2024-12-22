@@ -1,22 +1,28 @@
-
+import 'reflect-metadata';
 import { WeatherObserver } from '../../types/observers/weather.observer.type';
-import { IParameterProcessor } from '../../types/parameters/parameter-processor.type';
-import { ISettings as ISettingsService } from '../../types/settings/settings.type';
+import { IOptionalArgParser } from '../../types/parameters/parser.type';
 import { ArrayDataVerticalPrinterService } from '../printers/vertical.printer.service';
-import { ICache as ICacheService } from '../../types/cache/cache.type';
 import Container, { Inject, Service } from 'typedi';
-import { IDateService } from '../../types/dates/date-service.type';
+import { IDateParserService } from '../../types/dates/date.parser.type';
+import { ISettingsService } from 'src/types/settings/settings.service.type';
+import { ICacheService } from 'src/types/cache/cache.service.type';
 
-@Service({ global: true })
+@Service()
 export class WeatherObserverService {
-    @Inject()
-    SettingsService: ISettingsService;
+    // @Inject()
+    private readonly SettingsService: ISettingsService;
 
-    @Inject()
-    CacheService: ICacheService;
+    // @Inject()
+    private readonly CacheService: ICacheService;
 
-    @Inject()
-    DateService: IDateService;
+    // @Inject()
+    private readonly DateService: IDateParserService;
+
+    public constructor() {
+        this.SettingsService = Container.get<ISettingsService>('service.settings');
+        this.CacheService = Container.get<ICacheService>('service.cache');
+        this.DateService = Container.get<IDateParserService>('service.parser.date');
+    }
 
     public async process(
         location: any, 
@@ -73,36 +79,67 @@ export class WeatherObserverService {
             return weatherObserver;
         }
 
-        const INVALID_PARAMETER_NAME: string = '#Invalid parameter name:';
-        const argsArray: string[] = weatherObserver.OptionalArg1.split(';');
+        // const INVALID_PARAMETER_NAME: string = '#Invalid parameter name:';
 
-        if (argsArray && argsArray.length > 0) {
-            argsArray.forEach(element => {
-                if (!element) {
-                    return;
+        const optionalArgs: any[] | null[] | undefined[] = [weatherObserver.OptionalArg1, weatherObserver.OptionalArg2, weatherObserver.OptionalArg3, weatherObserver.OptionalArg4, weatherObserver.OptionalArg5];
+
+        optionalArgs.forEach(optionalArg => {
+            if (optionalArg) {
+                let isOptionalArgParseSuccess: boolean = false;
+
+                const optionalArgString = optionalArg as string;
+
+                if (optionalArgString && optionalArgString.length > 0) {
+                    const optionalArgStringLower = optionalArgString.toLowerCase().replace(' ', '');
+
+                    if (optionalArgStringLower && optionalArgStringLower.length > 0) {
+                        const optionalArgParsers = Container.getMany<IOptionalArgParser>('service.parser.arg');
+                        
+                        let index: number = -1;
+                        let optionalArgParser: IOptionalArgParser;
+
+                        do {
+                            optionalArgParser = optionalArgParsers[++index];
+                            isOptionalArgParseSuccess = optionalArgParser.tryParse(optionalArgStringLower, weatherObserver);
+                        } while (!isOptionalArgParseSuccess && index < optionalArgParsers.length - 1);
+                    }
                 }
 
-                const arg: string[] = element.split('=');
-
-                if (!arg || arg.length !== 2 || !arg[0] || !arg[1]) {
-                    throw new Error(INVALID_PARAMETERS);
+                if (!isOptionalArgParseSuccess) {
+                    throw new Error(`#Invalid parameter: '${optionalArg as string}'!`);
                 }
+            }
+        });
 
-                const argName = arg[0].trim().toLowerCase();
-                const argValue = arg[1].trim().toLowerCase();
+        // const argsArray: string[] = weatherObserver.OptionalArg1.split(';');
 
-                const parameterProcessor: IParameterProcessor = Container.get(argName);
+        // if (argsArray && argsArray.length > 0) {
+        //     argsArray.forEach(element => {
+        //         if (!element) {
+        //             return;
+        //         }
 
-                if (!parameterProcessor) {
-                    throw new Error(`${INVALID_PARAMETER_NAME} '${arg[0]}'.`);
-                }
+        //         const arg: string[] = element.split('=');
 
-                parameterProcessor.process(argValue, weatherObserver);
-            });
-        }
-        else {
-            throw new Error(INVALID_PARAMETERS);
-        }
+        //         if (!arg || arg.length !== 2 || !arg[0] || !arg[1]) {
+        //             throw new Error(INVALID_PARAMETERS);
+        //         }
+
+        //         const argName = arg[0].trim().toLowerCase();
+        //         const argValue = arg[1].trim().toLowerCase();
+
+        //         const parameterProcessor: IOptionalArgParser = Container.get(argName);
+
+        //         if (!parameterProcessor) {
+        //             throw new Error(`${INVALID_PARAMETER_NAME} '${arg[0]}'.`);
+        //         }
+
+        //         parameterProcessor.process(argValue, weatherObserver);
+        //     });
+        // }
+        // else {
+        //     throw new Error(INVALID_PARAMETERS);
+        // }
 
         return weatherObserver;
     }

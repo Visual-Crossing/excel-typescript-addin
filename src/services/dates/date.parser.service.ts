@@ -1,8 +1,8 @@
-import { IDateService } from '../../types/dates/date-service.type';
 import { Service } from 'typedi';
+import { IDateParserService } from '../../types/dates/date.parser.type';
 
-@Service({ global: true })
-export class DateService implements IDateService {
+@Service()
+export class DateParserService implements IDateParserService {
     public parseDate(value: any) : Date {
         const INVALID_DATE: string = '#Invalid date!';
 
@@ -29,7 +29,7 @@ export class DateService implements IDateService {
         return result;
     }
 
-    private isValidDate(date: Date) : boolean {
-        return !isNaN(date.getDate());
+    private isValidDate(value: Date) : boolean {
+        return !isNaN(value.getDate());
     }
 }

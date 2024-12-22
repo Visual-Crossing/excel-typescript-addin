@@ -1,4 +1,4 @@
-export interface ICache {
+export interface ICacheService {
     generateId(keys: string[]): string;
     has(id: string): boolean;
     get(id: string): string | null;

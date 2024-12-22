@@ -3,8 +3,9 @@
  * See LICENSE in the project root for license information.
  */
 
+import Container from 'typedi';
 import { DI } from '../services/container';
-import { getApiKeyFromSettingsAsync, getUnitFromSettingsAsync, storeApiKeyAsync, setUnitAsync } from '../settings/settings';
+import { ISettingsService } from 'src/types/settings/settings.service.type';
 
 /* global console, document, Excel, Office */
 
@@ -55,7 +56,8 @@ async function tryInitialiseApiKey(): Promise<boolean> {
   } else {
     apiKeyTextBox.oninput = updateBtnOkState;
 
-    const apiKey: string | null | undefined = await getApiKeyFromSettingsAsync();
+    const settings = Container.get<ISettingsService>('service.settings');
+    const apiKey: string | null | undefined = await settings.getApiKeyAsync();
     
     if (apiKey && apiKey.length > 0) {
       apiKeyTextBox.value = apiKey;
@@ -161,9 +163,10 @@ async function btnOkOnClickHandler() {
 
     if (apiKeyFromInput && apiKeyFromInput.length > 0) {
       const unit: string = getUnitAsyncFromInput();
+      const settings = Container.get<ISettingsService>('service.settings');
 
-      await storeApiKeyAsync(apiKeyFromInput);
-      await setUnitAsync(unit);
+      await settings.setApiKeyAsync(apiKeyFromInput);
+      await settings.setUnitAsync(unit);
 
       Office.context.ui.messageParent(JSON.stringify({ apiKey: apiKeyFromInput, unit: unit}));
       // Office.context.ui.messageParent('');
@@ -227,7 +230,9 @@ function getUnitAsyncFromInput(): string {
 }
 
 async function loadUnit() {
-  const unit: string | null | undefined = await getUnitFromSettingsAsync();
+  const settings = Container.get<ISettingsService>('service.settings');
+  const unit: string | null | undefined = await settings.getUnitAsync();
+  
   let unitLabel: HTMLElement | null = null;
 
   if (!unit) {

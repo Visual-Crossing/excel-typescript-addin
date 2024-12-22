@@ -1,25 +1,39 @@
 import { Container } from 'typedi';
-import { ICache } from '../types/cache/cache.type';
-import { BrowserSessionCacheService } from './cache/browser-session.cache.service';
 import { PrecipitationFieldService } from './fields/precipitation.field.service';
 import { PrintDirectionParameterService } from './parameters/print-direction.parameter-processor.service';
 import { ArrayDataVerticalPrinterService } from './printers/vertical.printer.service';
 import { ArrayDataHorizontalPrinterService } from './printers/horizontal.printer.service';
-import { ColumnsParameterService } from './parameters/columns.parameter-processor.service';
-import { RowsParameterService } from './parameters/rows.parameter-processor.service';
-import { ISettings } from '../types/settings/settings.type';
-import { OfficeSettingsService } from './settings/office-settings.service';
+import { ArrayColSizeOptionalArgParserService } from './parameters/parsers/array-col-size.parser.service';
+import { ArrayRowSizeOptionalArgParserService } from './parameters/parsers/array-row-size.parser.service';
 import { WeatherObserverService } from './observers/weather.observer.service';
-import { IDateService } from '../types/dates/date-service.type';
-import { DateService } from './dates/date.service';
+import { IDateParserService } from '../types/dates/date.parser.type';
+import { IPrintJob } from 'src/types/jobs/print.job.type';
+import { PrintJobService } from './jobs/print.job.service';
+import { OfficeSettingsService } from './settings/office-settings.service';
+import { BrowserSessionCacheService } from './cache/browser-session.cache.service';
+import { DateParserService } from './dates/date.parser.service';
+import { ArraySizeOptionalArgParserService } from './parameters/parsers/array-size.parser.service';
 
 export class DI {
   static registerServices() {
-      Container.set<ICache>({ value: new BrowserSessionCacheService() });
-      Container.set<ISettings>({ value: new OfficeSettingsService() });
-      Container.set<IDateService>({ value: new DateService() });
+      Container.set([
+        { id: 'service.settings', value: new OfficeSettingsService() },
+        { id: 'service.cache', value: new BrowserSessionCacheService() },
+        { id: 'service.parser.date', value: new DateParserService() }
+      ]);
 
-      Container.set({ value: new WeatherObserverService() });
+      Container.set([
+        { id: 'service.parser.arg', value: new PrintDirectionParameterService() },
+        { id: 'service.parser.arg', value: new ArrayDataVerticalPrinterService() },
+        { id: 'service.parser.arg', value: new ArrayDataHorizontalPrinterService() },
+        { id: 'service.parser.arg', value: new ArraySizeOptionalArgParserService() },
+        { id: 'service.parser.arg', value: new PrecipitationFieldService() }
+      ]);
+
+      Container.set([
+        { id: 'service.parser.arg.size', value: new ArrayColSizeOptionalArgParserService() },
+        { id: 'service.parser.arg.size', value: new ArrayRowSizeOptionalArgParserService() }
+      ]);
 
       Container.set([
         { id: 'dir', value: new PrintDirectionParameterService() }
@@ -29,10 +43,10 @@ export class DI {
         { id: 'v', value: new ArrayDataVerticalPrinterService() },
         { id: 'h', value: new ArrayDataHorizontalPrinterService() }
       ]);
-
+      
       Container.set([
-        { id: 'cols', value: new ColumnsParameterService() },
-        { id: 'rows', value: new RowsParameterService() }
+        { id: 'cols', value: new ArrayColSizeOptionalArgParserService() },
+        { id: 'rows', value: new ArrayRowSizeOptionalArgParserService() }
       ]);
 
       Container.set([

@@ -1,4 +1,4 @@
-export interface ISettings {
+export interface ISettingsService {
     getApiKey(onSuccess: (apiKey: string | null | undefined) => void, onError?: (error: any) => void): void;
     getApiKeyAsync(): Promise<string | null | undefined>;
     setApiKeyAsync(apiKey: string): Promise<void>;

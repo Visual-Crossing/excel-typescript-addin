@@ -1,6 +1,6 @@
 import { WeatherObserver } from "src/types/observers/weather.observer.type";
 import { getUnitFromSettingsAsync } from "../settings/settings";
-import { IParameterProcessor } from "src/types/parameters/parameter-processor.type";
+import { IOptionalArgParser } from "src/types/parameters/parser.type";
 import Container from "typedi";
 
 const INVALID_DATE: string = "Invalid date.";
