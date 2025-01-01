@@ -1,27 +1,28 @@
+import { ICleanUpJobService } from '../../types/jobs/clean-up.job.service.type';
 import { getCell } from '../../helpers/helpers.excel';
-import { IJob } from '../../types/jobs/job.type';
 import { Service } from 'typedi';
 
 @Service({ transient: true })
-export class CleanUpJobService implements IJob {
-    private readonly CallerCellOriginalFormula: any;
-    private readonly ArrayDataColsCount: number;
-    private readonly ArrayDataRowsCount: number;
-    private readonly Invocation: CustomFunctions.Invocation;
-
-    public constructor(callerCellOriginalFormula: any, arrayDataColsCount: number, arrayDataRowsCount: number, invocation: CustomFunctions.Invocation) {
-        this.CallerCellOriginalFormula = callerCellOriginalFormula;
-        this.ArrayDataColsCount = arrayDataColsCount;
-        this.ArrayDataRowsCount = arrayDataRowsCount;
-        this.Invocation = invocation;
-    }
+export class CleanUpJobService implements ICleanUpJobService {
+    public CallerCellOriginalFormula: any;
+    public ArrayDataColsCount: number;
+    public ArrayDataRowsCount: number;
+    public Invocation: CustomFunctions.Invocation;
 
     public getId(): string {
-        return `CleanUp_${this.Invocation.address}`;
+        if (this.Invocation && this.Invocation.address) {
+            return `CleanUp_${this.Invocation.address}`;
+        } else {
+            throw new Error();
+        }
     }
 
     public getAddress(): string {
-        return this.Invocation.address!;
+        if (this.Invocation && this.Invocation.address) {
+            return this.Invocation.address;
+        } else {
+            throw new Error();
+        }
     }
 
     public async run(context: Excel.RequestContext): Promise<boolean> {
@@ -34,6 +35,10 @@ export class CleanUpJobService implements IJob {
                 }
                 catch {
                     // Caller cell no longer exists
+                    return true;
+                }
+
+                if (!callerCell) {
                     return true;
                 }
 

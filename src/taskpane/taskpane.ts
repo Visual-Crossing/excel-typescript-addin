@@ -4,7 +4,7 @@
  */
 
 import Container from 'typedi';
-import { DI } from '../services/container';
+import { Setup } from '../services/setup';
 import { ISettingsService } from 'src/types/settings/settings.service.type';
 
 /* global console, document, Excel, Office */
@@ -14,7 +14,7 @@ Office.onReady(async () => {
   try
   {
     Office.addin.setStartupBehavior(Office.StartupBehavior.load);
-    DI.registerServices();
+    Setup.registerServices();
 
     if (!await tryInitialiseApiKey()) {
       return;

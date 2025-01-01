@@ -1,7 +1,7 @@
 import { Queue } from "queue-typescript";
-import { IJob } from "src/types/jobs/job.type";
+import { IJobService } from "src/types/jobs/job.service.type";
 
-var jobs: Queue<IJob> | null = null;
+var jobs: Queue<IJobService> | null = null;
 var isJobsProcessingInProgress: boolean = false;
 
 export async function processJobs(): Promise<void> {
@@ -12,7 +12,7 @@ export async function processJobs(): Promise<void> {
             return await Excel.run(async (context: Excel.RequestContext) => {
                 try {
                     while (jobs && jobs.length > 0) {
-                        const job: IJob = jobs.front;
+                        const job: IJobService = jobs.front;
 
                         if (await job.run(context)) {
                             jobs.dequeue();
@@ -48,9 +48,9 @@ export async function processJobs(): Promise<void> {
     }
 }
 
-export function addJob(job: IJob) : void {
+export function addJob(job: IJobService) : void {
     if (!jobs) {
-        jobs = new Queue<IJob>();
+        jobs = new Queue<IJobService>();
     }
 
     jobs.enqueue(job);

@@ -9,8 +9,15 @@ import { DateParserService } from './parsers/date.parser.service';
 import { ArraySizeOptionalArgParserService } from './parsers/optional-args/array-size/array-size.parser.service';
 import { HorizontalPrinterOptionalArgParserService } from './parsers/optional-args/printers/horizontal-printer.parser.service';
 import { WeatherObserverService } from './observers/weather.observer.service';
+import { JobsProcessorService } from './jobs/jobs-processor.service';
+import { FormulaCaptureJobService } from './jobs/formula-capture.job.service';
+import { CleanUpJobService } from './jobs/clean-up.job.service';
 
-export class DI {
+export type RegisterServicesOverrideType = () => void;
+
+export class Setup {
+  static registerServicesOverride: RegisterServicesOverrideType | null = null;
+
   static registerServices() {
       Container.set([
         { id: 'service.settings', value: new OfficeSettingsService() },
@@ -23,12 +30,20 @@ export class DI {
         { id: 'service.parser.arg', value: new VerticalPrinterOptionalArgParserService() },
         { id: 'service.parser.arg', value: new HorizontalPrinterOptionalArgParserService() },
         { id: 'service.parser.arg', value: new ArraySizeOptionalArgParserService() },
-        // { id: 'service.parser.arg', value: new PrecipitationFieldService() }
       ]);
 
       Container.set([
         { id: 'service.parser.arg.size', value: new ArrayColSizeOptionalArgParserService() },
         { id: 'service.parser.arg.size', value: new ArrayRowSizeOptionalArgParserService() }
+      ]);
+
+      Container.set([
+        { id: 'service.jobs.processor', value: new JobsProcessorService() }
+      ]);
+
+      Container.set([
+        { id: 'service.job.formula.capture', value: new FormulaCaptureJobService() },
+        { id: 'service.job.cleanup', value: new CleanUpJobService() }
       ]);
 
       // Container.set([

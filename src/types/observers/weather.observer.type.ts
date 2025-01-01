@@ -18,8 +18,8 @@ export type WeatherObserver = {
     OptionalArg4?: any | null | undefined;
     OptionalArg5?: any | null | undefined;
 
-    SheetColumnCount?: number;
-    SheetRowCount?: number;
+    SheetColsCount?: number;
+    SheetRowsCount?: number;
 
     OriginalFormula?: any;
 }

@@ -5,8 +5,8 @@ import { generateArrayData } from '../helpers/helpers.array-data';
 import { addJob, processJobs } from '../helpers/helpers.jobs';
 import { NA_DATA } from '../shared/constants';
 import { PrintJobService } from '../services/jobs/print.job.service';
-import { FormulaJobService } from '../services/jobs/formula.job.service';
-import { CleanUpJobService } from '../services/jobs/cleanup.job.service';
+import { FormulaCaptureJobService } from '../services/jobs/formula-capture.job.service';
+import { CleanUpJobService } from '../services/jobs/clean-up.job.service';
 import { WeatherObserver } from '../types/observers/weather.observer.type';
 
 var subscribersGroupedByCacheId: Map<string, DistinctQueue<string, WeatherObserver>> | null;
@@ -83,7 +83,7 @@ async function processSubscribersQueue(weatherObserver: WeatherObserver): Promis
                         const arrayData: any[] | null = generateArrayData(subscriberWeatherArgs, cacheItemObject.values);
 
                         if (arrayData && arrayData.length > 0){
-                            addJob(new PrintJobService(subscriberWeatherArgs.OriginalFormula, arrayData, subscriberWeatherArgs.Printer, subscriberWeatherArgs.SheetColumnCount!, subscriberWeatherArgs.SheetRowCount!, subscriberWeatherArgs.Invocation));
+                            addJob(new PrintJobService(subscriberWeatherArgs.OriginalFormula, arrayData, subscriberWeatherArgs.Printer, subscriberWeatherArgs.SheetColsCount!, subscriberWeatherArgs.SheetRowsCount!, subscriberWeatherArgs.Invocation));
                         }
                     }
                 }
@@ -113,11 +113,11 @@ export async function getOrRequestData(weatherObserver: WeatherObserver): Promis
         }));
     }
 
-    addJob(new FormulaJobService(async (formula: any, sheetColumnCount: number, sheetRowCount: number) => { 
+    addJob(new FormulaCaptureJobService(async (formula: any, sheetColumnCount: number, sheetRowCount: number) => { 
         if (formula && sheetColumnCount && sheetRowCount) {
             weatherObserver.OriginalFormula = formula;
-            weatherObserver.SheetColumnCount = sheetColumnCount;
-            weatherObserver.SheetRowCount = sheetRowCount;
+            weatherObserver.SheetColsCount = sheetColumnCount;
+            weatherObserver.SheetRowsCount = sheetRowCount;
 
             if (cacheItemJsonString) {
                 const cacheItemObject = JSON.parse(cacheItemJsonString);
@@ -142,7 +142,7 @@ export async function getOrRequestData(weatherObserver: WeatherObserver): Promis
                         const arrayData: any[] | null = generateArrayData(weatherObserver, cacheItemObject.values, false);
                 
                         if (arrayData && arrayData.length > 0) {
-                            addJob(new PrintJobService(weatherObserver.OriginalFormula, arrayData, weatherObserver.Printer.getPrinterExcludingCaller(), weatherObserver.SheetColumnCount!, weatherObserver.SheetRowCount!,weatherObserver.Invocation));
+                            addJob(new PrintJobService(weatherObserver.OriginalFormula, arrayData, weatherObserver.Printer.getPrinterExcludingCaller(), weatherObserver.SheetColsCount!, weatherObserver.SheetRowsCount!,weatherObserver.Invocation));
                         }
                     }
 

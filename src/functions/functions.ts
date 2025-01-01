@@ -1,7 +1,7 @@
 ﻿/* global clearInterval, console, CustomFunctions, setInterval */
 
 import Container from 'typedi';
-import { DI } from '../services/container';
+import { Setup } from '../services/setup';
 import { WeatherObserver } from '../types/observers/weather.observer.type';
 import { getOrRequestData } from './functions.weather';
 import { IWeatherObserverService } from 'src/types/observers/weather.observer.service.type';
@@ -33,7 +33,11 @@ export async function Weather(
   
   try {
     if (!Container.has('service.settings')) {
-      DI.registerServices();
+      if (!Setup.registerServicesOverride) {
+        Setup.registerServicesOverride = Setup.registerServices;
+      }
+
+      Setup.registerServicesOverride();
     }
 
     const weatherObserverService = Container.get<IWeatherObserverService>('service.observer.weather');
