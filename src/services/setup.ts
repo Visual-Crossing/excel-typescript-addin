@@ -12,6 +12,11 @@ import { WeatherObserverService } from './observers/weather.observer.service';
 import { JobsProcessorService } from './jobs/jobs-processor.service';
 import { FormulaCaptureJobService } from './jobs/formula-capture.job.service';
 import { CleanUpJobService } from './jobs/clean-up.job.service';
+import { FormulaUpdaterService } from './updaters/formula.updater.service';
+import { MatrixService } from './matrix/matrix.service';
+import { PrintJobService } from './jobs/print.job.service';
+import { WeatherObservableService } from './observables/weather.observable.service';
+import { WeatherRequest } from './requests/weather.request.service';
 
 export type RegisterServicesOverrideType = () => void;
 
@@ -23,7 +28,8 @@ export class Setup {
         { id: 'service.settings', value: new OfficeSettingsService() },
         { id: 'service.cache', value: new BrowserSessionCacheService() },
         { id: 'service.parser.date', value: new DateParserService() },
-        { id: 'service.observer.weather', value: new WeatherObserverService() }
+        { id: 'service.observer.weather', value: new WeatherObserverService() },
+        { id: 'service.observable.weather', value: new WeatherObservableService() }
       ]);
 
       Container.set([
@@ -43,8 +49,23 @@ export class Setup {
 
       Container.set([
         { id: 'service.job.formula.capture', value: new FormulaCaptureJobService() },
-        { id: 'service.job.cleanup', value: new CleanUpJobService() }
+        { id: 'service.job.cleanup', value: new CleanUpJobService() },
+        { id: 'service.job.print', value: new PrintJobService() }
       ]);
+
+      Container.set([
+        { id: 'service.updater.formula', value: new FormulaUpdaterService() }
+      ]);
+
+      Container.set([
+        { id: 'service.matrix', value: new MatrixService() }
+      ]);
+
+      Container.set([
+        { id: 'service.requests.weather', value: new WeatherRequest() }
+      ]);
+
+      //WeatherRequest
 
       // Container.set([
       //   { id: 'precip', value: new PrecipitationFieldService() }

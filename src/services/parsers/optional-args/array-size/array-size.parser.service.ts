@@ -1,6 +1,6 @@
 import Container from "typedi";
-import { WeatherObserver } from "src/types/observers/weather.observer.type";
-import { IOptionalArgParserService } from "src/types/parsers/parser.type";
+import { WeatherObserver } from "../../../../types/observers/weather.observer.type";
+import { IOptionalArgParserService } from "../../../../types/parsers/parser.service.type";
 import { OptionalArgParserService } from "../../parser.service";
 
 export class ArraySizeOptionalArgParserService extends OptionalArgParserService implements IOptionalArgParserService {

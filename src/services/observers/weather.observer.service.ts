@@ -1,11 +1,11 @@
 import { WeatherObserver } from '../../types/observers/weather.observer.type';
-import { IOptionalArgParserService } from '../../types/parsers/parser.type';
+import { IOptionalArgParserService } from '../../types/parsers/parser.service.type';
 import { ArrayDataVerticalPrinterService } from '../printers/vertical.printer.service';
 import Container, { Service } from 'typedi';
-import { IDateParserService } from '../../types/parsers/date.parser.type';
-import { ISettingsService } from 'src/types/settings/settings.service.type';
-import { ICacheService } from 'src/types/cache/cache.service.type';
-import { IWeatherObserverService } from 'src/types/observers/weather.observer.service.type';
+import { IDateParserService } from '../../types/parsers/date.parser.service.type';
+import { ISettingsService } from '../../types/settings/settings.service.type';
+import { ICacheService } from '../..//types/cache/cache.service.type';
+import { IWeatherObserverService } from '../..//types/observers/weather.observer.service.type';
 
 @Service()
 export class WeatherObserverService implements IWeatherObserverService {
@@ -49,8 +49,10 @@ export class WeatherObserverService implements IWeatherObserverService {
             Location: locationString, 
             Date: dateValue, 
             Unit: unit, 
-            Columns: 1,
-            Rows: 1,
+            ColumnsIn: 1,
+            RowsIn: 1,
+            ColumnsOut: 1,
+            RowsOut: 1,
             Printer: new ArrayDataVerticalPrinterService(),
             Invocation: invocation,
             OptionalArg1: optionalArg1, 
