@@ -3,7 +3,8 @@
  * See LICENSE in the project root for license information.
  */
 
-import { storeApiKeyAsync, setUnitAsync } from "../settings/settings";
+import { ISettingsService } from "../types/settings/settings.service.type";
+import Container from "typedi";
 
 /**
  * Displays the API key dialog.
@@ -48,12 +49,16 @@ async function displaySettingsDialog(event: Office.AddinCommands.Event) {
               if (argsAsMessageOrigin && argsAsMessageOrigin.message) {
                 const json = JSON.parse(argsAsMessageOrigin.message);
 
-                if (json.apiKey) {
-                  await storeApiKeyAsync(json.apiKey);
-                }
+                if (json) {
+                  const settingsService = Container.get<ISettingsService>('service.settings');
 
-                if (json.unit) {
-                  await setUnitAsync(json.unit);
+                  if (json.apiKey) {
+                    await settingsService.setApiKeyAsync(json.apiKey);
+                  }
+
+                  if (json.unit) {
+                    await settingsService.setUnitAsync(json.unit);
+                  }
                 }
               }
             }

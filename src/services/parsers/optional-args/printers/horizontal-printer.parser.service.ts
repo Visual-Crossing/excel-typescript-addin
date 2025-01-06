@@ -1,5 +1,5 @@
 import { INVALID_PARAMETER_VALUE } from '../../../../shared/constants';
-import { IOptionalArgParserService } from '../../../../types/parsers/parser.type';
+import { IOptionalArgParserService } from '../../../../types/parsers/parser.service.type';
 import { WeatherObserver } from '../../../../types/observers/weather.observer.type';
 import { ArrayDataHorizontalPrinterService } from '../../../printers/horizontal.printer.service';
 

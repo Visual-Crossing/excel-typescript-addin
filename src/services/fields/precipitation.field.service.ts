@@ -3,7 +3,7 @@ import { IField } from "../../types/fields/field.type";
 import { FieldService } from "./field.service";
 
 @Service({ global: true })
-export class PrecipitationFieldService extends FieldService<number> implements IField<number> {
+export class PrecipitationFieldService extends FieldService<number> implements IField {
     public getTitle(): string {
         return 'Precipitation';
     }

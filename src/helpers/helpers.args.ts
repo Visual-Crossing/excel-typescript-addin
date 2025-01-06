@@ -1,9 +1,4 @@
-import { WeatherObserver } from "src/types/observers/weather.observer.type";
-import { getUnitFromSettingsAsync } from "../settings/settings";
-import { IOptionalArgParserService } from "src/types/parsers/parser.type";
-import Container from "typedi";
-
-const INVALID_DATE: string = "Invalid date.";
+// const INVALID_DATE: string = "Invalid date.";
 
 export enum PrintDirections {
     Horizontal,

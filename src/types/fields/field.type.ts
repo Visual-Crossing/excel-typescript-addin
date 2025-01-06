@@ -1,4 +1,4 @@
-export interface IField<T> {
+export interface IField {
     getTitle(): string;
-    getValue(jsonData: any): T;
+    getValue(jsonData: object): string | number | Date;
 }

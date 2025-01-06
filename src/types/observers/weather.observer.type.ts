@@ -3,8 +3,11 @@ import { IArrayDataPrinterWithCaller } from '../printers/printer.type';
 export type WeatherObserver = {
     CacheId: string;
     
-    Columns: number;
-    Rows: number;
+    ColumnsIn: number;
+    ColumnsOut: number;
+
+    RowsIn: number;
+    RowsOut: number;
 
     Location: string;
     Date: Date;
@@ -21,5 +24,5 @@ export type WeatherObserver = {
     SheetColsCount?: number;
     SheetRowsCount?: number;
 
-    OriginalFormula?: any;
+    FormulaIn?: any;
 }

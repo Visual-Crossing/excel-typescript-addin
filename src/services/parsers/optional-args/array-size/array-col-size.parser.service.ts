@@ -1,5 +1,5 @@
-import { WeatherObserver } from "src/types/observers/weather.observer.type";
-import { IOptionalArgParserService } from "src/types/parsers/parser.type";
+import { WeatherObserver } from "../../../../types/observers/weather.observer.type";
+import { IOptionalArgParserService } from "../../../../types/parsers/parser.service.type";
 import { OptionalArgParserService } from "../../parser.service";
 
 export class ArrayColSizeOptionalArgParserService extends OptionalArgParserService implements IOptionalArgParserService {
@@ -12,7 +12,7 @@ export class ArrayColSizeOptionalArgParserService extends OptionalArgParserServi
             }
 
             try {
-                weatherObserver.Columns = parseInt(args[1], 10);
+                weatherObserver.ColumnsIn = parseInt(args[1], 10);
             }
             catch {
                 throw new Error(this.getErrorMessage(value));

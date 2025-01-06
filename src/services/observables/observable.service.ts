@@ -1,10 +1,11 @@
+import { IObservableService } from "../../types/observables/observable.service.type";
 import { DistinctQueue } from "../../types/queues/distinct.queue.type";
 
-export abstract class ObservableService<T> {
+export abstract class ObservableService<T> implements IObservableService<T> {
     private observers: Map<string, DistinctQueue<string, T>> | null = null;
 
-    public onValidate: ((observer: T) => boolean) | undefined;
-    public onUpdate: ((observer: T) => void) | undefined;
+    public onValidate: ((observer: T) => boolean);
+    public onUpdate: ((observer: T) => void);
 
     public subscribe(groupId: string, observerId: string, observer: T): void {
         if (!groupId ||

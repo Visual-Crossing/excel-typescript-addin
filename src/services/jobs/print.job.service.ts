@@ -1,35 +1,31 @@
 import { getCell } from '../../helpers/helpers.excel';
-import { IJobService } from '../../types/jobs/job.service.type';
 import { IArrayDataPrinter } from '../../types/printers/printer.type';
 import { ArrayDataExcludeCallerVerticalPrinterService } from '../printers/vertical.printer.service';
 import { ArrayDataExcludeCallerHorizontalPrinterService } from '../printers/horizontal.printer.service';
+import { IPrintJobService } from '../../types/jobs/print.job.service.type';
 import { Service } from 'typedi';
-import { IPrintJob } from 'src/types/jobs/print.job.type';
 
-//@Service({ transient: true })
-export class PrintJobService implements IPrintJob, IJobService {
-    private readonly CallerCellOriginalFormula: any;
-    private readonly ArrayData: any[];
-    private readonly ArrayDataPrinter: IArrayDataPrinter;
-    private readonly SheetColumnCount: number;
-    private readonly SheetRowCount: number;
-    private readonly Invocation: CustomFunctions.Invocation;
-
-    public constructor(callerCellOriginalFormula: any, arrayData: any[], arrayDataPrinter: IArrayDataPrinter, sheetColumnCount: number, sheetRowCount: number, invocation: CustomFunctions.Invocation) {
-        this.CallerCellOriginalFormula = callerCellOriginalFormula;
-        this.ArrayData = arrayData;
-        this.ArrayDataPrinter = arrayDataPrinter;
-        this.SheetColumnCount = sheetColumnCount;
-        this.SheetRowCount = sheetRowCount;
-        this.Invocation = invocation;
-    }
+@Service({ transient: true })
+export class PrintJobService implements IPrintJobService {
+    public CallerCellOriginalFormula: any;
+    public ArrayData: any[];
+    public ArrayDataPrinter: IArrayDataPrinter;
+    public Invocation: CustomFunctions.Invocation;
 
     public getId(): string {
-        return `Print_${this.Invocation.address}`;
+        if (this.Invocation && this.Invocation.address) {
+            return `Print_${this.Invocation.address}`;
+        } else {
+            throw new Error();
+        }
     }
 
     public getAddress(): string {
-        return this.Invocation.address!;
+        if (this.Invocation && this.Invocation.address) {
+            return this.Invocation.address;
+        } else {
+            throw new Error();
+        }
     }
 
     public getIsCallerAffected() : boolean {
@@ -49,9 +45,13 @@ export class PrintJobService implements IPrintJob, IJobService {
                     return true;
                 }
 
+                if (!callerCell) {
+                    return true;
+                }
+
                 callerCell.load();
                 await context.sync();
-
+                
                 // ToDo: Implement case insensitive and whitespace free comparison
                 if (callerCell.formulas[0][0] === this.CallerCellOriginalFormula) {
                     if (this.ArrayDataPrinter.print(callerCell, this.SheetColumnCount, this.SheetRowCount, this.ArrayData)) {

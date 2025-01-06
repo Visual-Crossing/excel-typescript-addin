@@ -1,10 +1,6 @@
 import { Service } from 'typedi';
-import { DEFAULT_UNIT } from '../../settings/settings';
-import { ISettingsService } from 'src/types/settings/settings.service.type';
-
-const API_KEY_SETTING: string = 'Visual Crossing API Key';
-const UNIT_SETTING: string = 'Visual Crossing Unit';
-
+import { ISettingsService } from '../../types/settings/settings.service.type';
+import { API_KEY_SETTING, DEFAULT_UNIT, UNIT_SETTING } from '../../shared/constants';
 @Service()
 export class OfficeSettingsService implements ISettingsService {
     public getApiKey(onSuccess: (apiKey: string | null | undefined) => void, onError?: (error: any) => void): void {
@@ -50,7 +46,7 @@ export class OfficeSettingsService implements ISettingsService {
             unit = DEFAULT_UNIT;
         }
         
-        return unit;
+        return unit!;
     }
 
     public async setUnitAsync(unit: string): Promise<void> {
