@@ -3,6 +3,7 @@
  * See LICENSE in the project root for license information.
  */
 
+import { Setup } from "../services/setup";
 import { ISettingsService } from "../types/settings/settings.service.type";
 import Container from "typedi";
 
@@ -50,6 +51,8 @@ async function displaySettingsDialog(event: Office.AddinCommands.Event) {
                 const json = JSON.parse(argsAsMessageOrigin.message);
 
                 if (json) {
+                  Setup.initialise();
+
                   const settingsService = Container.get<ISettingsService>('service.settings');
 
                   if (json.apiKey) {

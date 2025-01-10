@@ -2,15 +2,15 @@ import { IObservableService } from "../../types/observables/observable.service.t
 import { DistinctQueue } from "../../types/queues/distinct.queue.type";
 
 export abstract class ObservableService<T> implements IObservableService<T> {
-    private observers: Map<string, DistinctQueue<string, T>> | null = null;
+    private observers: Map<string, DistinctQueue<CustomFunctions.Invocation, T>> | null = null;
 
     public onValidate: ((observer: T) => boolean);
     public onUpdate: ((observer: T) => void);
 
-    public subscribe(groupId: string, observerId: string, observer: T): void {
+    public subscribe(groupId: string, observerKey: CustomFunctions.Invocation, observer: T): void {
         if (!groupId ||
-            !observerId) {
-            throw new Error("Invalid id.");
+            !observerKey) {
+            throw new Error();
         }
 
         if (!observer) {
@@ -18,20 +18,20 @@ export abstract class ObservableService<T> implements IObservableService<T> {
         }
 
         if (!this.observers) {
-            this.observers = new Map<string, DistinctQueue<string, T>>();
+            this.observers = new Map<string, DistinctQueue<CustomFunctions.Invocation, T>>();
         }
 
         if (!this.observers.has(groupId)) {
-            this.observers.set(groupId, new DistinctQueue<string, T>());
+            this.observers.set(groupId, new DistinctQueue<CustomFunctions.Invocation, T>());
         }
     
-        const observers: DistinctQueue<string, T> = this.observers.get(groupId)!;
+        const observers: DistinctQueue<CustomFunctions.Invocation, T> = this.observers.get(groupId)!;
     
         if (!observers) {
             throw new Error("Invalid internal state.");
         }
     
-        observers.enqueue(observerId, observer);
+        observers.enqueue(observerKey, observer);
     }
 
     public update(groupId: string): void {

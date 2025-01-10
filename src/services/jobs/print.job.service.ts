@@ -10,6 +10,8 @@ export class PrintJobService implements IPrintJobService {
     public CallerCellOriginalFormula: any;
     public ArrayData: any[];
     public ArrayDataPrinter: IArrayDataPrinter;
+    public SheetColumnCount: number;
+    public SheetRowCount: number;
     public Invocation: CustomFunctions.Invocation;
 
     public getId(): string {

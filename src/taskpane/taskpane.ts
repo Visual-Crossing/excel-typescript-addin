@@ -14,7 +14,7 @@ Office.onReady(async () => {
   try
   {
     Office.addin.setStartupBehavior(Office.StartupBehavior.load);
-    Setup.registerServices();
+    Setup.initialise();
 
     if (!await tryInitialiseApiKey()) {
       return;

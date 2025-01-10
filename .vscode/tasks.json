@@ -32,7 +32,7 @@
         "command": "npm",
         "args": [
           "run",
-          "start:desktop",
+          "start:desktop:dev",
           "--",
           "--app",
           "excel"
@@ -46,7 +46,7 @@
       {
         "label": "Dev Server",
         "type": "npm",
-        "script": "dev-server",
+        "script": "watch+no-overlay",
         "presentation": {
           "clear": true,
           "panel": "dedicated"
@@ -83,7 +83,7 @@
       {
         "label": "Stop Debug",
         "type": "npm",
-        "script": "stop",
+        "script": "stop:dev",
         "presentation": {
           "clear": true,
           "panel": "shared",
@@ -94,7 +94,7 @@
       {
         "label": "Watch",
         "type": "npm",
-        "script": "watch",
+        "script": "watch+no-overlay",
         "presentation": {
           "clear": true,
           "panel": "dedicated"

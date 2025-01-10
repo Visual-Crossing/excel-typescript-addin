@@ -23,6 +23,16 @@ export type RegisterServicesOverrideType = () => void;
 export class Setup {
   static registerServicesOverride: RegisterServicesOverrideType | null = null;
 
+  static initialise() {
+    if (!Container.has('service.settings')) {
+      if (Setup.registerServicesOverride) {
+        Setup.registerServicesOverride();
+      } else {
+        Setup.registerServices();
+      }
+    }
+  }
+
   static registerServices() {
       Container.set([
         { id: 'service.settings', value: new OfficeSettingsService() },

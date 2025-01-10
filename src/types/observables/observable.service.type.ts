@@ -1,0 +1,7 @@
+export interface IObservableService<T> {
+    onValidate: ((observer: T) => boolean);
+    onUpdate: ((observer: T) => void);
+
+    subscribe(groupId: string, observerKey: CustomFunctions.Invocation, observer: T): void;
+    update(groupId: string): void;
+}

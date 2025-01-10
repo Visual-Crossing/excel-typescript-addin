@@ -102,7 +102,7 @@
         <bt:String id="VisualCrossingTab.Label" DefaultValue="Visual Crossing"/>
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="GetStarted.Description" DefaultValue="The Visual Crossing Excel Add-in loaded succesfully. Please go to the 'Visual Crossing' tab and click on the 'Settings' button to get started."/>
+        <bt:String id="GetStarted.Description" DefaultValue="The Visual Crossing Excel Add-in loaded successfully. Please go to the 'Visual Crossing' tab and click on the 'Settings' button to get started."/>
         <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Click to enter or update the Visual Crossing Excel Add-in settings."/>
       </bt:LongStrings>
     </Resources>

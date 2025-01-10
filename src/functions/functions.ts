@@ -5,6 +5,8 @@ import { Setup } from '../services/setup';
 import { WeatherObserver } from '../types/observers/weather.observer.type';
 import { IWeatherObserverService } from '../types/observers/weather.observer.service.type';
 import { IRequestService } from '../types/requests/request.service.type';
+import { ObservableService } from '../services/observables/observable.service';
+import { WeatherObservableService } from '../services/observables/weather.observable.service';
 
 /**
  * Offers complete, global weather data coverage both geographically and chronologically.
@@ -32,26 +34,22 @@ export async function Weather(
 ): Promise<string | number | Date> {
   
   try {
-    if (!Container.has('service.settings')) {
-      if (!Setup.registerServicesOverride) {
-        Setup.registerServicesOverride = Setup.registerServices;
-      }
-
-      Setup.registerServicesOverride();
-    }
+    Setup.initialise();
 
     const weatherObserverService = Container.get<IWeatherObserverService>('service.observer.weather');
     const weatherObserver: WeatherObserver = await weatherObserverService.process(location, date, invocation, optionalArg1, optionalArg2, optionalArg3, optionalArg4, optionalArg5);
 
-    const weatherRequestService = Container.get<IRequestService<WeatherObserver>>('service.requests.weather');
-    return await weatherRequestService.fetchData(weatherObserver);
+    const weatherObservableService = Container.get<WeatherObservableService>('service.observable.weather');
+    await weatherObservableService.observe(weatherObserver);
+
+
   }
   catch (error: any) {
     if (error) {
       if (error.message) {
-        return `#N/A Error! - (${error.message})`;
+        return `#N/A Error - (${error.message})`;
       } else if (error.name) {
-        return `#N/A Error! - (${error.name})`;
+        return `#N/A Error - (${error.name})`;
       }
     }
 
