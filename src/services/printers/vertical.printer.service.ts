@@ -55,7 +55,10 @@ export class ArrayDataExcludeCallerVerticalPrinterService implements IArrayDataP
                 }
                 else {
                     // ToDo: Update formula columns and rows
-                    callerCell.formulas[0][0] = callerCell.formulas[0][0];
+                    callerCell.formulas = callerCell.formulas[0][0];
+                    
+                    //callerCell.setDirty();
+                    // callerCell.calculate();
                 }
             }
 

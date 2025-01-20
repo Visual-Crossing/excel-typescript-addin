@@ -4,8 +4,6 @@ import Container from 'typedi';
 import { Setup } from '../services/setup';
 import { WeatherObserver } from '../types/observers/weather.observer.type';
 import { IWeatherObserverService } from '../types/observers/weather.observer.service.type';
-import { IRequestService } from '../types/requests/request.service.type';
-import { ObservableService } from '../services/observables/observable.service';
 import { WeatherObservableService } from '../services/observables/weather.observable.service';
 
 /**
@@ -40,19 +38,19 @@ export async function Weather(
     const weatherObserver: WeatherObserver = await weatherObserverService.process(location, date, invocation, optionalArg1, optionalArg2, optionalArg3, optionalArg4, optionalArg5);
 
     const weatherObservableService = Container.get<WeatherObservableService>('service.observable.weather');
-    await weatherObservableService.observe(weatherObserver);
-
-
+    return await weatherObservableService.observe(weatherObserver);
   }
   catch (error: any) {
+    const NA_ERROR: string = '#N/A Error';
+
     if (error) {
       if (error.message) {
-        return `#N/A Error - (${error.message})`;
+        return `${NA_ERROR} - (${error.message})`;
       } else if (error.name) {
-        return `#N/A Error - (${error.name})`;
+        return `${NA_ERROR} - (${error.name})`;
       }
     }
 
-    return '#N/A Error!';
+    return `${NA_ERROR}!`;
   }
 }

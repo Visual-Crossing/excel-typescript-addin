@@ -4,12 +4,12 @@ import { FieldService } from "./field.service";
 import { ApiResponse } from "../../types/response/api-response.type";
 
 @Service({ global: true })
-export class PrecipitationFieldService extends FieldService<number> implements IField {
+export class PressureFieldService extends FieldService<number> implements IField {
     public getTitle(): string {
-        return 'Precipitation';
+        return 'Pressure';
     }
 
     public getValue(apiResponse: ApiResponse): number | null {
-        return super.getFieldValueByName('precip', apiResponse);
+        return super.getFieldValueByName('pressure', apiResponse);
     }
 }

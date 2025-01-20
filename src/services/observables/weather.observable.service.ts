@@ -10,6 +10,7 @@ import { IMatrixService } from "../../types/matrix/matrix.service.type";
 import { IPrintJobService } from "../../types/jobs/print.job.service.type";
 import { PROCESSING } from "../../shared/constants";
 import { IRequestService } from "../../types/requests/request.service.type";
+import { ApiResponse } from "src/types/response/api-response.type";
 
 export class WeatherObservableService extends ObservableService<WeatherObserver> {
     public constructor() {
@@ -19,18 +20,17 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
         this.onUpdate = ((observer: WeatherObserver) => this.onUpdateHandler(observer));
     }
 
-    public async observe(observer: WeatherObserver): Promise<void> {
+    public async observe(observer: WeatherObserver): Promise<string | number | Date> {
         if (!observer) {
             throw new Error();
         }
 
         const cacheService = Container.get<ICacheService>('service.cache');
-        const cacheItemString: string | null | undefined = cacheService.get(observer.CacheId);
+        let cacheItemString: string | null | undefined = cacheService.get(observer.CacheId);
 
         if (!cacheItemString) {
-            cacheService.set(observer.CacheId, JSON.stringify({ 
-                status: 'Requesting',
-            }));
+            cacheItemString = JSON.stringify({ status: 'Pending' });
+            cacheService.set(observer.CacheId, cacheItemString);
         }
 
         const jobsProcessorService = Container.get<IJobsProcessorService>('service.jobs.processor');
@@ -39,23 +39,21 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
         formulaCaptureJob.Observer = observer;
         formulaCaptureJob.Invocation = observer.Invocation;
 
-        formulaCaptureJob.OnFormulaCaptured = async (observer: WeatherObserver, callerCellFormula: any, sheetColsCount: number, sheetRowsCount: number) => await this.onFormulaCapturedHandler(observer, callerCellFormula, sheetColsCount, sheetRowsCount);
+        formulaCaptureJob.OnFormulaCaptured = async (observer: WeatherObserver, callerCellFormula: any, sheetColsCount: number, sheetRowsCount: number) => this.onFormulaCapturedHandler(observer, callerCellFormula, sheetColsCount, sheetRowsCount);
 
         jobsProcessorService.add(formulaCaptureJob);
-        await jobsProcessorService.process();
+        jobsProcessorService.process();
 
-        // if (cacheItemString) {
-        //     return await getReturnValue(cacheItemString, observer);
-        // }
-        // else {
-        //     return PROCESSING;
-        // }
+        const matrixService = Container.get<IMatrixService>('service.matrix');
+
+        matrixService.ApiResponse = JSON.parse(cacheItemString) as ApiResponse;
+
+        const matrix = matrixService.toMatrix();
+
+        return matrix.FormulaCellDisplayValue;
     }
 
     private async onFormulaCapturedHandler (observer: WeatherObserver, callerCellFormula: any, sheetColsCount: number, sheetRowsCount: number): Promise<void>  { 
-        const cacheService = Container.get<ICacheService>('service.cache');
-        const cacheItemString: string | null | undefined = cacheService.get(observer.CacheId);
-
         if (observer && observer.Invocation && observer.Invocation.address && callerCellFormula && sheetColsCount && sheetRowsCount) {
             observer.FormulaIn = callerCellFormula;
             observer.SheetColsCount = sheetColsCount;
@@ -71,51 +69,50 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
             const jobsProcessorService = Container.get<IJobsProcessorService>('service.jobs.processor');
 
             jobsProcessorService.add(cleanupJob);
-            await jobsProcessorService.process();
+            jobsProcessorService.process();
 
-            if (cacheItemString) {
-                const cacheItemObject = JSON.parse(cacheItemString);
+            const cacheService = Container.get<ICacheService>('service.cache');
+            const cacheItemString: string | null | undefined = cacheService.get(observer.CacheId);
 
-                if (!cacheItemObject) {
-                    return;
-                }
-                
+            const cacheItemObject = cacheItemString ? JSON.parse(cacheItemString) : null;
+
+            if (cacheItemObject && cacheItemObject.status !== 'Pending') {
                 if (cacheItemObject.status === 'Requesting') {
                     this.subscribe(observer.CacheId, observer.Invocation, observer);
                 }
-                else {
-                    const matrixService = Container.get<IMatrixService>('service.matrix');
+                // else {
+                //     const matrixService = Container.get<IMatrixService>('service.matrix');
 
-                    matrixService.CurrentFormula = observer.FormulaIn;
-                    matrixService.PrintDirection = observer.Printer.getPrintDirection();
-                    matrixService.JsonData = cacheItemObject.values;
+                //     matrixService.CurrentFormula = observer.FormulaIn;
+                //     matrixService.PrintDirection = observer.Printer.getPrintDirection();
+                //     matrixService.JsonData = cacheItemObject.values;
 
-                    if (observer.ColumnsIn && observer.RowsIn) {
-                        matrixService.CurrentColsRows = `cols=${observer.ColumnsIn};rows=${observer.RowsIn};`;
-                    }
+                //     if (observer.ColumnsIn && observer.RowsIn) {
+                //         matrixService.CurrentColsRows = `cols=${observer.ColumnsIn};rows=${observer.RowsIn};`;
+                //     }
 
-                    const matrix = matrixService.toMatrix();
+                //     const matrix = matrixService.toMatrix();
 
-                    if (matrix.OutputArrayData?.length) {
-                        const printJob = Container.get<IPrintJobService>('service.job.print');
+                //     if (matrix.OutputArrayData?.length) {
+                //         const printJob = Container.get<IPrintJobService>('service.job.print');
 
-                        printJob.CallerCellOriginalFormula = observer.FormulaIn;
-                        printJob.ArrayData = matrix.OutputArrayData;
-                        printJob.ArrayDataPrinter = observer.Printer.getPrinterExcludingCaller();
-                        printJob.Invocation = observer.Invocation;
+                //         printJob.CallerCellOriginalFormula = observer.FormulaIn;
+                //         printJob.ArrayData = matrix.OutputArrayData;
+                //         printJob.ArrayDataPrinter = observer.Printer.getPrinterExcludingCaller();
+                //         printJob.Invocation = observer.Invocation;
 
-                        await this.update(observer.CacheId);
+                //         await this.update(observer.CacheId);
 
-                        jobsProcessorService.add(cleanupJob);
-                        await jobsProcessorService.process();
-                    }
-                }
+                //         jobsProcessorService.add(cleanupJob);
+                //         await jobsProcessorService.process();
+                //     }
+                // }
             }
             else {
-                // const apiKey: string | null | undefined = await getApiKeyFromSettingsAsync();
-                //await fetchTimelineData(apiKey, observer);
                 const weatherRequest = Container.get<IRequestService<WeatherObserver>>('service.requests.weather');
-                await weatherRequest.fetchData(observer);
+                weatherRequest.fetchData(observer);
+
+                cacheService.set(observer.CacheId, JSON.stringify({ status: 'Requesting' }));
             }
         }
     }
@@ -132,6 +129,16 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
         if (!observer) {
             return;
         }
+
+        const cacheService = Container.get<ICacheService>('service.cache');
+        const cacheItemString: string | null | undefined = cacheService.get(observer.CacheId);
+
+        if (cacheItemString) {
+            const cacheItemObject = JSON.parse(cacheItemString);
+
+            if (!cacheItemObject) {
+                return;
+            }
         
         // const cacheItem = getCacheItem(observer.CacheId);
 
@@ -147,13 +154,33 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
         //             if (arrayData && arrayData.length > 0){
         //                 addJob(new PrintJobService(observer.FormulaIn, arrayData, observer.Printer, observer.SheetColsCount!, observer.SheetRowsCount!, observer.Invocation));
 
-        //                 const jobsProcessorService = Container.get<IJobsProcessorService>('service.jobs.processor');
-        //                 //ToDo: Add print job
-        //                 jobsProcessorService.add(formulaCaptureJob);
-        //                 await jobsProcessorService.process();
-        //             }
-        //         }
-        //     }
-        // }
+            const matrixService = Container.get<IMatrixService>('service.matrix');
+
+            matrixService.CurrentFormula = observer.FormulaIn;
+            matrixService.PrintDirection = observer.Printer.getPrintDirection();
+            matrixService.ApiResponse = cacheItemObject as ApiResponse;
+
+            if (observer.ColumnsIn && observer.RowsIn) {
+                matrixService.CurrentColsRows = `cols=${observer.ColumnsIn};rows=${observer.RowsIn};`;
+            }
+
+            const matrix = matrixService.toMatrix();
+
+            if (matrix.OutputArrayData?.length) {
+                const printJob = Container.get<IPrintJobService>('service.job.print');
+
+                printJob.CallerCellOriginalFormula = observer.FormulaIn;
+                printJob.ArrayData = matrix.OutputArrayData;
+                printJob.ArrayDataPrinter = observer.Printer.getPrinterExcludingCaller();
+                printJob.Invocation = observer.Invocation;
+
+                //await this.update(observer.CacheId);
+
+                const jobsProcessorService = Container.get<IJobsProcessorService>('service.jobs.processor');
+
+                jobsProcessorService.add(printJob);
+                jobsProcessorService.process();
+            }
+        }
     }
 }

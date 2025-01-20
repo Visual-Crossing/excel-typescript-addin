@@ -1,4 +1,6 @@
+import { ApiResponse } from "../response/api-response.type";
+
 export interface IField {
     getTitle(): string;
-    getValue(jsonData: object): string | number | Date;
+    getValue(apiResponse: ApiResponse): string | number | Date | null;
 }

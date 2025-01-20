@@ -19,7 +19,7 @@ export class WeatherObserverService implements IWeatherObserverService {
         optionalArg4?: any | null | undefined,
         optionalArg5?: any | null | undefined
     ): Promise<WeatherObserver> {
-        const INVALID_PARAMETERS: string = '#Invalid parameters!';
+        const INVALID_PARAMETERS: string = 'Invalid parameters!';
 
         if ((optionalArg1 && typeof optionalArg1 !== 'string') ||
             (optionalArg2 && typeof optionalArg2 !== 'string') ||
@@ -32,7 +32,7 @@ export class WeatherObserverService implements IWeatherObserverService {
         const locationString = (location as string)?.trim();
 
         if (!locationString || locationString.length === 0) {
-            throw new Error('#Invalid Location!');
+            throw new Error('Invalid Location!');
         }
 
         const settingsService = Container.get<ISettingsService>('service.settings');
@@ -101,7 +101,7 @@ export class WeatherObserverService implements IWeatherObserverService {
                 }
 
                 if (!isOptionalArgParseSuccess) {
-                    throw new Error(`#Invalid parameter: '${optionalArg as string}'!`);
+                    throw new Error(`Invalid parameter: '${optionalArg as string}'!`);
                 }
             }
         });

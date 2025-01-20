@@ -7,26 +7,30 @@ import { NA_DATA, PROCESSING } from "../../shared/constants";
 import { ISettingsService } from "../../types/settings/settings.service.type";
 
 export class WeatherRequest implements IRequestService<WeatherObserver> {
-    async onSuccessJsonResponse(jsonResponse: any, observer: WeatherObserver): Promise<string> {
+    async onSuccessJsonResponse(jsonResponse: any, observer: WeatherObserver): Promise<void> {
         return await new Promise(async (resolve, reject) => {
             try {
-                if (jsonResponse && jsonResponse.days && jsonResponse.days.length > 0 && jsonResponse.days[0]) {
-                    const cacheService = Container.get<ICacheService>('service.cache');
+                const cacheService = Container.get<ICacheService>('service.cache');
 
+                if (jsonResponse && jsonResponse.days && jsonResponse.days.length > 0 && jsonResponse.days[0]) {
                     cacheService.set(observer.CacheId, JSON.stringify({ 
                         status: 'Complete',
                         type: 'Permanent',
                         values: jsonResponse.days[0]
                     }));
-
-                    const weatherObservableService = Container.get<IObservableService<WeatherObserver>>('service.observable.weather');
-                    weatherObservableService.onUpdate(observer);
-
-                    return resolve(PROCESSING);
                 }
                 else {
-                    return resolve(NA_DATA);
+                    cacheService.set(observer.CacheId, JSON.stringify({ 
+                        status: 'Complete',
+                        type: 'Permanent',
+                        values: null
+                    }));
                 }
+
+                const weatherObservableService = Container.get<IObservableService<WeatherObserver>>('service.observable.weather');
+                weatherObservableService.onUpdate(observer);
+
+                return resolve();
             }
             catch (error: any) {
                 return reject(error);
@@ -34,7 +38,7 @@ export class WeatherRequest implements IRequestService<WeatherObserver> {
         });
     }
 
-    async onSuccessResponse(observer: WeatherObserver, response: Response): Promise<string> {
+    async onSuccessResponse(observer: WeatherObserver, response: Response): Promise<string | void> {
         return await new Promise(async (resolve, reject) => {
             try {
                 if (!response) {
@@ -50,7 +54,7 @@ export class WeatherRequest implements IRequestService<WeatherObserver> {
         });
     }
 
-    public async fetchData(observer: WeatherObserver): Promise<string> {
+    public async fetchData(observer: WeatherObserver): Promise<string | void> {
         const settings = Container.get<ISettingsService>('service.settings');
         const apiKey: string | null | undefined = await settings.getApiKeyAsync();
 
