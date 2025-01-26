@@ -1,5 +1,5 @@
-import { IFormulaCaptureJobService } from '../../types/jobs/formula-capture.job.service.type';
-import { getCell, getSheetColumnCount, getSheetRowCount } from '../../helpers/helpers.excel';
+import { IFormulaCaptureJobService } from '../../types/services/jobs/formula-capture.job.service.type';
+import { getCell, getSheetColumnsMax, getSheetRowsMax } from '../../helpers/helpers.excel';
 import { Service } from 'typedi';
 
 @Service({ transient: true })
@@ -49,8 +49,8 @@ export class FormulaCaptureJobService<T> implements IFormulaCaptureJobService<T>
                 callerCell.load();
                 await context.sync();
 
-                const sheetColsCount: number = await getSheetColumnCount(this.Invocation.address, context);
-                const sheetRowsCount: number = await getSheetRowCount(this.Invocation.address, context);
+                const sheetColsCount: number = await getSheetColumnsMax(this.Invocation.address, context);
+                const sheetRowsCount: number = await getSheetRowsMax(this.Invocation.address, context);
 
                 this.OnFormulaCaptured(this.Observer, callerCell.formulas[0][0], sheetColsCount, sheetRowsCount);
             }

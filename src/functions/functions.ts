@@ -2,8 +2,8 @@
 
 import Container from 'typedi';
 import { Setup } from '../services/setup';
-import { WeatherObserver } from '../types/observers/weather.observer.type';
-import { IWeatherObserverService } from '../types/observers/weather.observer.service.type';
+import { WeatherObserver } from '../types/weather.observer.type';
+import { IWeatherObserverService } from '../types/services/weather.observer.service.type';
 import { WeatherObservableService } from '../services/observables/weather.observable.service';
 
 /**

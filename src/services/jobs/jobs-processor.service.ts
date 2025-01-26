@@ -1,6 +1,6 @@
 import { Queue } from "queue-typescript";
-import { IJobService } from "../../types/jobs/job.service.type";
-import { IJobsProcessorService } from "../../types/jobs/jobs-processor.service.type";
+import { IJobService } from "../../types/services/jobs/job.service.type";
+import { IJobsProcessorService } from "../../types/services/jobs/jobs-processor.service.type";
 
 const RETRY_MS: number = 250;
 

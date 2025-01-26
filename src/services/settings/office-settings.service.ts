@@ -1,5 +1,5 @@
 import { Service } from 'typedi';
-import { ISettingsService } from '../../types/settings/settings.service.type';
+import { ISettingsService } from '../../types/services/settings.service.type';
 import { API_KEY_SETTING, DEFAULT_UNIT, UNIT_SETTING } from '../../shared/constants';
 @Service()
 export class OfficeSettingsService implements ISettingsService {

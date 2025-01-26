@@ -1,6 +1,6 @@
 import { INVALID_PARAMETER_VALUE } from '../../../../shared/constants';
-import { IOptionalArgParserService } from '../../../../types/parsers/parser.service.type';
-import { WeatherObserver } from '../../../../types/observers/weather.observer.type';
+import { IOptionalArgParserService } from '../../../../types/services/optional-arg-parser.service.type';
+import { WeatherObserver } from '../../../../types/weather.observer.type';
 import { ArrayDataVerticalPrinterService } from '../../../printers/vertical.printer.service';
 
 export class VerticalPrinterOptionalArgParserService implements IOptionalArgParserService {

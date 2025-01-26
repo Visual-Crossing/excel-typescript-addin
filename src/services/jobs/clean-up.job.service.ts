@@ -1,12 +1,12 @@
-import { ICleanUpJobService } from '../../types/jobs/clean-up.job.service.type';
+import { ICleanUpJobService } from '../../types/services/jobs/clean-up.job.service.type';
 import { getCell } from '../../helpers/helpers.excel';
 import { Service } from 'typedi';
 
 @Service({ transient: true })
 export class CleanUpJobService implements ICleanUpJobService {
-    public CallerCellOriginalFormula: any;
-    public ArrayDataColsCount: number;
-    public ArrayDataRowsCount: number;
+    public InitialFormula: any;
+    public ColumnsToClear: number;
+    public RowsToClear: number;
     public Invocation: CustomFunctions.Invocation;
 
     public getId(): string {
@@ -27,7 +27,7 @@ export class CleanUpJobService implements ICleanUpJobService {
 
     public async run(context: Excel.RequestContext): Promise<boolean> {
         try {
-            if (context && this.Invocation && this.Invocation.address && this.CallerCellOriginalFormula && (this.ArrayDataColsCount > 1 || this.ArrayDataRowsCount > 1)) {
+            if (context && this.Invocation && this.Invocation.address && this.InitialFormula && (this.ColumnsToClear > 1 || this.RowsToClear > 1)) {
                 let callerCell: Excel.Range;
                 
                 try {
@@ -46,13 +46,13 @@ export class CleanUpJobService implements ICleanUpJobService {
                 await context.sync();
 
                 // ToDo: Implement case insensitive and whitespace free comparison
-                if (callerCell.formulas[0][0] === this.CallerCellOriginalFormula) {
-                    if (this.ArrayDataRowsCount > 1) {
-                        callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex + 1, callerCell.columnIndex, this.ArrayDataRowsCount - 1, this.ArrayDataColsCount).clear(Excel.ClearApplyTo.contents);
+                if (callerCell.formulas[0][0] === this.InitialFormula) {
+                    if (this.RowsToClear > 1) {
+                        callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex + 1, callerCell.columnIndex, this.RowsToClear - 1, this.ColumnsToClear).clear(Excel.ClearApplyTo.contents);
                     }
 
-                    if (this.ArrayDataColsCount > 1) {
-                        callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex + 1, this.ArrayDataRowsCount, this.ArrayDataColsCount - 1).clear(Excel.ClearApplyTo.contents);
+                    if (this.ColumnsToClear > 1) {
+                        callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex + 1, this.RowsToClear, this.ColumnsToClear - 1).clear(Excel.ClearApplyTo.contents);
                     }
 
                     await context.sync();

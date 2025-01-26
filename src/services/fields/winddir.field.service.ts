@@ -1,15 +1,15 @@
 import { Service } from "typedi";
-import { IField } from "../../types/fields/field.type";
+import { IFieldService } from "../../types/services/field.service.type";
 import { FieldService } from "./field.service";
-import { ApiResponse } from "../../types/response/api-response.type";
+import { CacheItem } from "../../types/cache-item.type";
 
 @Service({ global: true })
-export class WindDirFieldService extends FieldService<number> implements IField {
+export class WindDirFieldService extends FieldService<number> implements IFieldService {
     public getTitle(): string {
         return 'Wind Direction';
     }
 
-    public getValue(apiResponse: ApiResponse): number | null {
-        return super.getFieldValueByName('winddir', apiResponse);
+    public getValue(cacheItem: CacheItem): number | null {
+        return super.getFieldValueByName('winddir', cacheItem);
     }
 }

@@ -1,3 +1,5 @@
+import 'reflect-metadata';
+
 import { Container } from 'typedi';
 import { PrecipitationFieldService } from './fields/precipitation.field.service';
 import { VerticalPrinterOptionalArgParserService } from './parsers/optional-args/printers/vertical-printer.parser.service';
@@ -58,7 +60,7 @@ export class Setup {
       ]);
 
       Container.set([
-        { id: 'service.job.formula.capture', value: new FormulaCaptureJobService() },
+        { id: 'service.job.formula.capture', type: FormulaCaptureJobService, transient: true },
         { id: 'service.job.cleanup', value: new CleanUpJobService() },
         { id: 'service.job.print', value: new PrintJobService() }
       ]);

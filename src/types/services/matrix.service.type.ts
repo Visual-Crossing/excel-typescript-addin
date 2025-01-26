@@ -1,14 +1,14 @@
 import { PrintDirections } from "../../helpers/helpers.args";
-import { IField } from "../fields/field.type";
-import { ApiResponse } from "../response/api-response.type";
-import { Matrix } from "./matrix.type";
+import { IFieldService } from "./field.service.type";
+import { CacheItem } from "../cache-item.type";
+import { Matrix } from "../matrix.type";
 
 export interface IMatrixService {
     CurrentFormula: string;
     CurrentColsRows: string;
-    Fields: IField[];
+    Fields: IFieldService[];
     PrintDirection: PrintDirections;
-    ApiResponse: ApiResponse;
+    CacheItem: CacheItem;
 
     IncludeTitle: boolean;
     UseFormulaForCaller: boolean;

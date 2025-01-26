@@ -6,6 +6,7 @@
     "allowJs": true,
     "baseUrl": ".",
     "esModuleInterop": true,
+    "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "jsx": "react",
     "noEmitOnError": true,

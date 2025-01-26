@@ -1,22 +1,22 @@
-import { IFormulaUpdaterService } from "../../types/updaters/formula.updater.service.type";
+import { IFormulaUpdaterService } from "../../types/services/formula-updater.service.type";
 import { getArrayDataCols, getArrayDataRows } from "../../helpers/helpers.formulas";
-import { IMatrixService } from "../../types/matrix/matrix.service.type";
-import { Matrix } from "../../types/matrix/matrix.type";
+import { IMatrixService } from "../../types/services/matrix.service.type";
+import { Matrix } from "../../types/matrix.type";
 import Container, { Service } from "typedi";
-import { IField } from "../../types/fields/field.type";
+import { IFieldService } from "../../types/services/field.service.type";
 import { PrintDirections } from "../../helpers/helpers.args";
 import { PrecipitationFieldService } from "../fields/precipitation.field.service";
 import { HumidityFieldService } from "../fields/humidity.field.service";
 import { PROCESSING } from "../../shared/constants";
-import { ApiResponse } from "../../types/response/api-response.type";
+import { CacheItem } from "../../types/cache-item.type";
 
 @Service({ transient: true })
 export class MatrixService implements IMatrixService {
     public CurrentFormula: string;
     public CurrentColsRows: string;
-    public Fields: IField[];
+    public Fields: IFieldService[];
     public PrintDirection: PrintDirections;
-    public ApiResponse: ApiResponse;
+    public CacheItem: CacheItem;
 
     public IncludeTitle: boolean = false;
     public UseFormulaForCaller: boolean = true;
@@ -30,7 +30,7 @@ export class MatrixService implements IMatrixService {
             this.Fields = [new HumidityFieldService()];
         }
 
-        if (!this.ApiResponse?.values) {
+        if (!this.CacheItem?.values) {
             return { FormulaCellDisplayValue: PROCESSING };
         }
 
@@ -38,9 +38,9 @@ export class MatrixService implements IMatrixService {
 
         //ToDo: Use multiple services
         if (this.IncludeTitle) {
-            this.Fields.forEach((field) => outputArrayData.push([field.getTitle(), field.getValue(this.ApiResponse)]));
+            this.Fields.forEach((field) => outputArrayData.push([field.getTitle(), field.getValue(this.CacheItem)]));
         } else {
-            this.Fields.forEach((field) => outputArrayData.push([field.getValue(this.ApiResponse)]));
+            this.Fields.forEach((field) => outputArrayData.push([field.getValue(this.CacheItem)]));
         }
 
         const formulaCellDisplayValue: string | number | Date = outputArrayData[0][0];

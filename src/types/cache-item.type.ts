@@ -1,4 +1,4 @@
-export type ApiResponse = {
+export type CacheItem = {
     status: string,
     type: string,
     values: any

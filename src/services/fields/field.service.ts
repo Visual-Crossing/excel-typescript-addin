@@ -1,17 +1,17 @@
-import { ApiResponse } from "../../types/response/api-response.type";
+import { CacheItem } from "../../types/cache-item.type";
 
 export abstract class FieldService<T> {
-    public getFieldValueByName(fieldName: string, apiResponse: ApiResponse): T | null {
-        if (!apiResponse || !apiResponse.values) {
+    public getFieldValueByName(fieldName: string, cacheItem: CacheItem): T | null {
+        if (!cacheItem || !cacheItem.values) {
             return null;
         }
 
-        const keys = Object.keys(apiResponse.values);
+        const keys = Object.keys(cacheItem.values);
 
         if (!keys || !keys.includes(fieldName)) {
             return null;
         }
 
-        return apiResponse.values[fieldName];
+        return cacheItem.values[fieldName];
     }
 }

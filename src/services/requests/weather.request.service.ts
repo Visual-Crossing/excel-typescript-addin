@@ -1,31 +1,27 @@
-import { IRequestService } from "../../types/requests/request.service.type";
-import { WeatherObserver } from "../../types/observers/weather.observer.type";
-import { ICacheService } from "../../types/cache/cache.service.type";
+import { IRequestService } from "../../types/services/request.service.type";
+import { WeatherObserver } from "../../types/weather.observer.type";
+import { ICacheService } from "../../types/services/cache.service.type";
 import Container from "typedi";
-import { IObservableService } from "../../types/observables/observable.service.type";
-import { NA_DATA, PROCESSING } from "../../shared/constants";
-import { ISettingsService } from "../../types/settings/settings.service.type";
+import { IObservableService } from "../../types/services/observable.service.type";
+import { NA_DATA } from "../../shared/constants";
+import { ISettingsService } from "../../types/services/settings.service.type";
 
 export class WeatherRequest implements IRequestService<WeatherObserver> {
     async onSuccessJsonResponse(jsonResponse: any, observer: WeatherObserver): Promise<void> {
         return await new Promise(async (resolve, reject) => {
             try {
                 const cacheService = Container.get<ICacheService>('service.cache');
+                let cacheValue: any = null;
 
                 if (jsonResponse && jsonResponse.days && jsonResponse.days.length > 0 && jsonResponse.days[0]) {
-                    cacheService.set(observer.CacheId, JSON.stringify({ 
-                        status: 'Complete',
-                        type: 'Permanent',
-                        values: jsonResponse.days[0]
-                    }));
+                    cacheValue = jsonResponse.days[0];
                 }
-                else {
-                    cacheService.set(observer.CacheId, JSON.stringify({ 
-                        status: 'Complete',
-                        type: 'Permanent',
-                        values: null
-                    }));
-                }
+
+                cacheService.set(observer.CacheId, JSON.stringify({ 
+                    status: 'Complete',
+                    type: 'Permanent',
+                    values: cacheValue
+                }));
 
                 const weatherObservableService = Container.get<IObservableService<WeatherObserver>>('service.observable.weather');
                 weatherObservableService.onUpdate(observer);

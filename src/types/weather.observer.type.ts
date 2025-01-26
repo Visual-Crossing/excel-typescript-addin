@@ -1,13 +1,13 @@
-import { IArrayDataPrinterWithCaller } from '../printers/printer.type';
+import { IArrayDataPrinterWithCaller } from './printers/printer.type';
 
 export type WeatherObserver = {
     CacheId: string;
     
-    ColumnsIn: number;
-    ColumnsOut: number;
+    ArrayDataColumnsIn: number;
+    ArrayDataColumnsOut: number;
 
-    RowsIn: number;
-    RowsOut: number;
+    ArrayDataRowsIn: number;
+    ArrayDataRowsOut: number;
 
     Location: string;
     Date: Date;
@@ -21,8 +21,8 @@ export type WeatherObserver = {
     OptionalArg4?: any | null | undefined;
     OptionalArg5?: any | null | undefined;
 
-    SheetColsCount?: number;
-    SheetRowsCount?: number;
+    SheetColumnsMax?: number;
+    SheetRowsMax?: number;
 
-    FormulaIn?: any;
+    InitialFormula?: any;
 }

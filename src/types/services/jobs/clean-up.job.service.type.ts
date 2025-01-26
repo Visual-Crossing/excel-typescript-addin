@@ -1,8 +1,8 @@
 import { IJobService } from "./job.service.type";
 
 export interface ICleanUpJobService extends IJobService {
-    CallerCellOriginalFormula: any;
-    ArrayDataColsCount: number;
-    ArrayDataRowsCount: number;
+    InitialFormula: any;
+    ColumnsToClear: number;
+    RowsToClear: number;
     Invocation: CustomFunctions.Invocation;
 }

@@ -9,7 +9,7 @@ export function getCell(address: string, context: Excel.RequestContext): Excel.R
     return caller;
 }
 
-export async function getSheetColumnCount(address: string, context: Excel.RequestContext): Promise<number> {
+export async function getSheetColumnsMax(address: string, context: Excel.RequestContext): Promise<number> {
     const sheet = getSheet(address, context);
 
     const range: Excel.Range = sheet.getRange();
@@ -20,7 +20,7 @@ export async function getSheetColumnCount(address: string, context: Excel.Reques
     return range.columnCount;
 }
 
-export async function getSheetRowCount(address: string, context: Excel.RequestContext): Promise<number>  {
+export async function getSheetRowsMax(address: string, context: Excel.RequestContext): Promise<number>  {
     const sheet = getSheet(address, context);
 
     const range: Excel.Range = sheet.getRange();

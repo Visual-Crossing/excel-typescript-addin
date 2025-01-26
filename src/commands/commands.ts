@@ -4,7 +4,7 @@
  */
 
 import { Setup } from "../services/setup";
-import { ISettingsService } from "../types/settings/settings.service.type";
+import { ISettingsService } from "../types/services/settings.service.type";
 import Container from "typedi";
 
 /**

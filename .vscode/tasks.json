@@ -28,30 +28,11 @@
       },
       {
         "label": "Debug: Excel Desktop",
-        "type": "shell",
-        "command": "npm",
-        "args": [
-          "run",
-          "start:desktop:dev",
-          "--",
-          "--app",
-          "excel"
-        ],
         "presentation": {
           "clear": true,
           "panel": "dedicated"
         },
-        "problemMatcher": []
-      },
-      {
-        "label": "Dev Server",
-        "type": "npm",
-        "script": "watch+no-overlay",
-        "presentation": {
-          "clear": true,
-          "panel": "dedicated"
-        },
-        "problemMatcher": []
+        "dependsOn": ["Watch", "Start Excel Desktop"]
       },
       {
         "label": "Install",
@@ -95,6 +76,16 @@
         "label": "Watch",
         "type": "npm",
         "script": "watch+no-overlay",
+        "presentation": {
+          "clear": true,
+          "panel": "dedicated"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Start Excel Desktop",
+        "type": "npm",
+        "script": "start:desktop:dev",
         "presentation": {
           "clear": true,
           "panel": "dedicated"

@@ -1,4 +1,4 @@
-import { WeatherObserver } from "./weather.observer.type";
+import { WeatherObserver } from "../weather.observer.type";
 
 export interface IWeatherObserverService {
     process(
