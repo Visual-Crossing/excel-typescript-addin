@@ -32,6 +32,7 @@ export async function Weather(
 ): Promise<string | number | Date> {
   
   try {
+    //debugger;
     Setup.initialise();
 
     const weatherObserverService = Container.get<IWeatherObserverService>('service.observer.weather');

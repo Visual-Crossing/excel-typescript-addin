@@ -21,6 +21,10 @@ export class MatrixService implements IMatrixService {
     public IncludeTitle: boolean = false;
     public UseFormulaForCaller: boolean = true;
 
+    public create(): IMatrixService {
+        return new MatrixService();
+    }
+
     public toMatrix(): Matrix {
         // if (!this.CurrentFormula || !this.Fields?.length || !this.JsonData || !this.PrintDirection) {
         //     throw new Error();

@@ -32,9 +32,10 @@ export abstract class ObservableService<T> implements IObservableService<T> {
         }
     
         observers.enqueue(observerKey, observer);
+        this.observers.set(groupId, observers);
     }
 
-    public update(groupId: string): void {
+    public update(groupId: string, getKey: (observer: T) => CustomFunctions.Invocation): void {
         if (!groupId) {
             throw new Error("Invalid id.");
         }
@@ -58,7 +59,7 @@ export abstract class ObservableService<T> implements IObservableService<T> {
                     this.onUpdate(observer);
                 }
                 
-                observers.remove(observer);
+                observers.dequeue(getKey(observer));
             }
         }
 

@@ -14,6 +14,10 @@ export class PrintJobService implements IPrintJobService {
     public SheetRowCount: number;
     public Invocation: CustomFunctions.Invocation;
 
+    public create(): IPrintJobService {
+        return new PrintJobService();
+    }
+
     public getId(): string {
         if (this.Invocation && this.Invocation.address) {
             return `Print_${this.Invocation.address}`;

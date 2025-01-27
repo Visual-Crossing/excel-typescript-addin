@@ -3,5 +3,5 @@ export interface IObservableService<T> {
     onUpdate: ((observer: T) => void);
 
     subscribe(groupId: string, observerKey: CustomFunctions.Invocation, observer: T): void;
-    update(groupId: string): void;
+    update(groupId: string, getKey: (observer: T) => CustomFunctions.Invocation): void;
 }

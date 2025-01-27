@@ -8,12 +8,13 @@
         "port": 9229,
         "timeout": 600000,
         "webRoot": "${workspaceRoot}",
-        "preLaunchTask": "Debug: Excel Desktop",
-        "postDebugTask": "Stop Debug"
+        "preLaunchTask": "Start Excel Desktop",  
+        "postDebugTask": "Stop Debug",
+        "sourceMaps": true,
       },
       {
         "name": "Excel Desktop (Edge Legacy)",
-        "type": "office-addin",
+        "type": "msedge",
         "request": "attach",
         "url": "https://localhost:3000/taskpane.html?_host_Info=Excel$Win32$16.01$en-US$$$$0",
         "port": 9222,
@@ -32,8 +33,7 @@
           "--runInBand"
         ],
         "console": "integratedTerminal",
-        "internalConsoleOptions": "neverOpen",
-        "port": 9229
+        "internalConsoleOptions": "neverOpen"
       }
     ]
   }

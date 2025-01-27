@@ -1,6 +1,7 @@
-import 'reflect-metadata';
+// import 'reflect-metadata';
 
 import { Container } from 'typedi';
+// import {container} from "tsyringe";
 import { PrecipitationFieldService } from './fields/precipitation.field.service';
 import { VerticalPrinterOptionalArgParserService } from './parsers/optional-args/printers/vertical-printer.parser.service';
 import { ArrayColSizeOptionalArgParserService } from './parsers/optional-args/array-size/array-col-size.parser.service';
@@ -19,6 +20,8 @@ import { MatrixService } from './matrix/matrix.service';
 import { PrintJobService } from './jobs/print.job.service';
 import { WeatherObservableService } from './observables/weather.observable.service';
 import { WeatherRequest } from './requests/weather.request.service';
+import { IFormulaCaptureJobService } from '../types/services/jobs/formula-capture.job.service.type';
+import { WeatherObserver } from '../types/weather.observer.type';
 
 export type RegisterServicesOverrideType = () => void;
 
@@ -60,10 +63,14 @@ export class Setup {
       ]);
 
       Container.set([
-        { id: 'service.job.formula.capture', type: FormulaCaptureJobService, transient: true },
+        { id: 'service.job.formula.capture', value: new FormulaCaptureJobService, transient: true, multiple: true },
         { id: 'service.job.cleanup', value: new CleanUpJobService() },
         { id: 'service.job.print', value: new PrintJobService() }
       ]);
+
+      // container.register<IFormulaCaptureJobService<WeatherObserver>>('service.job.formula.capture', {
+      //   useClass: FormulaCaptureJobService
+      // });
 
       Container.set([
         { id: 'service.updater.formula', value: new FormulaUpdaterService() }

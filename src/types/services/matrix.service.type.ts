@@ -13,5 +13,6 @@ export interface IMatrixService {
     IncludeTitle: boolean;
     UseFormulaForCaller: boolean;
 
+    create(): IMatrixService;
     toMatrix(): Matrix;
 }

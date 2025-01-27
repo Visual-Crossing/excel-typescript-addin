@@ -24,7 +24,7 @@ export class WeatherRequest implements IRequestService<WeatherObserver> {
                 }));
 
                 const weatherObservableService = Container.get<IObservableService<WeatherObserver>>('service.observable.weather');
-                weatherObservableService.onUpdate(observer);
+                weatherObservableService.update(observer.CacheId, (observer) => observer.Invocation);
 
                 return resolve();
             }

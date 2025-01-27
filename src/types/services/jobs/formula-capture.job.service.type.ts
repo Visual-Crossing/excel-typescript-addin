@@ -4,5 +4,6 @@ export interface IFormulaCaptureJobService<T> extends IJobService {
     Observer: T;
     Invocation: CustomFunctions.Invocation;
 
-    OnFormulaCaptured: (observer: T, initialFormula: any, sheetColsCount: number, sheetRowsCount: number) => {};
+    create(): IFormulaCaptureJobService<T>;
+    onFormulaCaptured: (observer: T, initialFormula: any, sheetColsCount: number, sheetRowsCount: number) => {};
 }

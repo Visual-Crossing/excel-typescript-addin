@@ -11,6 +11,7 @@ import { IPrintJobService } from "../../types/services/jobs/print.job.service.ty
 import { PROCESSING } from "../../shared/constants";
 import { IRequestService } from "../../types/services/request.service.type";
 import { CacheItem } from "src/types/cache-item.type";
+import { container } from "tsyringe";
 
 export class WeatherObservableService extends ObservableService<WeatherObserver> {
     public constructor() {
@@ -34,17 +35,18 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
         }
 
         const jobsProcessorService = Container.get<IJobsProcessorService>('service.jobs.processor');
-        const formulaCaptureJob = Container.get<IFormulaCaptureJobService<WeatherObserver>>('service.job.formula.capture');
+        const formulaCaptureJob = Container.get<IFormulaCaptureJobService<WeatherObserver>>('service.job.formula.capture').create();
+        // const formulaCaptureJob = container.resolve<IFormulaCaptureJobService<WeatherObserver>>('service.job.formula.capture');
 
         formulaCaptureJob.Observer = observer;
         formulaCaptureJob.Invocation = observer.Invocation;
 
-        formulaCaptureJob.OnFormulaCaptured = async (observer: WeatherObserver, callerCellFormula: any, sheetColsCount: number, sheetRowsCount: number) => this.onFormulaCapturedHandler(observer, callerCellFormula, sheetColsCount, sheetRowsCount);
+        formulaCaptureJob.onFormulaCaptured = async (observer: WeatherObserver, callerCellFormula: any, sheetColsCount: number, sheetRowsCount: number) => this.onFormulaCapturedHandler(observer, callerCellFormula, sheetColsCount, sheetRowsCount);
 
         jobsProcessorService.add(formulaCaptureJob);
         jobsProcessorService.process();
 
-        const matrixService = Container.get<IMatrixService>('service.matrix');
+        const matrixService = Container.get<IMatrixService>('service.matrix').create();
 
         matrixService.CacheItem = JSON.parse(cacheItemString) as CacheItem;
 
@@ -59,7 +61,7 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
             observer.SheetColumnsMax = sheetColsCount;
             observer.SheetRowsMax = sheetRowsCount;
 
-            const cleanupJob = Container.get<ICleanUpJobService>('service.job.cleanup');
+            const cleanupJob = Container.get<ICleanUpJobService>('service.job.cleanup').create();
 
             cleanupJob.InitialFormula = observer.InitialFormula;
             cleanupJob.ColumnsToClear = observer.ArrayDataColumnsIn;
@@ -154,7 +156,7 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
         //             if (arrayData && arrayData.length > 0){
         //                 addJob(new PrintJobService(observer.FormulaIn, arrayData, observer.Printer, observer.SheetColsCount!, observer.SheetRowsCount!, observer.Invocation));
 
-            const matrixService = Container.get<IMatrixService>('service.matrix');
+            const matrixService = Container.get<IMatrixService>('service.matrix').create();
 
             matrixService.CurrentFormula = observer.InitialFormula;
             matrixService.PrintDirection = observer.Printer.getPrintDirection();
@@ -167,19 +169,19 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
             const matrix = matrixService.toMatrix();
 
             if (matrix.OutputArrayData?.length) {
-                const printJob = Container.get<IPrintJobService>('service.job.print');
+                const printJob = Container.get<IPrintJobService>('service.job.print').create();
 
                 printJob.InitialFormula = observer.InitialFormula;
                 printJob.OutputArrayData = matrix.OutputArrayData;
                 printJob.ArrayDataPrinter = observer.Printer.getPrinterExcludingCaller();
                 printJob.Invocation = observer.Invocation;
 
-                //await this.update(observer.CacheId);
-
                 const jobsProcessorService = Container.get<IJobsProcessorService>('service.jobs.processor');
 
                 jobsProcessorService.add(printJob);
                 jobsProcessorService.process();
+
+                //this.update(observer.CacheId);
             }
         }
     }

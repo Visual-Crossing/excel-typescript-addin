@@ -28,10 +28,7 @@
       },
       {
         "label": "Debug: Excel Desktop",
-        "presentation": {
-          "clear": true,
-          "panel": "dedicated"
-        },
+        "dependsOrder": "sequence",
         "dependsOn": ["Watch", "Start Excel Desktop"]
       },
       {
@@ -74,18 +71,26 @@
       },
       {
         "label": "Watch",
-        "type": "npm",
-        "script": "watch+no-overlay",
+        "type": "shell",
+        "command": "npm",
+        "args": [
+          "run",
+          "watch+no-overlay"
+        ],
         "presentation": {
           "clear": true,
           "panel": "dedicated"
         },
-        "problemMatcher": []
+        "problemMatcher": ["$ts-webpack-watch", "$tslint-webpack-watch"]
       },
       {
         "label": "Start Excel Desktop",
-        "type": "npm",
-        "script": "start:desktop:dev",
+        "type": "shell",
+        "command": "npm",
+        "args": [
+          "run",
+          "start:desktop:dev"
+        ],
         "presentation": {
           "clear": true,
           "panel": "dedicated"

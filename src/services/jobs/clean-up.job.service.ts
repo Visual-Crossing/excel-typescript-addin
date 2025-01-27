@@ -9,6 +9,10 @@ export class CleanUpJobService implements ICleanUpJobService {
     public RowsToClear: number;
     public Invocation: CustomFunctions.Invocation;
 
+    public create(): ICleanUpJobService {
+        return new CleanUpJobService();
+    }
+
     public getId(): string {
         if (this.Invocation && this.Invocation.address) {
             return `CleanUp_${this.Invocation.address}`;

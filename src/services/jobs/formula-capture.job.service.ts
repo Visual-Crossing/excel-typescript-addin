@@ -7,7 +7,11 @@ export class FormulaCaptureJobService<T> implements IFormulaCaptureJobService<T>
     public Observer: T;
     public Invocation: CustomFunctions.Invocation;
 
-    public OnFormulaCaptured: (observer: T, callerCellFormula: any, sheetColsCount: number, sheetRowsCount: number) => {};
+    public onFormulaCaptured: (observer: T, callerCellFormula: any, sheetColsCount: number, sheetRowsCount: number) => {};
+
+    public create(): IFormulaCaptureJobService<T> {
+        return new FormulaCaptureJobService<T>();
+    }
 
     public getId(): string {
         if (this.Invocation && this.Invocation.address) {
@@ -31,7 +35,7 @@ export class FormulaCaptureJobService<T> implements IFormulaCaptureJobService<T>
     
     public async run(context: Excel.RequestContext): Promise<boolean> {
         try {
-            if (context && this.Invocation && this.Invocation.address && this.Observer && this.OnFormulaCaptured) {
+            if (context && this.Invocation && this.Invocation.address && this.Observer && this.onFormulaCaptured) {
                 let callerCell: Excel.Range;
                 
                 try {
@@ -52,7 +56,7 @@ export class FormulaCaptureJobService<T> implements IFormulaCaptureJobService<T>
                 const sheetColsCount: number = await getSheetColumnsMax(this.Invocation.address, context);
                 const sheetRowsCount: number = await getSheetRowsMax(this.Invocation.address, context);
 
-                this.OnFormulaCaptured(this.Observer, callerCell.formulas[0][0], sheetColsCount, sheetRowsCount);
+                this.onFormulaCaptured(this.Observer, callerCell.formulas[0][0], sheetColsCount, sheetRowsCount);
             }
 
             return true;
