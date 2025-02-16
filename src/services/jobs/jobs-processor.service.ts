@@ -1,23 +1,33 @@
 import { Queue } from "queue-typescript";
-import { IJobService } from "../../types/services/jobs/job.service.type";
+import { IJobService, jobTypes } from "../../types/services/jobs/job.service.type";
 import { IJobsProcessorService } from "../../types/services/jobs/jobs-processor.service.type";
 
 const RETRY_MS: number = 250;
 
-export class JobsProcessorService implements IJobsProcessorService {
-    private jobs: Queue<IJobService> | null = null;
+export class JobsProcessorService<T> implements IJobsProcessorService<T> {
+    private jobs: Queue<IJobService<T>> | null = null;
     private isJobsProcessingInProgress: boolean = false;
 
-    public add(job: IJobService): void {
+    private activePrintJobs: Set<T> | null = null;
+
+    public add(job: IJobService<T>): void {
         if (!job) {
             return;
         }
 
         if (!this.jobs) {
-            this.jobs = new Queue<IJobService>();
+            this.jobs = new Queue<IJobService<T>>();
         }
     
         this.jobs.enqueue(job);
+    }
+
+    public exists(id: T): boolean {
+        if (this.activePrintJobs === null) {
+            return false;
+        }
+
+        return this.activePrintJobs.has(id);
     }
 
     public async process(): Promise<void> {
@@ -28,14 +38,26 @@ export class JobsProcessorService implements IJobsProcessorService {
                 return await Excel.run(async (context: Excel.RequestContext) => {
                     try {
                         while (this.jobs && this.jobs.length > 0) {
-                            const job: IJobService = this.jobs.front;
+                            const job: IJobService<T> = this.jobs.front;
 
-                            if (await job.run(context)) {
+                            if (job) {
+                                if (job .getType() === jobTypes.print) {
+                                    if (this.activePrintJobs == null) {
+                                        this.activePrintJobs = new Set<T>();
+                                    }
+
+                                    this.activePrintJobs.add(job.getId());
+                                }
+
+                                if (await job.run(context)) {
+                                    this.jobs.dequeue();
+                                }
+                                else {
+                                    const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); await this.process(); }, RETRY_MS);
+                                    return;
+                                }
+                            } else {
                                 this.jobs.dequeue();
-                            }
-                            else {
-                                const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); await this.process(); }, RETRY_MS);
-                                return;
                             }
                         }
 
@@ -49,6 +71,7 @@ export class JobsProcessorService implements IJobsProcessorService {
                     }
                     finally {
                         this.isJobsProcessingInProgress = false;
+                        this.activePrintJobs = null;
                     }
                 });
             }
@@ -60,6 +83,7 @@ export class JobsProcessorService implements IJobsProcessorService {
             }
             finally {
                 this.isJobsProcessingInProgress = false;
+                this.activePrintJobs = null;
             }
         }
     }

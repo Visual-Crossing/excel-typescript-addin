@@ -1,21 +1,26 @@
 import { ICleanUpJobService } from '../../types/services/jobs/clean-up.job.service.type';
 import { getCell } from '../../helpers/helpers.excel';
 import { Service } from 'typedi';
+import { jobTypes } from '../../types/services/jobs/job.service.type';
 
 @Service({ transient: true })
-export class CleanUpJobService implements ICleanUpJobService {
+export class CleanUpJobService implements ICleanUpJobService<CustomFunctions.Invocation> {
     public InitialFormula: any;
     public ColumnsToClear: number;
     public RowsToClear: number;
     public Invocation: CustomFunctions.Invocation;
 
-    public create(): ICleanUpJobService {
+    public create(): ICleanUpJobService<CustomFunctions.Invocation> {
         return new CleanUpJobService();
     }
 
-    public getId(): string {
+    public getType(): jobTypes {
+        return jobTypes.cleanUp;
+    }
+
+    public getId(): CustomFunctions.Invocation {
         if (this.Invocation && this.Invocation.address) {
-            return `CleanUp_${this.Invocation.address}`;
+            return this.Invocation;
         } else {
             throw new Error();
         }

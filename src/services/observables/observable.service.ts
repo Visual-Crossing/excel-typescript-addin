@@ -7,6 +7,25 @@ export abstract class ObservableService<T> implements IObservableService<T> {
     public onValidate: ((observer: T) => boolean);
     public onUpdate: ((observer: T) => void);
 
+    public isObserved(groupId: string, observerKey: CustomFunctions.Invocation): boolean {
+        if (!groupId ||
+            !observerKey) {
+            throw new Error();
+        }
+
+        if (!this.observers || !this.observers.has(groupId)) {
+            return false;
+        }
+
+        const observers: DistinctQueue<CustomFunctions.Invocation, T> = this.observers.get(groupId)!;
+
+        if (!observers) {
+            throw new Error("Invalid internal state.");
+        }
+
+        return observers.hasKey(observerKey);
+    }
+
     public subscribe(groupId: string, observerKey: CustomFunctions.Invocation, observer: T): void {
         if (!groupId ||
             !observerKey) {

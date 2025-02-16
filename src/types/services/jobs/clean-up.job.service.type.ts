@@ -1,10 +1,10 @@
 import { IJobService } from "./job.service.type";
 
-export interface ICleanUpJobService extends IJobService {
+export interface ICleanUpJobService<T> extends IJobService<T> {
     InitialFormula: any;
     ColumnsToClear: number;
     RowsToClear: number;
     Invocation: CustomFunctions.Invocation;
 
-    create(): ICleanUpJobService;
+    create(): ICleanUpJobService<T>;
 }

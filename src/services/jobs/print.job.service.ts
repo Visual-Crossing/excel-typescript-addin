@@ -4,9 +4,10 @@ import { ArrayDataExcludeCallerVerticalPrinterService } from '../printers/vertic
 import { ArrayDataExcludeCallerHorizontalPrinterService } from '../printers/horizontal.printer.service';
 import { IPrintJobService } from '../../types/services/jobs/print.job.service.type';
 import { Service } from 'typedi';
+import { jobTypes } from '../../types/services/jobs/job.service.type';
 
 @Service({ transient: true })
-export class PrintJobService implements IPrintJobService {
+export class PrintJobService implements IPrintJobService<CustomFunctions.Invocation> {
     public InitialFormula: any;
     public OutputArrayData: any[];
     public ArrayDataPrinter: IArrayDataPrinter;
@@ -14,13 +15,17 @@ export class PrintJobService implements IPrintJobService {
     public SheetRowCount: number;
     public Invocation: CustomFunctions.Invocation;
 
-    public create(): IPrintJobService {
+    public create(): IPrintJobService<CustomFunctions.Invocation> {
         return new PrintJobService();
     }
 
-    public getId(): string {
+    public getType(): jobTypes {
+        return jobTypes.print;
+    }
+
+    public getId(): CustomFunctions.Invocation {
         if (this.Invocation && this.Invocation.address) {
-            return `Print_${this.Invocation.address}`;
+            return this.Invocation;
         } else {
             throw new Error();
         }

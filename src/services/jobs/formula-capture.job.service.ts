@@ -1,21 +1,26 @@
 import { IFormulaCaptureJobService } from '../../types/services/jobs/formula-capture.job.service.type';
 import { getCell, getSheetColumnsMax, getSheetRowsMax } from '../../helpers/helpers.excel';
 import { Service } from 'typedi';
+import { jobTypes } from '../../types/services/jobs/job.service.type';
 
 @Service({ transient: true })
-export class FormulaCaptureJobService<T> implements IFormulaCaptureJobService<T> {
+export class FormulaCaptureJobService<T> implements IFormulaCaptureJobService<T, CustomFunctions.Invocation> {
     public Observer: T;
     public Invocation: CustomFunctions.Invocation;
 
     public onFormulaCaptured: (observer: T, callerCellFormula: any, sheetColsCount: number, sheetRowsCount: number) => {};
 
-    public create(): IFormulaCaptureJobService<T> {
+    public create(): IFormulaCaptureJobService<T, CustomFunctions.Invocation> {
         return new FormulaCaptureJobService<T>();
     }
 
-    public getId(): string {
+    public getType(): jobTypes {
+        return jobTypes.formulaCapture;
+    }
+
+    public getId(): CustomFunctions.Invocation {
         if (this.Invocation && this.Invocation.address) {
-            return `Formula_${this.Invocation.address}`;
+            return this.Invocation;
         } else {
             throw new Error();
         }

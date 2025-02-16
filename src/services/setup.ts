@@ -59,11 +59,11 @@ export class Setup {
       ]);
 
       Container.set([
-        { id: 'service.jobs.processor', value: new JobsProcessorService() }
+        { id: 'service.jobs.processor', value: new JobsProcessorService<CustomFunctions.Invocation>() }
       ]);
 
       Container.set([
-        { id: 'service.job.formula.capture', value: new FormulaCaptureJobService, transient: true, multiple: true },
+        { id: 'service.job.formula.capture', value: new FormulaCaptureJobService<WeatherObserver>, transient: true },
         { id: 'service.job.cleanup', value: new CleanUpJobService() },
         { id: 'service.job.print', value: new PrintJobService() }
       ]);
