@@ -3,6 +3,7 @@ import { IPrintJobService } from "./print.job.service.type";
 
 export interface IJobsProcessorService<T> {
     add(job: IJobService<T>): void;
+    remove(id: T): void;
     exists(id: T): boolean;
     process(): Promise<void>;
 }

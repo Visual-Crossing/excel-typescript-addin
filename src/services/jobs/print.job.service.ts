@@ -1,9 +1,9 @@
+import { Service } from 'typedi';
 import { getCell } from '../../helpers/helpers.excel';
 import { IArrayDataPrinter } from '../../types/printers/printer.type';
 import { ArrayDataExcludeCallerVerticalPrinterService } from '../printers/vertical.printer.service';
 import { ArrayDataExcludeCallerHorizontalPrinterService } from '../printers/horizontal.printer.service';
 import { IPrintJobService } from '../../types/services/jobs/print.job.service.type';
-import { Service } from 'typedi';
 import { jobTypes } from '../../types/services/jobs/job.service.type';
 
 @Service({ transient: true })
@@ -63,7 +63,7 @@ export class PrintJobService implements IPrintJobService<CustomFunctions.Invocat
                 callerCell.load();
                 await context.sync();
                 
-                // ToDo: Implement case insensitive and whitespace free comparison
+                // ToDo: Consider implementing case insensitive and whitespace free comparison
                 if (callerCell.formulas[0][0] === this.InitialFormula) {
                     if (this.ArrayDataPrinter.print(callerCell, this.SheetColumnCount, this.SheetRowCount, this.OutputArrayData)) {
                         await context.sync();

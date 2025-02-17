@@ -22,7 +22,31 @@ export class JobsProcessorService<T> implements IJobsProcessorService<T> {
         this.jobs.enqueue(job);
     }
 
+    public remove(id: T): void {
+        if (!id) {
+            return;
+        }
+
+        if (this.activePrintJobs === null) {
+            return;
+        }
+
+        if (!this.activePrintJobs.has(id)) {
+            return;
+        }
+
+        this.activePrintJobs.delete(id);
+
+        if (this.activePrintJobs.size === 0) {
+            this.activePrintJobs = null;
+        }
+    }
+
     public exists(id: T): boolean {
+        if (!id) {
+            return false;
+        }
+
         if (this.activePrintJobs === null) {
             return false;
         }

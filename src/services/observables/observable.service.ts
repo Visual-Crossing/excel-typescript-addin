@@ -79,6 +79,8 @@ export abstract class ObservableService<T> implements IObservableService<T> {
                 }
                 
                 observers.dequeue(getKey(observer));
+            } else {
+                throw new Error();
             }
         }
 

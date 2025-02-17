@@ -1,6 +1,6 @@
+import { Service } from 'typedi';
 import { ICleanUpJobService } from '../../types/services/jobs/clean-up.job.service.type';
 import { getCell } from '../../helpers/helpers.excel';
-import { Service } from 'typedi';
 import { jobTypes } from '../../types/services/jobs/job.service.type';
 
 @Service({ transient: true })
@@ -54,7 +54,7 @@ export class CleanUpJobService implements ICleanUpJobService<CustomFunctions.Inv
                 callerCell.load();
                 await context.sync();
 
-                // ToDo: Implement case insensitive and whitespace free comparison
+                // ToDo: Consider implementing case insensitive and whitespace free comparison
                 if (callerCell.formulas[0][0] === this.InitialFormula) {
                     if (this.RowsToClear > 1) {
                         callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex + 1, callerCell.columnIndex, this.RowsToClear - 1, this.ColumnsToClear).clear(Excel.ClearApplyTo.contents);

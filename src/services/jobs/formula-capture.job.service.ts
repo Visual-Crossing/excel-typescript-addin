@@ -1,6 +1,6 @@
+import { Service } from 'typedi';
 import { IFormulaCaptureJobService } from '../../types/services/jobs/formula-capture.job.service.type';
 import { getCell, getSheetColumnsMax, getSheetRowsMax } from '../../helpers/helpers.excel';
-import { Service } from 'typedi';
 import { jobTypes } from '../../types/services/jobs/job.service.type';
 
 @Service({ transient: true })

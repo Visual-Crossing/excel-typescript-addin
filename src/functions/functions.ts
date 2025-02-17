@@ -35,10 +35,11 @@ export async function Weather(
     Setup.initialise();
 
     const weatherObserverService = Container.get<IWeatherObserverService>('service.observer.weather');
-    const weatherObserver = await weatherObserverService.process(location, date, invocation, optionalArg1, optionalArg2, optionalArg3, optionalArg4, optionalArg5);
     const weatherObservableService = Container.get<WeatherObservableService>('service.observable.weather');
+
+    const weatherObserver = await weatherObserverService.process(location, date, invocation, optionalArg1, optionalArg2, optionalArg3, optionalArg4, optionalArg5);
     
-    return await weatherObservableService.observe(weatherObserver);
+    return weatherObservableService.observe(weatherObserver);
   }
   catch (error: any) {
     return getErrorInfo(error);
