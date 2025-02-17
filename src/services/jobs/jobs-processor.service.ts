@@ -77,7 +77,7 @@ export class JobsProcessorService<T> implements IJobsProcessorService<T> {
                                     this.jobs.dequeue();
                                 }
                                 else {
-                                    const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); await this.process(); }, RETRY_MS);
+                                    const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); this.process(); }, RETRY_MS);
                                     return;
                                 }
                             } else {
@@ -89,7 +89,7 @@ export class JobsProcessorService<T> implements IJobsProcessorService<T> {
                     }
                     catch {
                         if (this.jobs && this.jobs.length > 0) {
-                            const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); await this.process(); }, RETRY_MS);
+                            const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); this.process(); }, RETRY_MS);
                             return;
                         }
                     }
@@ -100,7 +100,7 @@ export class JobsProcessorService<T> implements IJobsProcessorService<T> {
             }
             catch {
                 if (this.jobs && this.jobs.length > 0) {
-                    const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); await this.process(); }, RETRY_MS);
+                    const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); this.process(); }, RETRY_MS);
                     return;
                 }
             }
