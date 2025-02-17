@@ -167,10 +167,7 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
                 printJob.ArrayDataPrinter = observer.Printer.getPrinterExcludingCaller();
                 printJob.Invocation = observer.Invocation;
 
-                const jobsProcessorService = Container.get<IJobsProcessorService<CustomFunctions.Invocation>>('service.jobs.processor');
-
-                jobsProcessorService.add(printJob);
-                jobsProcessorService.process();
+                this.initJob(printJob);
             }
         }
     }
