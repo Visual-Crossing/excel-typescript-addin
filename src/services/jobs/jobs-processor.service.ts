@@ -8,7 +8,7 @@ export class JobsProcessorService<T> implements IJobsProcessorService<T> {
     private jobs: Queue<IJobService<T>> | null = null;
     private isJobsProcessingInProgress: boolean = false;
 
-    private activePrintJobs: Set<T> | null = null;
+    private activePrintJobs: Set<string> | null = null;
 
     public add(job: IJobService<T>): void {
         if (!job) {
@@ -22,7 +22,7 @@ export class JobsProcessorService<T> implements IJobsProcessorService<T> {
         this.jobs.enqueue(job);
     }
 
-    public remove(id: T): void {
+    public removePrintJob(id: string): void {
         if (!id) {
             return;
         }
@@ -42,7 +42,7 @@ export class JobsProcessorService<T> implements IJobsProcessorService<T> {
         }
     }
 
-    public exists(id: T): boolean {
+    public printJobExists(id: string): boolean {
         if (!id) {
             return false;
         }
@@ -67,10 +67,10 @@ export class JobsProcessorService<T> implements IJobsProcessorService<T> {
                             if (job) {
                                 if (job .getType() === jobTypes.print) {
                                     if (this.activePrintJobs == null) {
-                                        this.activePrintJobs = new Set<T>();
+                                        this.activePrintJobs = new Set<string>();
                                     }
 
-                                    this.activePrintJobs.add(job.getId());
+                                    this.activePrintJobs.add(job.getAddress());
                                 }
 
                                 if (await job.run(context)) {
@@ -95,7 +95,6 @@ export class JobsProcessorService<T> implements IJobsProcessorService<T> {
                     }
                     finally {
                         this.isJobsProcessingInProgress = false;
-                        this.activePrintJobs = null;
                     }
                 });
             }
@@ -107,7 +106,6 @@ export class JobsProcessorService<T> implements IJobsProcessorService<T> {
             }
             finally {
                 this.isJobsProcessingInProgress = false;
-                this.activePrintJobs = null;
             }
         }
     }

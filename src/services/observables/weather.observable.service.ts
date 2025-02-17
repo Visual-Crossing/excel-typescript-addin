@@ -84,10 +84,10 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
 
         const matrix = matrixService.toMatrix();
 
-        if (!jobsProcessorService.exists(observer.Invocation)) {
+        if (!jobsProcessorService.printJobExists(observer.Invocation.address!)) {
             this.initFormulaCaptureJob(observer);
         } else {
-            jobsProcessorService.remove(observer.Invocation);
+            jobsProcessorService.removePrintJob(observer.Invocation.address!);
         }
 
         return matrix.FormulaCellDisplayValue;
@@ -107,13 +107,11 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
             const cacheItemObject = cacheItemString ? JSON.parse(cacheItemString) : null;
 
             if (cacheItemObject && cacheItemObject.status !== 'Pending') {
-                if (cacheItemObject.status === 'Requesting') {
+                if (!this.isSubscribed(observer.CacheId, observer.Invocation)) {
                     this.subscribe(observer.CacheId, observer.Invocation, observer);
-                } else if (cacheItemObject.status === 'Complete') {
-                    if (!this.isObserved(observer.CacheId, observer.Invocation)) {
-                        this.subscribe(observer.CacheId, observer.Invocation, observer);
-                    }
+                }
 
+                if (cacheItemObject.status === 'Complete') {
                     this.onUpdate(observer);
                 }
             }
