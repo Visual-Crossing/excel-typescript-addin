@@ -13,9 +13,9 @@ export class ArrayDataHorizontalPrinterService implements IArrayDataPrinterWithC
     public print(callerCell: Excel.Range, sheetColumnCount: number, sheetRowCount: number, arrayData: any[]): boolean {
         try {
             if (callerCell && arrayData && arrayData.length > 0) {
-                if (arrayData.length > 0 && (callerCell.columnIndex + (arrayData.length - 1)) < sheetColumnCount) {
+                if (sheetColumnCount && arrayData.length > 1 && (callerCell.columnIndex + (arrayData.length - 1)) < sheetColumnCount) {
                     callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex, 1, arrayData.length).values = [arrayData];
-                } else if (arrayData.length > 0) {
+                } else if (sheetColumnCount && arrayData.length > 1) {
                     //ToDo
                 } else {
                     callerCell.formulas = arrayData[0][0];
@@ -40,13 +40,13 @@ export class ArrayDataExcludeCallerHorizontalPrinterService implements IArrayDat
             if (callerCell && arrayData && arrayData.length > 0) {
                 const arrayDataForPrint: any[] = [];
     
-                for (let i = 1; i < arrayData.length; i++) {
-                    arrayDataForPrint.push(arrayData[i]);
+                for (let i = 0; i < arrayData.length; i++) {
+                    arrayDataForPrint.push(arrayData[i][0]);
                 }
 
-                if (arrayDataForPrint.length > 0 && (callerCell.columnIndex + arrayDataForPrint.length) < sheetColumnCount) {
-                    callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex + 1, 1, arrayDataForPrint.length).values = [arrayDataForPrint];
-                } else if (arrayDataForPrint.length > 0) {
+                if (sheetColumnCount && arrayDataForPrint.length > 1 && ((callerCell.columnIndex + (arrayData.length - 1)) < sheetColumnCount)) {
+                    callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex, 1, arrayDataForPrint.length).values = [arrayDataForPrint];
+                } else if (sheetColumnCount && arrayDataForPrint.length > 1) {
                     //ToDo
                 } else {
                     callerCell.formulas = arrayData[0][0];

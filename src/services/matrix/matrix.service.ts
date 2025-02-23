@@ -5,10 +5,10 @@ import { IMatrixService } from "../../types/services/matrix.service.type";
 import { Matrix } from "../../types/matrix.type";
 import { IFieldService } from "../../types/services/field.service.type";
 import { PrintDirections } from "../../helpers/helpers.args";
-import { HumidityFieldService } from "../fields/humidity.field.service";
 import { PROCESSING } from "../../shared/constants";
 import { CacheItem } from "../../types/cache-item.type";
 
+import { HumidityFieldService } from "../fields/humidity.field.service";
 import { PrecipitationFieldService } from "../fields/precipitation.field.service";
 
 @Service({ transient: true })
@@ -32,7 +32,7 @@ export class MatrixService implements IMatrixService {
         // }
 
         if (!this.Fields?.length) {
-            this.Fields = [new HumidityFieldService()];
+            this.Fields = [new HumidityFieldService(), new PrecipitationFieldService()];
         }
 
         if (!this.CacheItem?.values) {

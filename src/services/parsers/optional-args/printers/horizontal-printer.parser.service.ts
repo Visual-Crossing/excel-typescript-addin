@@ -9,7 +9,7 @@ export class HorizontalPrinterOptionalArgParserService implements IOptionalArgPa
             weatherObserver.Printer = new ArrayDataHorizontalPrinterService();
             
             return true;
-        } else if (value && value.startsWith('dir=')) {
+        } else if (value && value.startsWith('dir=') && !value.startsWith('dir=v')) {
             throw new Error(`${INVALID_PARAMETER_VALUE} for parameter name 'dir'. Valid values are 'v' or 'h' only.`);
         } else {
             return false;

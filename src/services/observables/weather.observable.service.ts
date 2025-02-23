@@ -10,6 +10,7 @@ import { IPrintJobService } from "../../types/services/jobs/print.job.service.ty
 import { IRequestService } from "../../types/services/request.service.type";
 import { CacheItem } from "../../types/cache-item.type";
 import { IJobService } from "../../types/services/jobs/job.service.type";
+import { PrintJobService } from "../jobs/print.job.service";
 
 export class WeatherObservableService extends ObservableService<WeatherObserver> {
     public constructor() {
@@ -166,6 +167,14 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
                 printJob.OutputArrayData = matrix.OutputArrayData;
                 printJob.ArrayDataPrinter = observer.Printer.getPrinterExcludingCaller();
                 printJob.Invocation = observer.Invocation;
+
+                if (observer.SheetColumnsMax) {
+                    (printJob as PrintJobService).SheetColumnCount = observer.SheetColumnsMax;
+                }
+
+                if (observer.SheetRowsMax) {
+                    (printJob as PrintJobService).SheetRowCount = observer.SheetRowsMax;
+                }
 
                 this.initJob(printJob);
             }
