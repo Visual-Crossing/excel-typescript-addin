@@ -6,7 +6,7 @@ export class FormulaUpdaterService implements IFormulaUpdaterService {
             throw new Error();
         }
         
-        if (currentColsRows) {
+        if (currentColsRows && currentFormula.includes(currentColsRows)) {
             const updatedFormula = currentFormula.replace(currentColsRows, `cols=${arrayCols};rows=${arrayRows};`);
             return updatedFormula;
         }

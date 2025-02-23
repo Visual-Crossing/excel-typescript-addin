@@ -1,8 +1,6 @@
 // import 'reflect-metadata';
 
 import { Container } from 'typedi';
-// import {container} from "tsyringe";
-import { PrecipitationFieldService } from './fields/precipitation.field.service';
 import { VerticalPrinterOptionalArgParserService } from './parsers/optional-args/printers/vertical-printer.parser.service';
 import { ArrayColSizeOptionalArgParserService } from './parsers/optional-args/array-size/array-col-size.parser.service';
 import { ArrayRowSizeOptionalArgParserService } from './parsers/optional-args/array-size/array-row-size.parser.service';
@@ -20,8 +18,9 @@ import { MatrixService } from './matrix/matrix.service';
 import { PrintJobService } from './jobs/print.job.service';
 import { WeatherObservableService } from './observables/weather.observable.service';
 import { WeatherRequest } from './requests/weather.request.service';
-import { IFormulaCaptureJobService } from '../types/services/jobs/formula-capture.job.service.type';
 import { WeatherObserver } from '../types/weather.observer.type';
+
+import { PrecipitationFieldService } from './fields/precipitation.field.service';
 
 export type RegisterServicesOverrideType = () => void;
 
@@ -48,14 +47,14 @@ export class Setup {
       ]);
 
       Container.set([
-        { id: 'service.parser.arg', value: new VerticalPrinterOptionalArgParserService() },
-        { id: 'service.parser.arg', value: new HorizontalPrinterOptionalArgParserService() },
-        { id: 'service.parser.arg', value: new ArraySizeOptionalArgParserService() },
+        { id: 'service.parser.arg', value: new VerticalPrinterOptionalArgParserService(), multiple: true },
+        { id: 'service.parser.arg', value: new HorizontalPrinterOptionalArgParserService(), multiple: true },
+        { id: 'service.parser.arg', value: new ArraySizeOptionalArgParserService(), multiple: true },
       ]);
 
       Container.set([
-        { id: 'service.parser.arg.size', value: new ArrayColSizeOptionalArgParserService() },
-        { id: 'service.parser.arg.size', value: new ArrayRowSizeOptionalArgParserService() }
+        { id: 'service.parser.arg.size', value: new ArrayColSizeOptionalArgParserService(), multiple: true },
+        { id: 'service.parser.arg.size', value: new ArrayRowSizeOptionalArgParserService(), multiple: true }
       ]);
 
       Container.set([
@@ -67,10 +66,6 @@ export class Setup {
         { id: 'service.job.cleanup', value: new CleanUpJobService() },
         { id: 'service.job.print', value: new PrintJobService() }
       ]);
-
-      // container.register<IFormulaCaptureJobService<WeatherObserver>>('service.job.formula.capture', {
-      //   useClass: FormulaCaptureJobService
-      // });
 
       Container.set([
         { id: 'service.updater.formula', value: new FormulaUpdaterService() }
@@ -84,10 +79,8 @@ export class Setup {
         { id: 'service.requests.weather', value: new WeatherRequest() }
       ]);
 
-      //WeatherRequest
-
-      // Container.set([
-      //   { id: 'precip', value: new PrecipitationFieldService() }
-      // ]);
+      Container.set([
+        { id: 'precip', value: new PrecipitationFieldService() }
+      ]);
   }
 }

@@ -19,12 +19,12 @@ export class ArrayDataVerticalPrinterService implements IArrayDataPrinterWithCal
                     arrayDataForPrint.push([arrayData[i]]);
                 }
         
-                if ((callerCell.rowIndex + (arrayDataForPrint.length - 1)) < sheetRowCount) {
+                if (arrayDataForPrint.length > 0 && (callerCell.rowIndex + (arrayDataForPrint.length - 1)) < sheetRowCount) {
                     callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex, arrayDataForPrint.length, 1).values = arrayDataForPrint;
-                }
-                else {
-                    // ToDo: Update formula columns and rows
-                    callerCell.formulas[0][0] = callerCell.formulas[0][0];
+                } else if (arrayDataForPrint.length > 0) {
+                    //ToDo
+                } else {
+                    callerCell.formulas = arrayData[0][0];
                 }
             }
 
@@ -50,15 +50,12 @@ export class ArrayDataExcludeCallerVerticalPrinterService implements IArrayDataP
                     arrayDataForPrint.push([arrayData[i]]);
                 }
         
-                if ((callerCell.rowIndex + arrayDataForPrint.length)  < sheetRowCount) {
+                if (arrayDataForPrint.length > 0 && (callerCell.rowIndex + arrayDataForPrint.length)  < sheetRowCount) {
                     callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex + 1, callerCell.columnIndex, arrayDataForPrint.length, 1).values = arrayDataForPrint;
-                }
-                else {
-                    // ToDo: Update formula columns and rows
-                    callerCell.formulas = callerCell.formulas[0][0];
-                    
-                    //callerCell.setDirty();
-                    // callerCell.calculate();
+                } else if (arrayDataForPrint.length > 0) {
+                    //ToDo
+                } else {
+                    callerCell.formulas = arrayData[0][0];
                 }
             }
 

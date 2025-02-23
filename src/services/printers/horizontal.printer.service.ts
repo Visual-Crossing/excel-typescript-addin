@@ -13,12 +13,12 @@ export class ArrayDataHorizontalPrinterService implements IArrayDataPrinterWithC
     public print(callerCell: Excel.Range, sheetColumnCount: number, sheetRowCount: number, arrayData: any[]): boolean {
         try {
             if (callerCell && arrayData && arrayData.length > 0) {
-                if ((callerCell.columnIndex + (arrayData.length - 1)) < sheetColumnCount) {
+                if (arrayData.length > 0 && (callerCell.columnIndex + (arrayData.length - 1)) < sheetColumnCount) {
                     callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex, 1, arrayData.length).values = [arrayData];
-                }
-                else {
-                    // ToDo: Update formula columns and rows
-                    callerCell.formulas[0][0] = callerCell.formulas[0][0];
+                } else if (arrayData.length > 0) {
+                    //ToDo
+                } else {
+                    callerCell.formulas = arrayData[0][0];
                 }
             }
 
@@ -44,12 +44,12 @@ export class ArrayDataExcludeCallerHorizontalPrinterService implements IArrayDat
                     arrayDataForPrint.push(arrayData[i]);
                 }
 
-                if ((callerCell.columnIndex + arrayDataForPrint.length) < sheetColumnCount) {
+                if (arrayDataForPrint.length > 0 && (callerCell.columnIndex + arrayDataForPrint.length) < sheetColumnCount) {
                     callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex + 1, 1, arrayDataForPrint.length).values = [arrayDataForPrint];
-                }
-                else {
-                    // ToDo: Update formula columns and rows
-                    callerCell.formulas[0][0] = callerCell.formulas[0][0];
+                } else if (arrayDataForPrint.length > 0) {
+                    //ToDo
+                } else {
+                    callerCell.formulas = arrayData[0][0];
                 }
             }
 

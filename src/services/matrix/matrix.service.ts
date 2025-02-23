@@ -1,14 +1,15 @@
+import Container, { Service } from "typedi";
 import { IFormulaUpdaterService } from "../../types/services/formula-updater.service.type";
 import { getArrayDataCols, getArrayDataRows } from "../../helpers/helpers.formulas";
 import { IMatrixService } from "../../types/services/matrix.service.type";
 import { Matrix } from "../../types/matrix.type";
-import Container, { Service } from "typedi";
 import { IFieldService } from "../../types/services/field.service.type";
 import { PrintDirections } from "../../helpers/helpers.args";
-import { PrecipitationFieldService } from "../fields/precipitation.field.service";
 import { HumidityFieldService } from "../fields/humidity.field.service";
 import { PROCESSING } from "../../shared/constants";
 import { CacheItem } from "../../types/cache-item.type";
+
+import { PrecipitationFieldService } from "../fields/precipitation.field.service";
 
 @Service({ transient: true })
 export class MatrixService implements IMatrixService {
