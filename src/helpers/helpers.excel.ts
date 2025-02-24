@@ -1,12 +1,12 @@
 export function getCell(address: string, context: Excel.RequestContext): Excel.Range {
     const sheet = getSheet(address, context);
-    const caller = sheet.getRange(address);
+    const cell = sheet.getRange(address);
 
-    if (!caller) {
+    if (!cell) {
         throw new Error(`Unable to get cell address '${address}'.`);
     }
 
-    return caller;
+    return cell;
 }
 
 export async function getSheetColumnsMax(address: string, context: Excel.RequestContext): Promise<number> {

@@ -11,6 +11,7 @@ import { IRequestService } from "../../types/services/request.service.type";
 import { CacheItem } from "../../types/cache-item.type";
 import { IJobService } from "../../types/services/jobs/job.service.type";
 import { PrintJobService } from "../jobs/print.job.service";
+import { PROCESSING } from "../../shared/constants";
 
 export class WeatherObservableService extends ObservableService<WeatherObserver> {
     public constructor() {
@@ -36,6 +37,10 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
     }
 
     private initFormulaCaptureJob(observer: WeatherObserver): void {
+        if (!observer) {
+            return;
+        }
+
         const formulaCaptureJob = Container.get<IFormulaCaptureJobService<WeatherObserver, CustomFunctions.Invocation>>('service.job.formula.capture').create();
 
         if (!formulaCaptureJob) {
@@ -51,6 +56,10 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
     }
 
     private initCleanupJob(observer: WeatherObserver): void {
+        if (!observer) {
+            return;
+        }
+
         const cleanupJob = Container.get<ICleanUpJobService<CustomFunctions.Invocation>>('service.job.cleanup').create();
 
         if (!cleanupJob) {
@@ -74,24 +83,28 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
         let cacheItemString: string | null | undefined = cacheService.get(observer.CacheId);
 
         const jobsProcessorService = Container.get<IJobsProcessorService<CustomFunctions.Invocation>>('service.jobs.processor');
-        const matrixService = Container.get<IMatrixService>('service.matrix').create();
-
+        
         if (!cacheItemString) {
             cacheItemString = JSON.stringify({ status: 'Pending' });
             cacheService.set(observer.CacheId, cacheItemString);
         }
 
-        matrixService.CacheItem = JSON.parse(cacheItemString) as CacheItem;
-
-        const matrix = matrixService.toMatrix();
-
         if (!jobsProcessorService.printJobExists(observer.Invocation.address!)) {
             this.initFormulaCaptureJob(observer);
+            return PROCESSING;
         } else {
-            jobsProcessorService.removePrintJob(observer.Invocation.address!);
-        }
+            try {
+                const matrixService = Container.get<IMatrixService>('service.matrix').create();
+                matrixService.CacheItem = JSON.parse(cacheItemString) as CacheItem;
 
-        return matrix.FormulaCellDisplayValue;
+                const matrix = matrixService.toMatrix();
+
+                return matrix.FormulaCellDisplayValue;
+            }
+            finally {
+                jobsProcessorService.removePrintJob(observer.Invocation.address!);
+            }
+        }
     }
 
     private async onFormulaCapturedHandler (observer: WeatherObserver, callerCellFormula: any, sheetColsCount: number, sheetRowsCount: number): Promise<void>  { 
@@ -165,7 +178,7 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
 
                 printJob.InitialFormula = observer.InitialFormula;
                 printJob.OutputArrayData = matrix.OutputArrayData;
-                printJob.ArrayDataPrinter = observer.Printer.getPrinterExcludingCaller();
+                printJob.ArrayDataPrinter = observer.Printer;
                 printJob.Invocation = observer.Invocation;
 
                 if (observer.SheetColumnsMax) {

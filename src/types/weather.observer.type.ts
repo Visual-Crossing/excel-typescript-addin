@@ -1,4 +1,4 @@
-import { IArrayDataPrinterWithCaller } from './printers/printer.type';
+import { IArrayDataPrinter } from './printers/printer.type';
 
 export type WeatherObserver = {
     CacheId: string;
@@ -12,7 +12,7 @@ export type WeatherObserver = {
     Location: string;
     Date: Date;
     Unit: string;
-    Printer: IArrayDataPrinterWithCaller;
+    Printer: IArrayDataPrinter;
     Invocation: CustomFunctions.Invocation;
 
     OptionalArg1?: any | null | undefined;

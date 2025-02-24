@@ -1,42 +1,7 @@
 import { PrintDirections } from '../../helpers/helpers.args';
-import { IArrayDataPrinter, IArrayDataPrinterWithCaller } from '../../types/printers/printer.type';
+import { IArrayDataPrinter } from '../../types/printers/printer.type';
 
-export class ArrayDataVerticalPrinterService implements IArrayDataPrinterWithCaller {
-    public getPrintDirection(): PrintDirections {
-        return PrintDirections.Vertical;
-    }
-
-    public getPrinterExcludingCaller(): IArrayDataPrinter {
-        return new ArrayDataExcludeCallerVerticalPrinterService();
-    }
-
-    public print(callerCell: Excel.Range, sheetColumnCount: number, sheetRowCount: number, arrayData: any[]): boolean {
-        try {
-            if (callerCell && arrayData && arrayData.length > 0) {
-                const arrayDataForPrint: any[] = [];
-    
-                for (let i = 0; i < arrayData.length; i++) {
-                    arrayDataForPrint.push([arrayData[i]]);
-                }
-        
-                if (sheetRowCount && arrayDataForPrint.length > 1 && (callerCell.rowIndex + (arrayDataForPrint.length - 1)) < sheetRowCount) {
-                    callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex, arrayDataForPrint.length, 1).values = arrayDataForPrint;
-                } else if (sheetRowCount && arrayDataForPrint.length > 1) {
-                    //ToDo
-                } else {
-                    callerCell.formulas = arrayData[0][0];
-                }
-            }
-
-            return true;
-        }
-        catch {
-            return false;
-        }
-    }
-}
-
-export class ArrayDataExcludeCallerVerticalPrinterService implements IArrayDataPrinter {
+export class ArrayDataVerticalPrinterService implements IArrayDataPrinter {
     public getPrintDirection(): PrintDirections {
         return PrintDirections.Vertical;
     }
@@ -44,19 +9,15 @@ export class ArrayDataExcludeCallerVerticalPrinterService implements IArrayDataP
     public print(callerCell: Excel.Range, sheetColumnCount: number, sheetRowCount: number, arrayData: any[]): boolean {
         try {
             if (callerCell && arrayData && arrayData.length > 0) {
-                const arrayDataForPrint: any[] = [];
-    
-                for (let i = 0; i < arrayData.length; i++) {
-                    arrayDataForPrint.push([arrayData[i][0]]);
-                }
-        
-                if (sheetRowCount && arrayDataForPrint.length > 1 && ((callerCell.rowIndex + (arrayDataForPrint.length - 1)) < sheetRowCount)) {
-                    callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex, arrayDataForPrint.length, 1).values = arrayDataForPrint;
-                } else if (sheetRowCount && arrayDataForPrint.length > 1) {
+                if (sheetRowCount && ((callerCell.rowIndex + (arrayData.length - 1)) < sheetRowCount)) {
+                    callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex, arrayData.length, arrayData[0].length).values = arrayData;
+                } else if (sheetRowCount && arrayData.length > 1) {
                     //ToDo
                 } else {
                     callerCell.formulas = arrayData[0][0];
                 }
+            } else if (callerCell) {
+                //ToDo
             }
 
             return true;

@@ -19,7 +19,11 @@ export class JobsProcessorService<T> implements IJobsProcessorService<T> {
             this.jobs = new Queue<IJobService<T>>();
         }
     
-        this.jobs.enqueue(job);
+        // if (job.getType() === jobTypes.cleanUp) {
+        //     this.jobs.prepend(job);
+        // } else {
+            this.jobs.enqueue(job);
+        // }
     }
 
     public removePrintJob(id: string): void {

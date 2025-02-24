@@ -10,6 +10,8 @@ import { CacheItem } from "../../types/cache-item.type";
 
 import { HumidityFieldService } from "../fields/humidity.field.service";
 import { PrecipitationFieldService } from "../fields/precipitation.field.service";
+import { PressureFieldService } from "../fields/pressure.field.service";
+import { WindDirFieldService } from "../fields/winddir.field.service";
 
 @Service({ transient: true })
 export class MatrixService implements IMatrixService {
@@ -32,7 +34,7 @@ export class MatrixService implements IMatrixService {
         // }
 
         if (!this.Fields?.length) {
-            this.Fields = [new HumidityFieldService(), new PrecipitationFieldService()];
+            this.Fields = [new HumidityFieldService(), new PressureFieldService(), new WindDirFieldService()];
         }
 
         if (!this.CacheItem?.values) {
@@ -40,8 +42,8 @@ export class MatrixService implements IMatrixService {
         }
 
         const outputArrayData: any[][] = [];
-
-        //ToDo: Use multiple services
+        this.IncludeTitle = true;
+        //ToDo: Consider using multiple services
         if (this.IncludeTitle) {
             this.Fields.forEach((field) => outputArrayData.push([field.getTitle(), field.getValue(this.CacheItem)]));
         } else {

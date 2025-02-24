@@ -1,8 +1,6 @@
 import { Service } from 'typedi';
 import { getCell } from '../../helpers/helpers.excel';
 import { IArrayDataPrinter } from '../../types/printers/printer.type';
-import { ArrayDataExcludeCallerVerticalPrinterService } from '../printers/vertical.printer.service';
-import { ArrayDataExcludeCallerHorizontalPrinterService } from '../printers/horizontal.printer.service';
 import { IPrintJobService } from '../../types/services/jobs/print.job.service.type';
 import { jobTypes } from '../../types/services/jobs/job.service.type';
 
@@ -37,10 +35,6 @@ export class PrintJobService implements IPrintJobService<CustomFunctions.Invocat
         } else {
             throw new Error();
         }
-    }
-
-    public getIsCallerAffected() : boolean {
-        return !(this.ArrayDataPrinter instanceof ArrayDataExcludeCallerVerticalPrinterService) && !(this.ArrayDataPrinter instanceof ArrayDataExcludeCallerHorizontalPrinterService);
     }
     
     public async run(context: Excel.RequestContext): Promise<boolean> {

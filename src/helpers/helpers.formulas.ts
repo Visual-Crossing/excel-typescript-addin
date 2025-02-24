@@ -2,18 +2,18 @@ import { PrintDirections } from "./helpers.args";
 
 export function getArrayDataCols(arrayData: any[][], printDirection: PrintDirections): number {
     if (printDirection === PrintDirections.Horizontal) {
-        return arrayData.length;
+        return arrayData ? arrayData.length : 1;
     }
     else {
-        return 1;
+        return arrayData && arrayData[0] ? arrayData[0].length : 1;
     }
 }
 
 export function getArrayDataRows(arrayData: any[][], printDirection: PrintDirections): number {
     if (printDirection === PrintDirections.Horizontal) {
-        return 1;
+        return arrayData && arrayData[0] ? arrayData[0].length : 1;
     }
     else {
-        return arrayData.length;
+        return arrayData ? arrayData.length : 1;
     }
 }
