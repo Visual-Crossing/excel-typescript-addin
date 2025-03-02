@@ -6,6 +6,7 @@ import { ArrayColSizeOptionalArgParserService } from './parsers/optional-args/ar
 import { ArrayRowSizeOptionalArgParserService } from './parsers/optional-args/array-size/array-row-size.parser.service';
 import { OfficeSettingsService } from './settings/office-settings.service';
 import { BrowserSessionCacheService } from './cache/browser-session.cache.service';
+import { ErrorParserService } from './parsers/error.parser.service';
 import { DateParserService } from './parsers/date.parser.service';
 import { ArraySizeOptionalArgParserService } from './parsers/optional-args/array-size/array-size.parser.service';
 import { HorizontalPrinterOptionalArgParserService } from './parsers/optional-args/printers/horizontal-printer.parser.service';
@@ -42,6 +43,7 @@ export class Setup {
       Container.set([
         { id: 'service.settings', value: new OfficeSettingsService() },
         { id: 'service.cache', value: new BrowserSessionCacheService() },
+        { id: 'service.parser.error', value: new ErrorParserService() },
         { id: 'service.parser.date', value: new DateParserService() },
         { id: 'service.observer.weather', value: new WeatherObserverService() },
         { id: 'service.observable.weather', value: new WeatherObservableService() }

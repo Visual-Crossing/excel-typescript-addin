@@ -5,7 +5,7 @@
 
 import Container from 'typedi';
 import { Setup } from '../services/setup';
-import { ISettingsService } from 'src/types/services/settings.service.type';
+import { ISettingsService } from '../types/services/settings.service.type';
 
 /* global console, document, Excel, Office */
 

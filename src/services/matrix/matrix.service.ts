@@ -1,5 +1,5 @@
 import Container, { Service } from "typedi";
-import { IFormulaUpdaterService } from "../../types/services/formula-updater.service.type";
+import { IFormulaUpdaterService } from "../../types/services/updaters/formula.updater.service.type";
 import { getArrayDataCols, getArrayDataRows } from "../../helpers/helpers.formulas";
 import { IMatrixService } from "../../types/services/matrix.service.type";
 import { Matrix } from "../../types/matrix.type";
@@ -22,7 +22,6 @@ export class MatrixService implements IMatrixService {
     public CacheItem: CacheItem;
 
     public IncludeTitle: boolean = false;
-    public UseFormulaForCaller: boolean = true;
 
     public create(): IMatrixService {
         return new MatrixService();
@@ -37,22 +36,27 @@ export class MatrixService implements IMatrixService {
             this.Fields = [new HumidityFieldService(), new PressureFieldService(), new WindDirFieldService()];
         }
 
-        if (!this.CacheItem?.values) {
+        if (!this.CacheItem?.values && !this.CacheItem?.error) {
             return { FormulaCellDisplayValue: PROCESSING };
         }
 
         const outputArrayData: any[][] = [];
-        this.IncludeTitle = true;
-        //ToDo: Consider using multiple services
-        if (this.IncludeTitle) {
-            this.Fields.forEach((field) => outputArrayData.push([field.getTitle(), field.getValue(this.CacheItem)]));
+        
+        if (this.CacheItem.error) {
+            outputArrayData.push([this.CacheItem.error]);
         } else {
-            this.Fields.forEach((field) => outputArrayData.push([field.getValue(this.CacheItem)]));
+            this.IncludeTitle = true;
+            //ToDo: Consider using multiple services
+            if (this.IncludeTitle) {
+                this.Fields.forEach((field) => outputArrayData.push([field.getTitle(), field.getValue(this.CacheItem)]));
+            } else {
+                this.Fields.forEach((field) => outputArrayData.push([field.getValue(this.CacheItem)]));
+            }
         }
 
         const formulaCellDisplayValue: string | number | Date = outputArrayData[0][0];
 
-        if (this.UseFormulaForCaller && this.CurrentFormula) {
+        if (this.CurrentFormula) {
             //ToDo: Use services
             const arrayDataCols = getArrayDataCols(outputArrayData, this.PrintDirection);
             const arrayDataRows = getArrayDataRows(outputArrayData, this.PrintDirection);

@@ -1,13 +1,17 @@
 export async function getCell(address: string, context: Excel.RequestContext): Promise<Excel.Range> {
     const sheet = getSheet(address, context);
+
+    sheet.load();
+    await sheet.context.sync();
+
     const cell = sheet.getRange(address);
 
     if (!cell) {
         throw new Error(`Unable to get cell address '${address}'.`);
     }
-
+    
     cell.load();
-    await context.sync();
+    await cell.context.sync();
 
     return cell;
 }
@@ -15,10 +19,13 @@ export async function getCell(address: string, context: Excel.RequestContext): P
 export async function getSheetColumnsMax(address: string, context: Excel.RequestContext): Promise<number> {
     const sheet = getSheet(address, context);
 
+    sheet.load();
+    await sheet.context.sync();
+
     const range: Excel.Range = sheet.getRange();
     range.load("columnCount");
 
-    await context.sync();
+    await range.context.sync();
 
     return range.columnCount;
 }
@@ -26,10 +33,13 @@ export async function getSheetColumnsMax(address: string, context: Excel.Request
 export async function getSheetRowsMax(address: string, context: Excel.RequestContext): Promise<number>  {
     const sheet = getSheet(address, context);
 
+    sheet.load();
+    await sheet.context.sync();
+
     const range: Excel.Range = sheet.getRange();
     range.load("rowCount");
 
-    await context.sync();
+    await range.context.sync();
 
     return range.rowCount;
 }

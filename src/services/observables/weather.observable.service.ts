@@ -35,6 +35,7 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
 
         jobsProcessorService.add(job);
         jobsProcessorService.process();
+        // const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); jobsProcessorService.process(); }, 50);
     }
 
     private initMacroJob(observer: WeatherObserver): void {
@@ -83,12 +84,21 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
         const cacheService = Container.get<ICacheService>('service.cache');
         let cacheItemString: string | null | undefined = cacheService.get(observer.CacheId);
 
-        const jobsProcessorService = Container.get<IJobsProcessorService<CustomFunctions.Invocation>>('service.jobs.processor');
-        
         if (!cacheItemString) {
-            cacheItemString = JSON.stringify({ status: 'Pending' });
+            if (observer.error) {
+                cacheItemString = JSON.stringify({ 
+                    status: 'Complete',
+                    type: 'Permanent',
+                    error: observer.error
+                });
+            } else {
+                cacheItemString = JSON.stringify({ status: 'Pending' });
+            }
+
             cacheService.set(observer.CacheId, cacheItemString);
         }
+
+        const jobsProcessorService = Container.get<IJobsProcessorService<CustomFunctions.Invocation>>('service.jobs.processor');
 
         if (!jobsProcessorService.printJobExists(observer.Invocation.address!)) {
             this.initMacroJob(observer);

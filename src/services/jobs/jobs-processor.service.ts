@@ -58,6 +58,13 @@ export class JobsProcessorService<T> implements IJobsProcessorService<T> {
         return this.activePrintJobs.has(id);
     }
 
+    // public async process(): Promise<void> {
+    //     if (this.jobs && this.jobs.length > 0 && !this.isJobsProcessingInProgress) {
+    //         this.isJobsProcessingInProgress = true;
+    //         const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); this.process(); }, RETRY_MS);
+    //     }
+    // }
+
     public async process(): Promise<void> {
         if (this.jobs && this.jobs.length > 0 && !this.isJobsProcessingInProgress) {
             try {

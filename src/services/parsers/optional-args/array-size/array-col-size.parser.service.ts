@@ -1,5 +1,5 @@
 import { WeatherObserver } from "../../../../types/weather.observer.type";
-import { IOptionalArgParserService } from "../../../../types/services/optional-arg-parser.service.type";
+import { IOptionalArgParserService } from "../../../../types/services/parsers/optional-arg.parser.service.type";
 import { OptionalArgParserService } from "../../parser.service";
 
 export class ArrayColSizeOptionalArgParserService extends OptionalArgParserService implements IOptionalArgParserService {

@@ -1,4 +1,4 @@
-import { ICacheService } from 'src/types/services/cache.service.type';
+import { ICacheService } from '../../types/services/cache.service.type';
 import { Service } from 'typedi';
 
 

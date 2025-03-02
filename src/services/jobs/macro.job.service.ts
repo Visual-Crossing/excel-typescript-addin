@@ -38,13 +38,16 @@ export class MacroJobService<T> implements IMacroJobService<T, CustomFunctions.I
         try {
             const callerCell: Excel.Range = await getCell(this.getAddress(), context);
 
+            //callerCell.load();
+            await callerCell.context.sync();
+
             if (callerCell && callerCell.formulas && callerCell.formulas.length > 0 && callerCell.formulas[0].length > 0) {
                 return callerCell.formulas[0][0];
             }
 
             return null;
         }
-        catch {
+        catch (error: any) {
             // Caller cell no longer exists
             return null;
         }

@@ -1,5 +1,5 @@
 import { Service } from 'typedi';
-import { IDateParserService } from '../../types/services/date-parser.service.type';
+import { IDateParserService } from '../../types/services/parsers/date.parser.service.type';
 
 @Service()
 export class DateParserService implements IDateParserService {

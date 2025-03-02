@@ -21,8 +21,6 @@ export type WeatherObserver = {
     OptionalArg4?: any | null | undefined;
     OptionalArg5?: any | null | undefined;
 
-    // SheetColumnsMax?: number;
-    // SheetRowsMax?: number;
-
     InitialFormula?: any;
+    error?: any;
 }

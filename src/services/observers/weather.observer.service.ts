@@ -1,11 +1,12 @@
 import { WeatherObserver } from '../../types/weather.observer.type';
-import { IOptionalArgParserService } from '../../types/services/optional-arg-parser.service.type';
+import { IOptionalArgParserService } from '../../types/services/parsers/optional-arg.parser.service.type';
 import { ArrayDataVerticalPrinterService } from '../printers/vertical.printer.service';
 import Container, { Service } from 'typedi';
-import { IDateParserService } from '../../types/services/date-parser.service.type';
+import { IDateParserService } from '../../types/services/parsers/date.parser.service.type';
 import { ISettingsService } from '../../types/services/settings.service.type';
 import { ICacheService } from '../../types/services/cache.service.type';
 import { IWeatherObserverService } from '../../types/services/weather.observer.service.type';
+import { IErrorParserService } from '../../types/services/parsers/error.parser.service.type';
 
 @Service()
 export class WeatherObserverService implements IWeatherObserverService {
@@ -20,34 +21,43 @@ export class WeatherObserverService implements IWeatherObserverService {
         optionalArg5?: any | null | undefined
     ): Promise<WeatherObserver> {
         const INVALID_PARAMETERS: string = 'Invalid parameters!';
+        let errorMsg: string | undefined = undefined;
 
         if ((optionalArg1 && typeof optionalArg1 !== 'string') ||
             (optionalArg2 && typeof optionalArg2 !== 'string') ||
             (optionalArg3 && typeof optionalArg3 !== 'string') ||
             (optionalArg4 && typeof optionalArg4 !== 'string') ||
             (optionalArg5 && typeof optionalArg5 !== 'string')) {
-            throw new Error(INVALID_PARAMETERS);
+            errorMsg = INVALID_PARAMETERS;
         }
 
         const locationString = (location as string)?.trim();
 
         if (!locationString || locationString.length === 0) {
-            throw new Error('Invalid Location!');
+            errorMsg = 'Invalid Location!';
         }
 
         const settingsService = Container.get<ISettingsService>('service.settings');
         const cacheService = Container.get<ICacheService>('service.cache');
         const dateService = Container.get<IDateParserService>('service.parser.date');
 
-        const dateValue: Date = dateService.parse(date);
+        let dateValue: Date | undefined = undefined;
+
+        try {
+            dateValue = dateService.parse(date);
+        } catch (error: any) {
+            const errorParserService = Container.get<IErrorParserService>('service.parser.error');
+            errorMsg = errorParserService.getErrorInfo(error);
+        }
+
         const unit: string = await settingsService.getUnitAsync();
 
-        const cacheId = cacheService.generateId([ locationString, dateValue.toDateString(), unit ]);
+        const cacheId = cacheService.generateId([ locationString, dateValue ? dateValue.toDateString() : date, unit ]);
         
         const weatherObserver: WeatherObserver = { 
             CacheId: cacheId,
             Location: locationString, 
-            Date: dateValue, 
+            Date: dateValue ?? date, 
             Unit: unit, 
             ArrayDataColumnsIn: 1,
             ArrayDataRowsIn: 1,
@@ -72,12 +82,16 @@ export class WeatherObserverService implements IWeatherObserverService {
 
         const optionalArgs: any[] | null[] | undefined[] = [weatherObserver.OptionalArg1, weatherObserver.OptionalArg2, weatherObserver.OptionalArg3, weatherObserver.OptionalArg4, weatherObserver.OptionalArg5];
 
-        this.processOptionalArgs(optionalArgs, weatherObserver);
+        this.processOptionalArgs(optionalArgs, weatherObserver, errorMsg);
+
+        if (errorMsg) {
+            weatherObserver.error = errorMsg;
+        }
 
         return weatherObserver;
     }
 
-    private processOptionalArgs(optionalArgs: any[] | null[] | undefined[], weatherObserver: WeatherObserver): void {
+    private processOptionalArgs(optionalArgs: any[] | null[] | undefined[], weatherObserver: WeatherObserver, errorMsg: string | undefined): void {
         optionalArgs.forEach(optionalArg => {
             if (optionalArg) {
                 let isOptionalArgParseSuccess: boolean = false;
@@ -95,13 +109,19 @@ export class WeatherObserverService implements IWeatherObserverService {
 
                         do {
                             optionalArgParser = optionalArgParsers[++index];
-                            isOptionalArgParseSuccess = optionalArgParser.tryParse(optionalArgStringLower, weatherObserver);
+
+                            try {
+                                isOptionalArgParseSuccess = optionalArgParser.tryParse(optionalArgStringLower, weatherObserver);
+                            } catch (error: any) {
+                                const errorParserService = Container.get<IErrorParserService>('service.parser.error');
+                                errorMsg = errorParserService.getErrorInfo(error);
+                            }
                         } while (!isOptionalArgParseSuccess && index < optionalArgParsers.length - 1);
                     }
                 }
 
                 if (!isOptionalArgParseSuccess) {
-                    throw new Error(`Invalid parameter: '${optionalArg as string}'!`);
+                    errorMsg = `Invalid parameter: '${optionalArg as string}'!`;
                 }
             }
         });

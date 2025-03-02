@@ -4,6 +4,8 @@ import Container from 'typedi';
 import { Setup } from '../services/setup';
 import { IWeatherObserverService } from '../types/services/weather.observer.service.type';
 import { WeatherObservableService } from '../services/observables/weather.observable.service';
+import { WeatherObserver } from '../types/weather.observer.type';
+import { IErrorParserService } from '../types/services/parsers/error.parser.service.type';
 
 /**
  * Offers complete, global weather data coverage both geographically and chronologically.
@@ -37,25 +39,11 @@ export async function Weather(
     const weatherObserverService = Container.get<IWeatherObserverService>('service.observer.weather');
     const weatherObservableService = Container.get<WeatherObservableService>('service.observable.weather');
 
-    const weatherObserver = await weatherObserverService.process(location, date, invocation, optionalArg1, optionalArg2, optionalArg3, optionalArg4, optionalArg5);
-    
+    const weatherObserver: WeatherObserver = await weatherObserverService.process(location, date, invocation, optionalArg1, optionalArg2, optionalArg3, optionalArg4, optionalArg5);
+
     return weatherObservableService.observe(weatherObserver);
+  } catch (error: any) {
+    const errorParserService = Container.get<IErrorParserService>('service.parser.error');
+    return errorParserService.getErrorInfo(error);
   }
-  catch (error: any) {
-    return getErrorInfo(error);
-  }
-}
-
-function getErrorInfo(error: any): string {
-  const NA_ERROR: string = '#N/A Error';
-
-  if (error) {
-    if (error.message) {
-      return `${NA_ERROR} - (${error.message})`;
-    } else if (error.name) {
-      return `${NA_ERROR} - (${error.name})`;
-    }
-  }
-
-  return `${NA_ERROR}!`;
 }

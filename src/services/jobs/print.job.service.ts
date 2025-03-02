@@ -54,8 +54,8 @@ export class PrintJobService implements IPrintJobService<CustomFunctions.Invocat
                     return true;
                 }
 
-                // callerCell.load();
-                // await context.sync();
+                callerCell.load();
+                await callerCell.context.sync();
                 
                 // ToDo: Consider implementing case insensitive and whitespace free comparison
                 if (callerCell.formulas[0][0] === this.InitialFormula) {

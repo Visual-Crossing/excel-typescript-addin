@@ -11,7 +11,6 @@ export interface IMatrixService {
     CacheItem: CacheItem;
 
     IncludeTitle: boolean;
-    UseFormulaForCaller: boolean;
 
     create(): IMatrixService;
     toMatrix(): Matrix;
