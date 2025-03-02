@@ -4,7 +4,7 @@ export interface ICleanUpJobService<T> extends IJobService<T> {
     InitialFormula: any;
     ColumnsToClear: number;
     RowsToClear: number;
-    Invocation: CustomFunctions.Invocation;
+    Invocation: T;
 
     create(): ICleanUpJobService<T>;
 }

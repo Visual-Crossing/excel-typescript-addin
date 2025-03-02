@@ -5,7 +5,7 @@ export interface IPrintJobService<T> extends IJobService<T> {
     InitialFormula: any;
     OutputArrayData: any[];
     ArrayDataPrinter: IArrayDataPrinter;
-    Invocation: CustomFunctions.Invocation;
+    Invocation: T;
 
     create(): IPrintJobService<T>;
 }

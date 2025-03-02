@@ -3,8 +3,8 @@ import { ObservableService } from "./observable.service";
 import { WeatherObserver } from "../../types/weather.observer.type";
 import { ICacheService } from "../../types/services/cache.service.type";
 import { IJobsProcessorService } from "../../types/services/jobs/jobs-processor.service.type";
-import { IFormulaCaptureJobService } from "../../types/services/jobs/formula-capture.job.service.type";
-import { ICleanUpJobService } from "../../types/services/jobs/clean-up.job.service.type";
+import { IMacroJobService } from "../../types/services/jobs/macro.job.service.type";
+import { ICleanUpJobService } from "../../types/services/jobs/cleanup.job.service.type";
 import { IMatrixService } from "../../types/services/matrix.service.type";
 import { IPrintJobService } from "../../types/services/jobs/print.job.service.type";
 import { IRequestService } from "../../types/services/request.service.type";
@@ -12,6 +12,7 @@ import { CacheItem } from "../../types/cache-item.type";
 import { IJobService } from "../../types/services/jobs/job.service.type";
 import { PrintJobService } from "../jobs/print.job.service";
 import { PROCESSING } from "../../shared/constants";
+import { IMetadataService } from "../..//types/services/jobs/metadata.service.type";
 
 export class WeatherObservableService extends ObservableService<WeatherObserver> {
     public constructor() {
@@ -36,23 +37,23 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
         jobsProcessorService.process();
     }
 
-    private initFormulaCaptureJob(observer: WeatherObserver): void {
+    private initMacroJob(observer: WeatherObserver): void {
         if (!observer) {
             return;
         }
 
-        const formulaCaptureJob = Container.get<IFormulaCaptureJobService<WeatherObserver, CustomFunctions.Invocation>>('service.job.formula.capture').create();
+        const macroJob = Container.get<IMacroJobService<WeatherObserver, CustomFunctions.Invocation>>('service.job.macro').create();
 
-        if (!formulaCaptureJob) {
+        if (!macroJob) {
             throw new Error();
         }
 
-        formulaCaptureJob.Observer = observer;
-        formulaCaptureJob.Invocation = observer.Invocation;
+        macroJob.Observer = observer;
+        macroJob.Invocation = observer.Invocation;
 
-        formulaCaptureJob.onFormulaCaptured = async (observer: WeatherObserver, callerCellFormula: any, sheetColsCount: number, sheetRowsCount: number) => this.onFormulaCapturedHandler(observer, callerCellFormula, sheetColsCount, sheetRowsCount);
+        macroJob.onCallback = async (macroJobService: IMacroJobService<WeatherObserver, CustomFunctions.Invocation>, context: Excel.RequestContext) => this.onMacroCallbackHandler(macroJobService, context);
 
-        this.initJob(formulaCaptureJob);
+        this.initJob(macroJob);
     }
 
     private initCleanupJob(observer: WeatherObserver): void {
@@ -90,7 +91,7 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
         }
 
         if (!jobsProcessorService.printJobExists(observer.Invocation.address!)) {
-            this.initFormulaCaptureJob(observer);
+            this.initMacroJob(observer);
             return PROCESSING;
         } else {
             try {
@@ -107,33 +108,55 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
         }
     }
 
-    private async onFormulaCapturedHandler (observer: WeatherObserver, callerCellFormula: any, sheetColsCount: number, sheetRowsCount: number): Promise<void>  { 
-        if (observer && observer.Invocation && observer.Invocation.address && callerCellFormula && sheetColsCount && sheetRowsCount) {
-            observer.InitialFormula = callerCellFormula;
-            observer.SheetColumnsMax = sheetColsCount;
-            observer.SheetRowsMax = sheetRowsCount;
+    private async saveMetadata(macroJobService: IMacroJobService<WeatherObserver, CustomFunctions.Invocation>, context: Excel.RequestContext) {
+        const metadataService = Container.get<IMetadataService>('service.metadata');
 
-            this.initCleanupJob(observer);
+        if (!metadataService.MaxSheetRows || metadataService.MaxSheetRows === 0) {
+            metadataService.MaxSheetRows = await macroJobService.getMaxSheetRows(context);
+        }
 
-            const cacheService = Container.get<ICacheService>('service.cache');
-            const cacheItemString: string | null | undefined = cacheService.get(observer.CacheId);
+        if (!metadataService.MaxSheetCols || metadataService.MaxSheetCols === 0) {
+            metadataService.MaxSheetCols = await macroJobService.getMaxSheetCols(context);
+        }
+    }
 
-            const cacheItemObject = cacheItemString ? JSON.parse(cacheItemString) : null;
+    private async onMacroCallbackHandler (macroJobService: IMacroJobService<WeatherObserver, CustomFunctions.Invocation>, context: Excel.RequestContext): Promise<void>  { 
+        if (!macroJobService || !context) {
+            throw new Error();
+        }
+        
+        const observer = macroJobService.Observer;
+        
+        if (observer && observer.Invocation && observer.Invocation.address) {
+            const callerCellFormula = await macroJobService.getCallerCellFormula(context);
 
-            if (cacheItemObject && cacheItemObject.status !== 'Pending') {
-                if (!this.isSubscribed(observer.CacheId, observer.Invocation)) {
-                    this.subscribe(observer.CacheId, observer.Invocation, observer);
+            if (callerCellFormula) {
+                await this.saveMetadata(macroJobService, context);
+
+                observer.InitialFormula = callerCellFormula;
+
+                this.initCleanupJob(observer);
+
+                const cacheService = Container.get<ICacheService>('service.cache');
+                const cacheItemString: string | null | undefined = cacheService.get(observer.CacheId);
+
+                const cacheItemObject = cacheItemString ? JSON.parse(cacheItemString) : null;
+
+                if (cacheItemObject && cacheItemObject.status !== 'Pending') {
+                    if (!this.isSubscribed(observer.CacheId, observer.Invocation)) {
+                        this.subscribe(observer.CacheId, observer.Invocation, observer);
+                    }
+
+                    if (cacheItemObject.status === 'Complete') {
+                        this.onUpdate(observer);
+                    }
                 }
+                else {
+                    const weatherRequest = Container.get<IRequestService<WeatherObserver>>('service.requests.weather');
+                    weatherRequest.fetchData(observer);
 
-                if (cacheItemObject.status === 'Complete') {
-                    this.onUpdate(observer);
+                    cacheService.set(observer.CacheId, JSON.stringify({ status: 'Requesting' }));
                 }
-            }
-            else {
-                const weatherRequest = Container.get<IRequestService<WeatherObserver>>('service.requests.weather');
-                weatherRequest.fetchData(observer);
-
-                cacheService.set(observer.CacheId, JSON.stringify({ status: 'Requesting' }));
             }
         }
     }
@@ -181,13 +204,13 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
                 printJob.ArrayDataPrinter = observer.Printer;
                 printJob.Invocation = observer.Invocation;
 
-                if (observer.SheetColumnsMax) {
-                    (printJob as PrintJobService).SheetColumnCount = observer.SheetColumnsMax;
-                }
+                // if (observer.SheetColumnsMax) {
+                //     (printJob as PrintJobService).SheetColumnCount = observer.SheetColumnsMax;
+                // }
 
-                if (observer.SheetRowsMax) {
-                    (printJob as PrintJobService).SheetRowCount = observer.SheetRowsMax;
-                }
+                // if (observer.SheetRowsMax) {
+                //     (printJob as PrintJobService).SheetRowCount = observer.SheetRowsMax;
+                // }
 
                 this.initJob(printJob);
             }

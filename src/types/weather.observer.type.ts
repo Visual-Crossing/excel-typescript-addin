@@ -4,10 +4,10 @@ export type WeatherObserver = {
     CacheId: string;
     
     ArrayDataColumnsIn: number;
-    ArrayDataColumnsOut: number;
+    // ArrayDataColumnsOut: number;
 
     ArrayDataRowsIn: number;
-    ArrayDataRowsOut: number;
+    // ArrayDataRowsOut: number;
 
     Location: string;
     Date: Date;
@@ -21,8 +21,8 @@ export type WeatherObserver = {
     OptionalArg4?: any | null | undefined;
     OptionalArg5?: any | null | undefined;
 
-    SheetColumnsMax?: number;
-    SheetRowsMax?: number;
+    // SheetColumnsMax?: number;
+    // SheetRowsMax?: number;
 
     InitialFormula?: any;
 }

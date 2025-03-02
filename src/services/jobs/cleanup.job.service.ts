@@ -1,5 +1,5 @@
 import { Service } from 'typedi';
-import { ICleanUpJobService } from '../../types/services/jobs/clean-up.job.service.type';
+import { ICleanUpJobService } from '../../types/services/jobs/cleanup.job.service.type';
 import { getCell } from '../../helpers/helpers.excel';
 import { jobTypes } from '../../types/services/jobs/job.service.type';
 
@@ -40,7 +40,7 @@ export class CleanUpJobService implements ICleanUpJobService<CustomFunctions.Inv
                 let callerCell: Excel.Range;
                 
                 try {
-                    callerCell = getCell(this.Invocation.address, context);
+                    callerCell = await getCell(this.Invocation.address, context);
                 }
                 catch {
                     // Caller cell no longer exists
@@ -51,8 +51,8 @@ export class CleanUpJobService implements ICleanUpJobService<CustomFunctions.Inv
                     return true;
                 }
 
-                callerCell.load();
-                await context.sync();
+                // callerCell.load();
+                // await context.sync();
 
                 // ToDo: Consider implementing case insensitive and whitespace free comparison
                 if (callerCell.formulas[0][0] === this.InitialFormula) {

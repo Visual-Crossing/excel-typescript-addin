@@ -1,10 +1,13 @@
-export function getCell(address: string, context: Excel.RequestContext): Excel.Range {
+export async function getCell(address: string, context: Excel.RequestContext): Promise<Excel.Range> {
     const sheet = getSheet(address, context);
     const cell = sheet.getRange(address);
 
     if (!cell) {
         throw new Error(`Unable to get cell address '${address}'.`);
     }
+
+    cell.load();
+    await context.sync();
 
     return cell;
 }

@@ -11,9 +11,10 @@ import { ArraySizeOptionalArgParserService } from './parsers/optional-args/array
 import { HorizontalPrinterOptionalArgParserService } from './parsers/optional-args/printers/horizontal-printer.parser.service';
 import { WeatherObserverService } from './observers/weather.observer.service';
 import { JobsProcessorService } from './jobs/jobs-processor.service';
-import { FormulaCaptureJobService } from './jobs/formula-capture.job.service';
-import { CleanUpJobService } from './jobs/clean-up.job.service';
+import { MacroJobService } from './jobs/macro.job.service';
+import { CleanUpJobService } from './jobs/cleanup.job.service';
 import { FormulaUpdaterService } from './updaters/formula.updater.service';
+import { MetadataService } from './metadata/metadata.service';
 import { MatrixService } from './matrix/matrix.service';
 import { PrintJobService } from './jobs/print.job.service';
 import { WeatherObservableService } from './observables/weather.observable.service';
@@ -62,13 +63,17 @@ export class Setup {
       ]);
 
       Container.set([
-        { id: 'service.job.formula.capture', value: new FormulaCaptureJobService<WeatherObserver>, transient: true },
+        { id: 'service.job.macro', value: new MacroJobService<WeatherObserver>, transient: true },
         { id: 'service.job.cleanup', value: new CleanUpJobService() },
         { id: 'service.job.print', value: new PrintJobService() }
       ]);
 
       Container.set([
         { id: 'service.updater.formula', value: new FormulaUpdaterService() }
+      ]);
+
+      Container.set([
+        { id: 'service.metadata', value: new MetadataService() }
       ]);
 
       Container.set([

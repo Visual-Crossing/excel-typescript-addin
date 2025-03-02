@@ -9,8 +9,8 @@ export class PrintJobService implements IPrintJobService<CustomFunctions.Invocat
     public InitialFormula: any;
     public OutputArrayData: any[];
     public ArrayDataPrinter: IArrayDataPrinter;
-    public SheetColumnCount: number;
-    public SheetRowCount: number;
+    // public SheetColumnCount: number;
+    // public SheetRowCount: number;
     public Invocation: CustomFunctions.Invocation;
 
     public create(): IPrintJobService<CustomFunctions.Invocation> {
@@ -43,7 +43,7 @@ export class PrintJobService implements IPrintJobService<CustomFunctions.Invocat
                 let callerCell: Excel.Range;
                 
                 try {
-                    callerCell = getCell(this.Invocation.address, context);
+                    callerCell = await getCell(this.Invocation.address, context);
                 }
                 catch {
                     // Caller cell no longer exists
@@ -54,12 +54,12 @@ export class PrintJobService implements IPrintJobService<CustomFunctions.Invocat
                     return true;
                 }
 
-                callerCell.load();
-                await context.sync();
+                // callerCell.load();
+                // await context.sync();
                 
                 // ToDo: Consider implementing case insensitive and whitespace free comparison
                 if (callerCell.formulas[0][0] === this.InitialFormula) {
-                    if (this.ArrayDataPrinter.print(callerCell, this.SheetColumnCount, this.SheetRowCount, this.OutputArrayData)) {
+                    if (this.ArrayDataPrinter.print(callerCell, this.OutputArrayData)) {
                         await context.sync();
                     }
                 }
