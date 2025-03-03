@@ -65,14 +65,14 @@ export class CleanUpJobService implements ICleanUpJobService<CustomFunctions.Inv
                         throw new Error();
                     }
 
-                    const colsToClearAdjusted = destination.columnIndex + (this.ColumnsToClear - 1) > maxSheetCols ? maxSheetCols - destination.columnIndex + 1 : this.ColumnsToClear;
-                    const rowsToClearAdjusted = destination.rowIndex + (this.RowsToClear - 1) > maxSheetRows ? maxSheetRows - destination.rowIndex + 1 : this.RowsToClear;
+                    const colsToClearAdjusted = destination.columnIndex + this.ColumnsToClear >= maxSheetCols ? maxSheetCols - destination.columnIndex : this.ColumnsToClear;
+                    const rowsToClearAdjusted = destination.rowIndex + this.RowsToClear >= maxSheetRows ? maxSheetRows - destination.rowIndex : this.RowsToClear;
 
-                    if (this.ColumnsToClear > 1 && destination.columnIndex < maxSheetCols) {
+                    if (colsToClearAdjusted > 1 && destination.columnIndex < maxSheetCols - 1) {
                         destination.worksheet.getRangeByIndexes(destination.rowIndex, destination.columnIndex + 1, rowsToClearAdjusted, colsToClearAdjusted - 1).clear(Excel.ClearApplyTo.contents);
                     }
 
-                    if (this.RowsToClear > 1 && destination.rowIndex < maxSheetRows) {
+                    if (rowsToClearAdjusted > 1 && destination.rowIndex < maxSheetRows - 1) {
                         destination.worksheet.getRangeByIndexes(destination.rowIndex + 1, destination.columnIndex, rowsToClearAdjusted - 1, colsToClearAdjusted).clear(Excel.ClearApplyTo.contents);
                     }
 
