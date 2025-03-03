@@ -1,6 +1,8 @@
+import Container from "typedi";
 import { Queue } from "queue-typescript";
 import { IJobService, jobTypes } from "../../types/services/jobs/job.service.type";
 import { IJobsProcessorService } from "../../types/services/jobs/jobs-processor.service.type";
+import { IWeatherResultsStoreService } from "../../types/services/weather.result.store.service.type";
 
 const RETRY_MS: number = 250;
 
@@ -63,7 +65,7 @@ export class JobsProcessorService<T> implements IJobsProcessorService<T> {
             try {
                 this.isJobsProcessingInProgress = true;
 
-                return await Excel.run(async (context: Excel.RequestContext) => {
+                await Excel.run(async (context: Excel.RequestContext) => {
                     try {
                         while (this.jobs && this.jobs.length > 0) {
                             const job: IJobService<T> = this.jobs.front;
@@ -101,6 +103,11 @@ export class JobsProcessorService<T> implements IJobsProcessorService<T> {
                         this.isJobsProcessingInProgress = false;
                     }
                 });
+
+                // if (!this.jobs || this.jobs.length === 0) {
+                //     const weatherResultsStore = Container.get<IWeatherResultsStoreService>('service.results.store.weather');
+                //     weatherResultsStore.clear();
+                // }
             }
             catch {
                 if (this.jobs && this.jobs.length > 0) {
