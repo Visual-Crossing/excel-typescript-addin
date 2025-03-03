@@ -117,6 +117,7 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
             }
             finally {
                 //weatherResultsStore.removePrintJob(observer.Invocation.address!);
+                weatherResultsStore.remove(observer.CacheId, observer.Invocation.address!);
             }
         }
     }
