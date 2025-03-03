@@ -23,8 +23,8 @@ export class ArrayDataHorizontalPrinterService implements IArrayDataPrinter {
 
             const arrayData: any[] = weatherResult.toArray((arrayData: any[]) => {
                 return arrayData && arrayData.length > 0 && arrayData[0].length > 0 &&
-                    (destination.columnIndex + (arrayData.length - 1)) <= maxSheetCols &&
-                    (destination.rowIndex + (arrayData[0].length - 1)) <= maxSheetRows;
+                    (destination.columnIndex + (arrayData.length - 1)) < maxSheetCols &&
+                    (destination.rowIndex + (arrayData[0].length - 1)) < maxSheetRows;
             });
 
             const weatherResultsStore = Container.get<IWeatherResultsStoreService>('service.results.store.weather');
