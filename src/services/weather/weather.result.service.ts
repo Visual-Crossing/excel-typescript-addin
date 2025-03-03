@@ -44,6 +44,7 @@ export class WeatherResult implements IWeatherResultService {
         } else {
             if (!this.Fields?.length) {
                 this.Fields = [new HumidityFieldService(), new PressureFieldService(), new WindDirFieldService()];
+                //this.Fields = [new HumidityFieldService()];
             }
             
             //ToDo: Consider using multiple services
