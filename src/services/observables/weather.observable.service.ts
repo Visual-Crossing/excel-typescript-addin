@@ -5,14 +5,14 @@ import { ICacheService } from "../../types/services/cache.service.type";
 import { IJobsProcessorService } from "../../types/services/jobs/jobs-processor.service.type";
 import { IMacroJobService } from "../../types/services/jobs/macro.job.service.type";
 import { ICleanUpJobService } from "../../types/services/jobs/cleanup.job.service.type";
-import { IMatrixService } from "../../types/services/matrix.service.type";
+import { IWeatherResultService } from "../../types/services/weather.result.service.type";
 import { IPrintJobService } from "../../types/services/jobs/print.job.service.type";
 import { IRequestService } from "../../types/services/request.service.type";
 import { CacheItem } from "../../types/cache-item.type";
 import { IJobService } from "../../types/services/jobs/job.service.type";
-import { PrintJobService } from "../jobs/print.job.service";
 import { PROCESSING } from "../../shared/constants";
 import { IMetadataService } from "../..//types/services/jobs/metadata.service.type";
+import { IWeatherResultsStoreService } from "src/types/services/weather.result.store.service.type";
 
 export class WeatherObservableService extends ObservableService<WeatherObserver> {
     public constructor() {
@@ -35,7 +35,6 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
 
         jobsProcessorService.add(job);
         jobsProcessorService.process();
-        // const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); jobsProcessorService.process(); }, 50);
     }
 
     private initMacroJob(observer: WeatherObserver): void {
@@ -87,33 +86,37 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
         if (!cacheItemString) {
             if (observer.error) {
                 cacheItemString = JSON.stringify({ 
+                    id: observer.CacheId,
                     status: 'Complete',
                     type: 'Permanent',
                     error: observer.error
                 });
             } else {
-                cacheItemString = JSON.stringify({ status: 'Pending' });
+                cacheItemString = JSON.stringify({ id: observer.CacheId, status: 'Pending' });
             }
 
             cacheService.set(observer.CacheId, cacheItemString);
         }
 
-        const jobsProcessorService = Container.get<IJobsProcessorService<CustomFunctions.Invocation>>('service.jobs.processor');
+        const weatherResultsStore = Container.get<IWeatherResultsStoreService>('service.results.store.weather');
+        const weatherResult = weatherResultsStore.get(observer.CacheId, observer.Invocation.address!);
 
-        if (!jobsProcessorService.printJobExists(observer.Invocation.address!)) {
+        if (!weatherResult) {
             this.initMacroJob(observer);
             return PROCESSING;
         } else {
             try {
-                const matrixService = Container.get<IMatrixService>('service.matrix').create();
-                matrixService.CacheItem = JSON.parse(cacheItemString) as CacheItem;
+                // const weatherResult = Container.get<IWeatherResultService>('service.results.weather').create();
+                // weatherResult.CacheItem = JSON.parse(cacheItemString) as CacheItem;
 
-                const matrix = matrixService.toMatrix();
+                // const matrix = weatherResult.toMatrix();
 
-                return matrix.FormulaCellDisplayValue;
+                // return matrix.FormulaCellDisplayValue;
+
+                return weatherResult.getFormulaCellValue();
             }
             finally {
-                jobsProcessorService.removePrintJob(observer.Invocation.address!);
+                //weatherResultsStore.removePrintJob(observer.Invocation.address!);
             }
         }
     }
@@ -165,7 +168,7 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
                     const weatherRequest = Container.get<IRequestService<WeatherObserver>>('service.requests.weather');
                     weatherRequest.fetchData(observer);
 
-                    cacheService.set(observer.CacheId, JSON.stringify({ status: 'Requesting' }));
+                    cacheService.set(observer.CacheId, JSON.stringify({ id: observer.CacheId, status: 'Requesting' }));
                 }
             }
         }
@@ -194,36 +197,35 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
                 return;
             }
         
-            const matrixService = Container.get<IMatrixService>('service.matrix').create();
+            const weatherResult = Container.get<IWeatherResultService>('service.results.weather').create();
 
-            matrixService.CurrentFormula = observer.InitialFormula;
-            matrixService.PrintDirection = observer.Printer.getPrintDirection();
-            matrixService.CacheItem = cacheItemObject as CacheItem;
-
-            if (observer.ArrayDataColumnsIn && observer.ArrayDataRowsIn) {
-                matrixService.CurrentColsRows = `cols=${observer.ArrayDataColumnsIn};rows=${observer.ArrayDataRowsIn};`;
+            if (observer && observer.Invocation && observer.Invocation.address) {
+                weatherResult.DestinationAddress = observer.Invocation.address;
             }
 
-            const matrix = matrixService.toMatrix();
+            weatherResult.CurrentFormula = observer.InitialFormula;
+            weatherResult.Fields = observer.Fields;
+            weatherResult.IncludeTitle = observer.IncludeTitle;
+            weatherResult.PrintDirection = observer.Printer.getPrintDirection();
+            weatherResult.CacheItem = cacheItemObject as CacheItem;
 
-            if (matrix.OutputArrayData?.length) {
+            if (observer.ArrayDataColumnsIn && observer.ArrayDataRowsIn) {
+                weatherResult.CurrentCols = observer.ArrayDataColumnsIn;
+                weatherResult.CurrentRows = observer.ArrayDataRowsIn;
+            }
+
+            // const matrix = weatherResult.toMatrix();
+
+            // if (matrix.OutputArrayData?.length) {
                 const printJob = Container.get<IPrintJobService<CustomFunctions.Invocation>>('service.job.print').create();
 
                 printJob.InitialFormula = observer.InitialFormula;
-                printJob.OutputArrayData = matrix.OutputArrayData;
+                printJob.WeatherResult = weatherResult;
                 printJob.ArrayDataPrinter = observer.Printer;
                 printJob.Invocation = observer.Invocation;
 
-                // if (observer.SheetColumnsMax) {
-                //     (printJob as PrintJobService).SheetColumnCount = observer.SheetColumnsMax;
-                // }
-
-                // if (observer.SheetRowsMax) {
-                //     (printJob as PrintJobService).SheetRowCount = observer.SheetRowsMax;
-                // }
-
                 this.initJob(printJob);
-            }
+            // }
         }
     }
 }

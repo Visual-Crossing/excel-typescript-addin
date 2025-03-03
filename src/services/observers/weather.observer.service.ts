@@ -1,7 +1,7 @@
+import Container, { Service } from 'typedi';
 import { WeatherObserver } from '../../types/weather.observer.type';
 import { IOptionalArgParserService } from '../../types/services/parsers/optional-arg.parser.service.type';
 import { ArrayDataVerticalPrinterService } from '../printers/vertical.printer.service';
-import Container, { Service } from 'typedi';
 import { IDateParserService } from '../../types/services/parsers/date.parser.service.type';
 import { ISettingsService } from '../../types/services/settings.service.type';
 import { ICacheService } from '../../types/services/cache.service.type';
@@ -61,8 +61,8 @@ export class WeatherObserverService implements IWeatherObserverService {
             Unit: unit, 
             ArrayDataColumnsIn: 1,
             ArrayDataRowsIn: 1,
-            // ArrayDataColumnsOut: 1,
-            // ArrayDataRowsOut: 1,
+            Fields: [],
+            IncludeTitle: true,
             Printer: new ArrayDataVerticalPrinterService(),
             Invocation: invocation,
             OptionalArg1: optionalArg1, 

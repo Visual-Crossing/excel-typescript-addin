@@ -1,7 +1,8 @@
-import { Service } from 'typedi';
+import Container, { Service } from 'typedi';
 import { ICleanUpJobService } from '../../types/services/jobs/cleanup.job.service.type';
 import { getCell } from '../../helpers/helpers.excel';
 import { jobTypes } from '../../types/services/jobs/job.service.type';
+import { IMetadataService } from '../../types/services/jobs/metadata.service.type';
 
 @Service({ transient: true })
 export class CleanUpJobService implements ICleanUpJobService<CustomFunctions.Invocation> {
@@ -37,31 +38,42 @@ export class CleanUpJobService implements ICleanUpJobService<CustomFunctions.Inv
     public async run(context: Excel.RequestContext): Promise<boolean> {
         try {
             if (context && this.Invocation && this.Invocation.address && this.InitialFormula && (this.ColumnsToClear > 1 || this.RowsToClear > 1)) {
-                let callerCell: Excel.Range;
+                let destination: Excel.Range;
                 
                 try {
-                    callerCell = await getCell(this.Invocation.address, context);
+                    destination = await getCell(this.Invocation.address, context);
                 }
                 catch {
                     // Caller cell no longer exists
                     return true;
                 }
 
-                if (!callerCell) {
+                if (!destination) {
                     return true;
                 }
 
-                callerCell.load();
-                await callerCell.context.sync();
+                // destination.load();
+                await destination.context.sync();
 
                 // ToDo: Consider implementing case insensitive and whitespace free comparison
-                if (callerCell.formulas[0][0] === this.InitialFormula) {
-                    if (this.RowsToClear > 1) {
-                        callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex + 1, callerCell.columnIndex, this.RowsToClear - 1, this.ColumnsToClear).clear(Excel.ClearApplyTo.contents);
+                if (destination.formulas[0][0] === this.InitialFormula) {
+                    const metadataService = Container.get<IMetadataService>('service.metadata');
+                    const maxSheetCols: number = metadataService.MaxSheetCols;
+                    const maxSheetRows: number = metadataService.MaxSheetRows;
+
+                    if (maxSheetCols === 0 || maxSheetRows === 0) {
+                        throw new Error();
                     }
 
-                    if (this.ColumnsToClear > 1) {
-                        callerCell.worksheet.getRangeByIndexes(callerCell.rowIndex, callerCell.columnIndex + 1, this.RowsToClear, this.ColumnsToClear - 1).clear(Excel.ClearApplyTo.contents);
+                    const colsToClearAdjusted = destination.columnIndex + (this.ColumnsToClear - 1) > maxSheetCols ? maxSheetCols - destination.columnIndex + 1 : this.ColumnsToClear;
+                    const rowsToClearAdjusted = destination.rowIndex + (this.RowsToClear - 1) > maxSheetRows ? maxSheetRows - destination.rowIndex + 1 : this.RowsToClear;
+
+                    if (this.ColumnsToClear > 1 && destination.columnIndex < maxSheetCols) {
+                        destination.worksheet.getRangeByIndexes(destination.rowIndex, destination.columnIndex + 1, rowsToClearAdjusted, colsToClearAdjusted - 1).clear(Excel.ClearApplyTo.contents);
+                    }
+
+                    if (this.RowsToClear > 1 && destination.rowIndex < maxSheetRows) {
+                        destination.worksheet.getRangeByIndexes(destination.rowIndex + 1, destination.columnIndex, rowsToClearAdjusted - 1, colsToClearAdjusted).clear(Excel.ClearApplyTo.contents);
                     }
 
                     await context.sync();

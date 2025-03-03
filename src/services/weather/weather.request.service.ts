@@ -18,6 +18,7 @@ export class WeatherRequest implements IRequestService<WeatherObserver> {
                 }
 
                 cacheService.set(observer.CacheId, JSON.stringify({ 
+                    id: observer.CacheId,
                     status: 'Complete',
                     type: 'Permanent',
                     values: cacheValue
@@ -75,12 +76,10 @@ export class WeatherRequest implements IRequestService<WeatherObserver> {
                         const cacheService = Container.get<ICacheService>('service.cache');
 
                         cacheService.set(observer.CacheId, JSON.stringify({ 
+                            id: observer.CacheId,
                             status: 'Complete',
                             type: 'Temporary',
-                            values: 
-                            [
-                                { name: 'Error', value: 'API Error' },
-                            ]
+                            error: 'API Error'
                         }));
         
                         const weatherObservableService = Container.get<IObservableService<WeatherObserver>>('service.observable.weather');

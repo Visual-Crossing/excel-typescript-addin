@@ -16,11 +16,12 @@ import { MacroJobService } from './jobs/macro.job.service';
 import { CleanUpJobService } from './jobs/cleanup.job.service';
 import { FormulaUpdaterService } from './updaters/formula.updater.service';
 import { MetadataService } from './metadata/metadata.service';
-import { MatrixService } from './matrix/matrix.service';
+import { WeatherResult } from './weather/weather.result.service';
 import { PrintJobService } from './jobs/print.job.service';
 import { WeatherObservableService } from './observables/weather.observable.service';
-import { WeatherRequest } from './requests/weather.request.service';
+import { WeatherRequest } from './weather/weather.request.service';
 import { WeatherObserver } from '../types/weather.observer.type';
+import { WeatherResultsStore } from './weather.result.store.service';
 
 import { PrecipitationFieldService } from './fields/precipitation.field.service';
 
@@ -79,11 +80,9 @@ export class Setup {
       ]);
 
       Container.set([
-        { id: 'service.matrix', value: new MatrixService() }
-      ]);
-
-      Container.set([
-        { id: 'service.requests.weather', value: new WeatherRequest() }
+        { id: 'service.requests.weather', value: new WeatherRequest() },
+        { id: 'service.results.weather', value: new WeatherResult() },
+        { id: 'service.results.store.weather', value: new WeatherResultsStore() }
       ]);
 
       Container.set([

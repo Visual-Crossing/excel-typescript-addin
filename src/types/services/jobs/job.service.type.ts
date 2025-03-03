@@ -5,6 +5,8 @@ export enum jobTypes {
 }
 
 export interface IJobService<T> {
+    key?: string;
+
     getId(): T;
     getType(): jobTypes;
     getAddress(): string;

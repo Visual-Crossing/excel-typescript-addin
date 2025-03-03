@@ -36,13 +36,13 @@ export class MacroJobService<T> implements IMacroJobService<T, CustomFunctions.I
 
     public async getCallerCellFormula(context: Excel.RequestContext): Promise<any> {
         try {
-            const callerCell: Excel.Range = await getCell(this.getAddress(), context);
+            const destination: Excel.Range = await getCell(this.getAddress(), context);
 
-            //callerCell.load();
-            await callerCell.context.sync();
+            //destination.load();
+            await destination.context.sync();
 
-            if (callerCell && callerCell.formulas && callerCell.formulas.length > 0 && callerCell.formulas[0].length > 0) {
-                return callerCell.formulas[0][0];
+            if (destination && destination.formulas && destination.formulas.length > 0 && destination.formulas[0].length > 0) {
+                return destination.formulas[0][0];
             }
 
             return null;
@@ -67,27 +67,27 @@ export class MacroJobService<T> implements IMacroJobService<T, CustomFunctions.I
         try {
             //if (context && this.Invocation && this.Invocation.address && this.Observer && this.onCallback) {
             if (context &&  this.onCallback) {
-                //let callerCell: Excel.Range;
+                //let destination: Excel.Range;
                 
                 // try {
-                //     callerCell = getCell(this.Invocation.address, context);
+                //     destination = getCell(this.Invocation.address, context);
                 // }
                 // catch {
                 //     // Caller cell no longer exists
                 //     return true;
                 // }
 
-                // if (!callerCell) {
+                // if (!destination) {
                 //     return true;
                 // }
 
-                // callerCell.load();
+                // destination.load();
                 // await context.sync();
 
                 // const sheetColsCount: number = await getSheetColumnsMax(this.Invocation.address, context);
                 // const sheetRowsCount: number = await getMaxSheetRows(this.Invocation.address, context);
 
-                //this.onCallback(this.Observer, callerCell.formulas[0][0], sheetColsCount, sheetRowsCount);
+                //this.onCallback(this.Observer, destination.formulas[0][0], sheetColsCount, sheetRowsCount);
                 this.onCallback(this, context);
             }
 

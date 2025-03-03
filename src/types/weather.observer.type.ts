@@ -1,19 +1,20 @@
 import { IArrayDataPrinter } from './printers/printer.type';
+import { IFieldService } from './services/field.service.type';
 
 export type WeatherObserver = {
     CacheId: string;
     
     ArrayDataColumnsIn: number;
-    // ArrayDataColumnsOut: number;
-
     ArrayDataRowsIn: number;
-    // ArrayDataRowsOut: number;
 
     Location: string;
     Date: Date;
     Unit: string;
     Printer: IArrayDataPrinter;
     Invocation: CustomFunctions.Invocation;
+
+    Fields: IFieldService[];
+    IncludeTitle: boolean;
 
     OptionalArg1?: any | null | undefined;
     OptionalArg2?: any | null | undefined;

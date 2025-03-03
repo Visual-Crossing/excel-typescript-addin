@@ -1,6 +1,7 @@
 import { PrintDirections } from "../../helpers/helpers.args";
+import { IWeatherResultService } from "../services/weather.result.service.type";
 
 export interface IArrayDataPrinter {
     getPrintDirection(): PrintDirections;
-    print(callerCell: Excel.Range, arrayData: any[]): boolean;
+    print(weatherResult: IWeatherResultService, destination: Excel.Range): boolean;
 }

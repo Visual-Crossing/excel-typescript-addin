@@ -8,7 +8,7 @@ export class JobsProcessorService<T> implements IJobsProcessorService<T> {
     private jobs: Queue<IJobService<T>> | null = null;
     private isJobsProcessingInProgress: boolean = false;
 
-    private activePrintJobs: Set<string> | null = null;
+    // private activePrintJobs: Map<string, string | number | Date | null> | null = null;
 
     public add(job: IJobService<T>): void {
         if (!job) {
@@ -26,43 +26,36 @@ export class JobsProcessorService<T> implements IJobsProcessorService<T> {
         // }
     }
 
-    public removePrintJob(id: string): void {
-        if (!id) {
-            return;
-        }
-
-        if (this.activePrintJobs === null) {
-            return;
-        }
-
-        if (!this.activePrintJobs.has(id)) {
-            return;
-        }
-
-        this.activePrintJobs.delete(id);
-
-        if (this.activePrintJobs.size === 0) {
-            this.activePrintJobs = null;
-        }
-    }
-
-    public printJobExists(id: string): boolean {
-        if (!id) {
-            return false;
-        }
-
-        if (this.activePrintJobs === null) {
-            return false;
-        }
-
-        return this.activePrintJobs.has(id);
-    }
-
-    // public async process(): Promise<void> {
-    //     if (this.jobs && this.jobs.length > 0 && !this.isJobsProcessingInProgress) {
-    //         this.isJobsProcessingInProgress = true;
-    //         const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); this.process(); }, RETRY_MS);
+    // public removePrintJob(id: string): void {
+    //     if (!id) {
+    //         return;
     //     }
+
+    //     if (this.activePrintJobs === null) {
+    //         return;
+    //     }
+
+    //     if (!this.activePrintJobs.has(id)) {
+    //         return;
+    //     }
+
+    //     this.activePrintJobs.delete(id);
+
+    //     if (this.activePrintJobs.size === 0) {
+    //         this.activePrintJobs = null;
+    //     }
+    // }
+
+    // public printJobExists(id: string): boolean {
+    //     if (!id) {
+    //         return false;
+    //     }
+
+    //     if (this.activePrintJobs === null) {
+    //         return false;
+    //     }
+
+    //     return this.activePrintJobs.has(id);
     // }
 
     public async process(): Promise<void> {
@@ -76,13 +69,13 @@ export class JobsProcessorService<T> implements IJobsProcessorService<T> {
                             const job: IJobService<T> = this.jobs.front;
 
                             if (job) {
-                                if (job .getType() === jobTypes.print) {
-                                    if (this.activePrintJobs == null) {
-                                        this.activePrintJobs = new Set<string>();
-                                    }
+                                // if (job .getType() === jobTypes.print) {
+                                //     if (this.activePrintJobs == null) {
+                                //         this.activePrintJobs = new Map<string, string | number | Date>();
+                                //     }
 
-                                    this.activePrintJobs.add(job.getAddress());
-                                }
+                                //     this.activePrintJobs.set(`${job.key}_${job.getAddress()}`, null);
+                                // }
 
                                 if (await job.run(context)) {
                                     this.jobs.dequeue();
