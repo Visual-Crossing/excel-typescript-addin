@@ -6,7 +6,6 @@ import { IWeatherObserverService } from '../types/services/weather.observer.serv
 import { WeatherObservableService } from '../services/observables/weather.observable.service';
 import { WeatherObserver } from '../types/weather.observer.type';
 import { IErrorParserService } from '../types/services/parsers/error.parser.service.type';
-import { Hooks } from '../services/hooks';
 
 /**
  * Offers complete, global weather data coverage both geographically and chronologically.
@@ -35,8 +34,7 @@ export async function Weather(
   
   try {
     //debugger;
-    Setup.init();
-    await Hooks.init();
+    Setup.initialise();
 
     const weatherObserverService = Container.get<IWeatherObserverService>('service.observer.weather');
     const weatherObservableService = Container.get<WeatherObservableService>('service.observable.weather');
