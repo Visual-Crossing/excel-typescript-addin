@@ -30,7 +30,7 @@ export type RegisterServicesOverrideType = () => void;
 export class Setup {
   static registerServicesOverride: RegisterServicesOverrideType | null = null;
 
-  static initialise() {
+  static init() {
     if (!Container.has('service.settings')) {
       if (Setup.registerServicesOverride) {
         Setup.registerServicesOverride();

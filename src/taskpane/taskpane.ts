@@ -14,9 +14,9 @@ Office.onReady(async () => {
   try
   {
     Office.addin.setStartupBehavior(Office.StartupBehavior.load);
-    Setup.initialise();
+    Setup.init();
 
-    if (!await tryInitialiseApiKey()) {
+    if (!await tryInitApiKey()) {
       return;
     }
 
@@ -28,7 +28,7 @@ Office.onReady(async () => {
       return;
     }
 
-    if (!tryInitialiseUnitLabels()) {
+    if (!tryInitUnitLabels()) {
       return;
     }
 
@@ -48,7 +48,7 @@ function handleEnterKey() {
   });
 }
 
-async function tryInitialiseApiKey(): Promise<boolean> {
+async function tryInitApiKey(): Promise<boolean> {
   const apiKeyTextBox: HTMLInputElement | null = getApiKeyTextBox();
 
   if (!apiKeyTextBox) {
@@ -79,7 +79,7 @@ function trySetBtnOnClickHandler(btnId: string, btnName: string, btnOnClickHandl
   }
 }
 
-function tryInitialiseUnitLabels(): boolean {
+function tryInitUnitLabels(): boolean {
   const unitLabels = document.querySelectorAll<HTMLInputElement>('.btn-group > label > input');
 
   if (unitLabels) {

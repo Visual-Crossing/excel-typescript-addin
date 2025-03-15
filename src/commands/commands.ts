@@ -51,7 +51,7 @@ async function displaySettingsDialog(event: Office.AddinCommands.Event) {
                 const json = JSON.parse(argsAsMessageOrigin.message);
 
                 if (json) {
-                  Setup.initialise();
+                  Setup.init();
 
                   const settingsService = Container.get<ISettingsService>('service.settings');
 
