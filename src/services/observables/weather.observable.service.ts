@@ -13,6 +13,7 @@ import { IJobService } from "../../types/services/jobs/job.service.type";
 import { PROCESSING } from "../../shared/constants";
 import { IMetadataService } from "../..//types/services/jobs/metadata.service.type";
 import { IWeatherResultsStoreService } from "src/types/services/weather.result.store.service.type";
+import { error } from "jquery";
 
 export class WeatherObservableService extends ObservableService<WeatherObserver> {
     public constructor() {
@@ -113,11 +114,15 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
 
                 // return matrix.FormulaCellDisplayValue;
 
-                return weatherResult.getFormulaCellValue();
+                if (!weatherResult.weatherResultService) {
+                    throw new Error();
+                }
+
+                return weatherResult.weatherResultService.getFormulaCellValue();
             }
             finally {
                 //weatherResultsStore.removePrintJob(observer.Invocation.address!);
-                weatherResultsStore.remove(observer.CacheId, observer.Invocation.address!);
+                //weatherResultsStore.remove(observer.CacheId, observer.Invocation.address!);
             }
         }
     }

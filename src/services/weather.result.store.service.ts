@@ -4,7 +4,7 @@ import { IWeatherResultService } from "../types/services/weather.result.service.
 
 @Service()
 export class WeatherResultsStore implements IWeatherResultsStoreService {
-    private WeatherResults: Map<string, IWeatherResultService> = new Map<string, IWeatherResultService>();
+    private WeatherResults: Map<string, { key: string, count: number, weatherResultService: IWeatherResultService }> = new Map<string, { key: string, count: number, weatherResultService: IWeatherResultService }>();
 
     private generateKey(cacheId: string, destinationAddress: string): string {
         return `${cacheId}_${destinationAddress}`;
@@ -15,16 +15,23 @@ export class WeatherResultsStore implements IWeatherResultsStoreService {
             throw new Error();
         }
 
-        const key = this.generateKey(weatherResult.CacheItem.id, weatherResult.DestinationAddress);
-        this.WeatherResults.set(key, weatherResult);
-    }
+        let storeItem = this.get(weatherResult.CacheItem.id, weatherResult.DestinationAddress); 
 
-    public get(cacheId: string, destinationAddress: string): IWeatherResultService | null {
-        if (!cacheId || !destinationAddress) {
-            throw new Error();
+        if (storeItem) {
+            storeItem.count++;
+            storeItem.weatherResultService = weatherResult;
+        } else {
+            const key: string = this.generateKey(weatherResult.CacheItem.id, weatherResult.DestinationAddress);
+            storeItem = { key: key, count: 1, weatherResultService: weatherResult };
         }
 
-        const key = this.generateKey(cacheId, destinationAddress);
+        this.WeatherResults.set(storeItem.key, storeItem);
+    }
+
+    private getStoreItemByKey(key: string): { key: string, count: number, weatherResultService: IWeatherResultService } | null {
+        if (!key) {
+            throw new Error();
+        }
 
         if (this.WeatherResults.has(key)) {
             return this.WeatherResults.get(key)!;
@@ -33,20 +40,31 @@ export class WeatherResultsStore implements IWeatherResultsStoreService {
         return null;
     }
 
-    public remove(cacheId: string, destinationAddress: string): void {
+    public get(cacheId: string, destinationAddress: string): { key: string, count: number, weatherResultService: IWeatherResultService } | null {
         if (!cacheId || !destinationAddress) {
             throw new Error();
         }
 
-        const key = this.generateKey(cacheId, destinationAddress);
+        const key: string = this.generateKey(cacheId, destinationAddress);
 
-        if (this.WeatherResults.has(key)) {
-            this.WeatherResults.delete(key)!;
-        }
+        return this.getStoreItemByKey(key);
+    }
+
+    public remove(cacheId: string, destinationAddress: string): void {
+        // const storeItem = this.get(cacheId, destinationAddress);
+
+        // if (storeItem) {
+        //     storeItem.count--;
+
+        //     if (storeItem.count < 1) {
+        //         this.WeatherResults.delete(storeItem.key);
+        //     } else {
+        //         this.WeatherResults.set(storeItem.key, storeItem);
+        //     }
+        // }
     }
 
     public clear(): void {
         this.WeatherResults.clear();
     }
-    
 }
