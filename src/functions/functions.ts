@@ -1,14 +1,10 @@
-﻿/* global clearInterval, console, CustomFunctions, setInterval */
-
-import Container from 'typedi';
-import { Setup } from '../services/setup';
+﻿import { Setup } from '../services/setup';
+import { Hooks } from '../services/hooks';
 import { IWeatherObserverService } from '../types/services/weather.observer.service.type';
-import { WeatherObservableService } from '../services/observables/weather.observable.service';
 import { WeatherObserver } from '../types/weather.observer.type';
 import { IErrorParserService } from '../types/services/parsers/error.parser.service.type';
-import { Hooks } from '../services/hooks';
-// import { IJobsProcessorService } from '../types/services/jobs/jobs-processor.service.type';
-// import { IWeatherResultsStoreService } from '../types/services/weather.result.store.service.type';
+import { IObservableService } from '../types/services/observable.service.type';
+import { getErrorParserService, getWeatherObservableService, getWeatherObserverService } from '../helpers/helpers.services';
 
 /**
  * Offers complete, global weather data coverage both geographically and chronologically.
@@ -40,30 +36,18 @@ export async function Weather(
     Setup.init();
     await Hooks.init();
 
-
-    // const weatherObservableService = Container.get<WeatherObservableService>('service.observable.weather');
-    // const jobsProcessorService = Container.get<IJobsProcessorService<CustomFunctions.Invocation>>('service.jobs.processor');
-    
-    // if (!weatherObservableService.isInProgress() && !jobsProcessorService.isInProgress()) {
-    //   const weatherResultsStore = Container.get<IWeatherResultsStoreService>('service.results.store.weather');
-
-    //   if (!weatherResultsStore) {
-    //     throw new Error();
-    //   }
-
-    //   weatherResultsStore.clear();
-    // }
-
-
-
-    const weatherObserverService = Container.get<IWeatherObserverService>('service.observer.weather');
-    const weatherObservableService = Container.get<WeatherObservableService>('service.observable.weather');
-
+    const weatherObserverService: IWeatherObserverService = getWeatherObserverService();
     const weatherObserver: WeatherObserver = await weatherObserverService.process(location, date, invocation, optionalArg1, optionalArg2, optionalArg3, optionalArg4, optionalArg5);
+    const weatherObservableService: IObservableService<WeatherObserver> = getWeatherObservableService();
 
     return weatherObservableService.observe(weatherObserver);
   } catch (error: any) {
-    const errorParserService = Container.get<IErrorParserService>('service.parser.error');
-    return errorParserService.getErrorInfo(error);
+    const errorParserService: IErrorParserService | null = getErrorParserService();
+    
+    if (errorParserService) {
+      return errorParserService.getErrorInfo(error);
+    } else {
+      return '#VALUE!';
+    }
   }
 }

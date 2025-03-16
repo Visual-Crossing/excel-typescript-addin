@@ -11,7 +11,9 @@ export abstract class ObservableService<T> implements IObservableService<T> {
         return this.observers !== null ? this.observers.size : 0;
     }
 
-    public isSubscribed(groupId: string, observerKey: CustomFunctions.Invocation): boolean {
+    public abstract observe(observer: T): string | number | Date;
+
+    private isSubscribed(groupId: string, observerKey: CustomFunctions.Invocation): boolean {
         if (!groupId ||
             !observerKey) {
             throw new Error();
@@ -31,9 +33,8 @@ export abstract class ObservableService<T> implements IObservableService<T> {
     }
 
     public subscribe(groupId: string, observerKey: CustomFunctions.Invocation, observer: T): void {
-        if (!groupId ||
-            !observerKey) {
-            throw new Error();
+        if (this.isSubscribed(groupId, observerKey)) {
+            return;
         }
 
         if (!observer) {

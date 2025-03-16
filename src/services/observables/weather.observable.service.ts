@@ -154,15 +154,12 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
                     observer.InitialFormula = callerCellFormula;
 
                     this.initCleanupJob(observer);
+                    this.subscribe(observer.CacheId, observer.Invocation, observer);
 
                     const cacheService = Container.get<ICacheService>('service.cache');
                     const cacheItemString: string | null | undefined = cacheService.get(observer.CacheId);
 
                     const cacheItemObject = cacheItemString ? JSON.parse(cacheItemString) : null;
-
-                    if (!this.isSubscribed(observer.CacheId, observer.Invocation)) {
-                        this.subscribe(observer.CacheId, observer.Invocation, observer);
-                    }
 
                     if (cacheItemObject && cacheItemObject.status !== 'Pending') {
                         if (cacheItemObject.status === 'Complete') {

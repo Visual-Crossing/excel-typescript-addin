@@ -3,7 +3,7 @@ export interface IObservableService<T> {
     onUpdate: ((observer: T) => void);
 
     getCount(): number;
-    isSubscribed(groupId: string, observerKey: CustomFunctions.Invocation): boolean;
+    observe(observer: T): string | number | Date;
     subscribe(groupId: string, observerKey: CustomFunctions.Invocation, observer: T): void;
     update(groupId: string, getKey: (observer: T) => CustomFunctions.Invocation): void;
 }

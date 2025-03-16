@@ -7,6 +7,7 @@ import { ISettingsService } from '../../types/services/settings.service.type';
 import { ICacheService } from '../../types/services/cache.service.type';
 import { IWeatherObserverService } from '../../types/services/weather.observer.service.type';
 import { IErrorParserService } from '../../types/services/parsers/error.parser.service.type';
+import { getCacheService, getDateParserService, getSettingsService } from '../../helpers/helpers.services';
 
 @Service()
 export class WeatherObserverService implements IWeatherObserverService {
@@ -37,14 +38,14 @@ export class WeatherObserverService implements IWeatherObserverService {
             errorMsg = 'Invalid Location!';
         }
 
-        const settingsService = Container.get<ISettingsService>('service.settings');
-        const cacheService = Container.get<ICacheService>('service.cache');
-        const dateService = Container.get<IDateParserService>('service.parser.date');
+        const settingsService: ISettingsService = getSettingsService();
+        const cacheService: ICacheService = getCacheService();
+        const dateParserService: IDateParserService = getDateParserService();
 
         let dateValue: Date | undefined = undefined;
 
         try {
-            dateValue = dateService.parse(date);
+            dateValue = dateParserService.parse(date);
         } catch (error: any) {
             const errorParserService = Container.get<IErrorParserService>('service.parser.error');
             errorMsg = errorParserService.getErrorInfo(error);

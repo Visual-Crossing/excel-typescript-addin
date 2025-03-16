@@ -43,10 +43,10 @@ export class WeatherResult implements IWeatherResultService {
             this.outputArrayData.push([this.CacheItem.error]);
         } else {
             if (!this.Fields?.length) {
-                this.Fields = [new HumidityFieldService(), new PressureFieldService(), new WindDirFieldService()];
-                //this.Fields = [new HumidityFieldService()];
+                //this.Fields = [new HumidityFieldService(), new PressureFieldService(), new WindDirFieldService()];
+                this.Fields = [new HumidityFieldService()];
             }
-            
+            this.IncludeTitle = false;
             //ToDo: Consider using multiple services
             if (this.IncludeTitle) {
                 this.Fields.forEach((field) => this.outputArrayData.push([field.getTitle(), field.getValue(this.CacheItem)]));
