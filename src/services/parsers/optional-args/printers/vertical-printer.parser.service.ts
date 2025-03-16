@@ -5,11 +5,11 @@ import { ArrayDataVerticalPrinterService } from '../../../printers/vertical.prin
 
 export class VerticalPrinterOptionalArgParserService implements IOptionalArgParserService {
     public tryParse(value: string, weatherObserver: WeatherObserver): boolean {
-        if (value && value === 'dir=v') {
+        if (value && value.localeCompare('dir=v', undefined, { sensitivity: 'base' }) === 0) {
             weatherObserver.Printer = new ArrayDataVerticalPrinterService();
             
             return true;
-        } else if (value && value.startsWith('dir=') && !value.startsWith('dir=v') && !value.startsWith('dir=h')) {
+        } else if (value && value.startsWith('dir=') && value.localeCompare('dir=v', undefined, { sensitivity: 'base' }) !== 0 && value.localeCompare('dir=h', undefined, { sensitivity: 'base' }) !== 0) {
             throw new Error(`${INVALID_PARAMETER_VALUE} for parameter name 'dir'. Valid values are 'v' or 'h' only.`);
         } else {
             return false;

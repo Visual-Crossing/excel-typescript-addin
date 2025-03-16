@@ -4,11 +4,11 @@ import { WeatherObserver } from '../../../../types/weather.observer.type';
 
 export class HeaderYOptionalArgParserService implements IOptionalArgParserService {
     public tryParse(value: string, weatherObserver: WeatherObserver): boolean {
-        if (value && value === 'headers=y') {
+        if (value && value.localeCompare('headers=y', undefined, { sensitivity: 'base' }) === 0) {
             weatherObserver.IncludeTitle = true;
             
             return true;
-        } else if (value && value.startsWith('headers=') && !value.startsWith('headers=y')) {
+        } else if (value && value.startsWith('headers=') && value.localeCompare('headers=n', undefined, { sensitivity: 'base' }) !== 0 && value.localeCompare('headers=y', undefined, { sensitivity: 'base' }) !== 0) {
             throw new Error(`${INVALID_PARAMETER_VALUE} for parameter name 'headers'. Valid values are 'y' or 'n' only.`);
         } else {
             return false;

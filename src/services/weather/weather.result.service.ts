@@ -40,7 +40,7 @@ export class WeatherResult implements IWeatherResultService {
     public toArray(validate: (arrayData: any[]) => boolean): any[] {
         if (this.Error) {
             this.outputArrayData.push([this.Error]);
-        } else if (!this.CacheItem || (!this.CacheItem.values || this.CacheItem.values.length < 1)) {
+        } else if (!this.CacheItem || !this.CacheItem.values || this.CacheItem.values.length < 1) {
             this.outputArrayData.push(['#N/A Data!']);
         } else {
             if (!this.Fields?.length) {
