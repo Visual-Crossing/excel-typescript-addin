@@ -25,6 +25,10 @@ export function getRequiredService<T>(id: string): T {
 
 export function getService<T>(id: string): T | null {
     try {
+        if (!id) {
+            return null;
+        }
+
         const service = Container.get<T>(id);
         return service;
     }
