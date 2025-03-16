@@ -5,6 +5,7 @@ import { CacheItem } from "../cache-item.type";
 export interface IWeatherResultService {
     CacheItem: CacheItem;
     DestinationAddress: string;
+    Error?: any;
 
     CurrentFormula: string;
     CurrentCols: number;

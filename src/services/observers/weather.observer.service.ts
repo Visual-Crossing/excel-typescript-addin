@@ -83,17 +83,17 @@ export class WeatherObserverService implements IWeatherObserverService {
 
         const optionalArgs: any[] | null[] | undefined[] = [weatherObserver.OptionalArg1, weatherObserver.OptionalArg2, weatherObserver.OptionalArg3, weatherObserver.OptionalArg4, weatherObserver.OptionalArg5];
 
-        this.processOptionalArgs(optionalArgs, weatherObserver, errorMsg);
-
         if (errorMsg) {
             weatherObserver.error = errorMsg;
         }
 
+        this.processOptionalArgs(optionalArgs, weatherObserver);
+
         return weatherObserver;
     }
 
-    private processOptionalArgs(optionalArgs: any[] | null[] | undefined[], weatherObserver: WeatherObserver, errorMsg: string | undefined): void {
-        optionalArgs.forEach(optionalArg => {
+    private processOptionalArgs(optionalArgs: any[] | null[] | undefined[], weatherObserver: WeatherObserver): void {
+        optionalArgs.forEach((optionalArg: any) => {
             if (optionalArg) {
                 let isOptionalArgParseSuccess: boolean = false;
 
@@ -115,15 +115,15 @@ export class WeatherObserverService implements IWeatherObserverService {
                                 isOptionalArgParseSuccess = optionalArgParser.tryParse(optionalArgStringLower, weatherObserver);
                             } catch (error: any) {
                                 const errorParserService = Container.get<IErrorParserService>('service.parser.error');
-                                errorMsg = errorParserService.getErrorInfo(error);
+                                weatherObserver.error = errorParserService.getErrorInfo(error);
                             }
                         } while (!isOptionalArgParseSuccess && index < optionalArgParsers.length - 1);
                     }
                 }
 
-                if (!isOptionalArgParseSuccess) {
-                    errorMsg = `Invalid parameter: '${optionalArg as string}'!`;
-                }
+                // if (!isOptionalArgParseSuccess) {
+                //     weatherObserver.error = `Invalid parameter: '${optionalArg as string}'!`;
+                // }
             }
         });
     }

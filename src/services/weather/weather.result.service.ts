@@ -15,6 +15,7 @@ import { WindDirFieldService } from "../fields/winddir.field.service";
 export class WeatherResult implements IWeatherResultService {
     public CacheItem: CacheItem;
     public DestinationAddress: string;
+    public Error?: any;
 
     public CurrentFormula: string;
     public CurrentCols: number;
@@ -37,10 +38,10 @@ export class WeatherResult implements IWeatherResultService {
     }
 
     public toArray(validate: (arrayData: any[]) => boolean): any[] {
-        if (!this.CacheItem || ((!this.CacheItem.values || this.CacheItem.values.length) && !this.CacheItem.error)) {
-            this.outputArrayData.push(["#N/A Data!"]);
-        } else if (this.CacheItem.error) {
-            this.outputArrayData.push([this.CacheItem.error]);
+        if (this.Error) {
+            this.outputArrayData.push([this.Error]);
+        } else if (!this.CacheItem || (!this.CacheItem.values || this.CacheItem.values.length < 1)) {
+            this.outputArrayData.push(['#N/A Data!']);
         } else {
             if (!this.Fields?.length) {
                 this.Fields = [new HumidityFieldService(), new PressureFieldService(), new WindDirFieldService()];
@@ -57,7 +58,7 @@ export class WeatherResult implements IWeatherResultService {
 
         if (!validate(this.outputArrayData)) {
             this.outputArrayData = [];
-            this.outputArrayData.push(["#N/A Overflow!"]);
+            this.outputArrayData.push(['#N/A Overflow!']);
             
         }
 

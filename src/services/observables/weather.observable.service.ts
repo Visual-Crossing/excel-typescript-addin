@@ -222,6 +222,7 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
             weatherResult.IncludeTitle = observer.IncludeTitle;
             weatherResult.PrintDirection = observer.Printer.getPrintDirection();
             weatherResult.CacheItem = cacheItemObject as CacheItem;
+            weatherResult.Error = observer.error;
 
             if (observer.ArrayDataColumnsIn && observer.ArrayDataRowsIn) {
                 weatherResult.CurrentCols = observer.ArrayDataColumnsIn;
