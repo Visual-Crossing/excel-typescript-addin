@@ -7,6 +7,8 @@ import { WeatherObservableService } from '../services/observables/weather.observ
 import { WeatherObserver } from '../types/weather.observer.type';
 import { IErrorParserService } from '../types/services/parsers/error.parser.service.type';
 import { Hooks } from '../services/hooks';
+// import { IJobsProcessorService } from '../types/services/jobs/jobs-processor.service.type';
+// import { IWeatherResultsStoreService } from '../types/services/weather.result.store.service.type';
 
 /**
  * Offers complete, global weather data coverage both geographically and chronologically.
@@ -37,6 +39,22 @@ export async function Weather(
     //debugger;
     Setup.init();
     await Hooks.init();
+
+
+    // const weatherObservableService = Container.get<WeatherObservableService>('service.observable.weather');
+    // const jobsProcessorService = Container.get<IJobsProcessorService<CustomFunctions.Invocation>>('service.jobs.processor');
+    
+    // if (!weatherObservableService.isInProgress() && !jobsProcessorService.isInProgress()) {
+    //   const weatherResultsStore = Container.get<IWeatherResultsStoreService>('service.results.store.weather');
+
+    //   if (!weatherResultsStore) {
+    //     throw new Error();
+    //   }
+
+    //   weatherResultsStore.clear();
+    // }
+
+
 
     const weatherObserverService = Container.get<IWeatherObserverService>('service.observer.weather');
     const weatherObservableService = Container.get<WeatherObservableService>('service.observable.weather');

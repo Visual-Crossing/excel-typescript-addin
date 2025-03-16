@@ -1,9 +1,11 @@
+import { Service } from "typedi";
 import { Queue } from "queue-typescript";
 import { IJobService } from "../../types/services/jobs/job.service.type";
 import { IJobsProcessorService } from "../../types/services/jobs/jobs-processor.service.type";
 
 const RETRY_MS: number = 250;
 
+@Service()
 export class JobsProcessorService<T> implements IJobsProcessorService<T> {
     private jobs: Queue<IJobService<T>> | null = null;
     private isJobsProcessingInProgress: boolean = false;
@@ -20,17 +22,23 @@ export class JobsProcessorService<T> implements IJobsProcessorService<T> {
         this.jobs.enqueue(job);
     }
 
+    public getCount(): number {
+        return this.jobs !== null ? this.jobs.length : 0;
+    }
+
     private retry(): void {
-        const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); this.process(); }, RETRY_MS);
+        if (this.jobs && this.jobs.length > 0) {
+            const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); this.process(); }, RETRY_MS);
+        }
     }
 
     public async process(): Promise<void> {
         if (this.jobs && this.jobs.length > 0 && !this.isJobsProcessingInProgress) {
             try {
-                Excel.run(async (context: Excel.RequestContext) => {
-                    try {
-                        this.isJobsProcessingInProgress = true;
+                this.isJobsProcessingInProgress = true;
 
+                await Excel.run(async (context: Excel.RequestContext) => {
+                    try {
                         while (this.jobs && this.jobs.length > 0) {
                             const job: IJobService<T> = this.jobs.front;
 
@@ -50,10 +58,8 @@ export class JobsProcessorService<T> implements IJobsProcessorService<T> {
                         this.jobs = null;
                     }
                     catch {
-                        if (this.jobs && this.jobs.length > 0) {
-                            this.retry();
-                            return;
-                        }
+                        this.retry();
+                        return;
                     }
                     finally {
                         this.isJobsProcessingInProgress = false;
@@ -61,12 +67,11 @@ export class JobsProcessorService<T> implements IJobsProcessorService<T> {
                 });
             }
             catch {
+                this.retry();
+                return;
+            }
+            finally {
                 this.isJobsProcessingInProgress = false;
-
-                if (this.jobs && this.jobs.length > 0) {
-                    this.retry();
-                    return;
-                }
             }
         }
     }

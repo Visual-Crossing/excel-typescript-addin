@@ -2,6 +2,9 @@
 
 import { Container } from 'typedi';
 import { IWeatherResultsStoreService } from '../types/services/weather.result.store.service.type';
+import { IJobsProcessorService } from '../types/services/jobs/jobs-processor.service.type';
+import { WeatherObservableService } from './observables/weather.observable.service';
+import { IMacroCounterService } from '../types/services/macro.counter.service.type';
 
 export type InitHooksOverrideType = () => Promise<void>;
 
@@ -23,13 +26,19 @@ export class Hooks {
   }
 
   static async onWorkbookCalcComplete(event: Excel.WorksheetCalculatedEventArgs) {
-    const weatherResultsStore = Container.get<IWeatherResultsStoreService>('service.results.store.weather');
+    const weatherObservableService = Container.get<WeatherObservableService>('service.observable.weather');
+    const jobsProcessorService = Container.get<IJobsProcessorService<CustomFunctions.Invocation>>('service.jobs.processor');
+    const macroCounterService = Container.get<IMacroCounterService>('service.counter.macro');
 
-    if (!weatherResultsStore) {
-      throw new Error();
+    if (weatherObservableService.getCount() === 0 && jobsProcessorService.getCount() === 0 && macroCounterService.getCount() === 0) {
+        const weatherResultsStore = Container.get<IWeatherResultsStoreService>('service.results.store.weather');
+
+        if (!weatherResultsStore) {
+            throw new Error();
+        }
+
+        weatherResultsStore.clear();
     }
-
-    weatherResultsStore.clear();
   }
 
   static async initOnWorkbookCalcCompleteHook() {

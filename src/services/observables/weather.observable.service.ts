@@ -12,8 +12,9 @@ import { CacheItem } from "../../types/cache-item.type";
 import { IJobService } from "../../types/services/jobs/job.service.type";
 import { PROCESSING } from "../../shared/constants";
 import { IMetadataService } from "../..//types/services/jobs/metadata.service.type";
-import { IWeatherResultsStoreService } from "src/types/services/weather.result.store.service.type";
-import { error } from "jquery";
+import { IWeatherResultsStoreService } from "../../types/services/weather.result.store.service.type";
+import { ArrayDataVerticalPrinterService } from "../printers/vertical.printer.service";
+import { IMacroCounterService } from "../../types/services/macro.counter.service.type";
 
 export class WeatherObservableService extends ObservableService<WeatherObserver> {
     public constructor() {
@@ -103,26 +104,21 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
         const weatherResult = weatherResultsStore.get(observer.CacheId, observer.Invocation.address!);
 
         if (!weatherResult) {
+            const macroCounterService = Container.get<IMacroCounterService>('service.counter.macro');
+            macroCounterService.add();
+
             this.initMacroJob(observer);
             return PROCESSING;
         } else {
             try {
-                // const weatherResult = Container.get<IWeatherResultService>('service.results.weather').create();
-                // weatherResult.CacheItem = JSON.parse(cacheItemString) as CacheItem;
-
-                // const matrix = weatherResult.toMatrix();
-
-                // return matrix.FormulaCellDisplayValue;
-
                 if (!weatherResult.weatherResultService) {
                     throw new Error();
                 }
 
                 return weatherResult.weatherResultService.getFormulaCellValue();
-            }
-            finally {
-                //weatherResultsStore.removePrintJob(observer.Invocation.address!);
-                //weatherResultsStore.remove(observer.CacheId, observer.Invocation.address!);
+            } finally {
+                const macroCounterService = Container.get<IMacroCounterService>('service.counter.macro');
+                macroCounterService.remove();
             }
         }
     }
@@ -140,43 +136,54 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
     }
 
     private async onMacroCallbackHandler (macroJobService: IMacroJobService<WeatherObserver, CustomFunctions.Invocation>, context: Excel.RequestContext): Promise<void>  { 
-        if (!macroJobService || !context) {
-            throw new Error();
-        }
-        
-        const observer = macroJobService.Observer;
-        
-        if (observer && observer.Invocation && observer.Invocation.address) {
-            const callerCellFormula = await macroJobService.getCallerCellFormula(context);
+        const macroCounterService = Container.get<IMacroCounterService>('service.counter.macro');
 
-            if (callerCellFormula) {
-                await this.saveMetadata(macroJobService, context);
+        try {
+            if (!macroJobService || !context) {
+                throw new Error();
+            }
+            
+            const observer = macroJobService.Observer;
+            
+            if (observer && observer.Invocation && observer.Invocation.address) {
+                const callerCellFormula = await macroJobService.getCallerCellFormula(context);
 
-                observer.InitialFormula = callerCellFormula;
+                if (callerCellFormula) {
+                    await this.saveMetadata(macroJobService, context);
 
-                this.initCleanupJob(observer);
+                    observer.InitialFormula = callerCellFormula;
 
-                const cacheService = Container.get<ICacheService>('service.cache');
-                const cacheItemString: string | null | undefined = cacheService.get(observer.CacheId);
+                    this.initCleanupJob(observer);
 
-                const cacheItemObject = cacheItemString ? JSON.parse(cacheItemString) : null;
+                    const cacheService = Container.get<ICacheService>('service.cache');
+                    const cacheItemString: string | null | undefined = cacheService.get(observer.CacheId);
 
-                if (cacheItemObject && cacheItemObject.status !== 'Pending') {
+                    const cacheItemObject = cacheItemString ? JSON.parse(cacheItemString) : null;
+
                     if (!this.isSubscribed(observer.CacheId, observer.Invocation)) {
                         this.subscribe(observer.CacheId, observer.Invocation, observer);
                     }
 
-                    if (cacheItemObject.status === 'Complete') {
-                        this.onUpdate(observer);
+                    if (cacheItemObject && cacheItemObject.status !== 'Pending') {
+                        if (cacheItemObject.status === 'Complete') {
+                            this.update(observer.CacheId, (observer) => observer.Invocation);
+                        }
                     }
-                }
-                else {
-                    const weatherRequest = Container.get<IRequestService<WeatherObserver>>('service.requests.weather');
-                    weatherRequest.fetchData(observer);
+                    else {
+                        const weatherRequest = Container.get<IRequestService<WeatherObserver>>('service.requests.weather');
+                        weatherRequest.fetchData(observer);
 
-                    cacheService.set(observer.CacheId, JSON.stringify({ id: observer.CacheId, status: 'Requesting' }));
+                        cacheService.set(observer.CacheId, JSON.stringify({ id: observer.CacheId, status: 'Requesting' }));
+                    }
+                } else {
+                    macroCounterService.remove();
                 }
+            } else  {
+                macroCounterService.remove();
             }
+        } catch (error: any){
+            macroCounterService.remove();
+            throw error;
         }
     }
 
@@ -209,6 +216,10 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
                 weatherResult.DestinationAddress = observer.Invocation.address;
             }
 
+            if (!observer.Printer) {
+                observer.Printer = new ArrayDataVerticalPrinterService(); 
+            }
+
             weatherResult.CurrentFormula = observer.InitialFormula;
             weatherResult.Fields = observer.Fields;
             weatherResult.IncludeTitle = observer.IncludeTitle;
@@ -220,18 +231,14 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
                 weatherResult.CurrentRows = observer.ArrayDataRowsIn;
             }
 
-            // const matrix = weatherResult.toMatrix();
+            const printJob = Container.get<IPrintJobService<CustomFunctions.Invocation>>('service.job.print').create();
 
-            // if (matrix.OutputArrayData?.length) {
-                const printJob = Container.get<IPrintJobService<CustomFunctions.Invocation>>('service.job.print').create();
+            printJob.InitialFormula = observer.InitialFormula;
+            printJob.WeatherResult = weatherResult;
+            printJob.ArrayDataPrinter = observer.Printer;
+            printJob.Invocation = observer.Invocation;
 
-                printJob.InitialFormula = observer.InitialFormula;
-                printJob.WeatherResult = weatherResult;
-                printJob.ArrayDataPrinter = observer.Printer;
-                printJob.Invocation = observer.Invocation;
-
-                this.initJob(printJob);
-            // }
+            this.initJob(printJob);
         }
     }
 }

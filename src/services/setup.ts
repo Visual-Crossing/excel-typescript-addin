@@ -24,6 +24,7 @@ import { WeatherObservableService } from './observables/weather.observable.servi
 import { WeatherRequest } from './weather/weather.request.service';
 import { WeatherObserver } from '../types/weather.observer.type';
 import { WeatherResultsStore } from './weather.result.store.service';
+import { MacroCounterService } from './macro.counter.service';
 
 import { PrecipitationFieldService } from './fields/precipitation.field.service';
 
@@ -67,6 +68,10 @@ export class Setup {
 
       Container.set([
         { id: 'service.jobs.processor', value: new JobsProcessorService<CustomFunctions.Invocation>() }
+      ]);
+
+      Container.set([
+        { id: 'service.counter.macro', value: new MacroCounterService() }
       ]);
 
       Container.set([

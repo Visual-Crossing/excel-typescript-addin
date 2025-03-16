@@ -7,6 +7,10 @@ export abstract class ObservableService<T> implements IObservableService<T> {
     public onValidate: ((observer: T) => boolean);
     public onUpdate: ((observer: T) => void);
 
+    public getCount(): number {
+        return this.observers !== null ? this.observers.size : 0;
+    }
+
     public isSubscribed(groupId: string, observerKey: CustomFunctions.Invocation): boolean {
         if (!groupId ||
             !observerKey) {
