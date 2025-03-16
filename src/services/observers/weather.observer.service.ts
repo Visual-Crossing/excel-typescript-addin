@@ -63,7 +63,7 @@ export class WeatherObserverService implements IWeatherObserverService {
             ArrayDataColumnsIn: 1,
             ArrayDataRowsIn: 1,
             Fields: [],
-            IncludeTitle: true,
+            IncludeTitle: false,
             Printer: new ArrayDataVerticalPrinterService(),
             Invocation: invocation,
             OptionalArg1: optionalArg1, 
