@@ -11,6 +11,17 @@ import { getCacheService, getDateParserService, getSettingsService } from '../..
 
 @Service()
 export class WeatherObserverService implements IWeatherObserverService {
+    private parseLocation(location: any): string {
+        try {
+            const locationString: string = (location as string)?.trim();
+
+            return locationString;
+        }
+        catch {
+            return '';
+        }
+    }
+
     public async process(
         location: any, 
         date: any,
@@ -32,10 +43,10 @@ export class WeatherObserverService implements IWeatherObserverService {
             errorMsg = INVALID_PARAMETERS;
         }
 
-        const locationString = (location as string)?.trim();
+        const locationString: string = this.parseLocation(location);
 
         if (!locationString || locationString.length === 0) {
-            errorMsg = 'Invalid Location!';
+            errorMsg = '#N/A Invalid Location!';
         }
 
         const settingsService: ISettingsService = getSettingsService();
