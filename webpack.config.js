@@ -1,14 +1,14 @@
 /* eslint-disable no-undef */
 
-const devCerts = require("office-addin-dev-certs");
-const CopyWebpackPlugin = require("copy-webpack-plugin");
-const CustomFunctionsMetadataPlugin = require("custom-functions-metadata-plugin");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
+const devCerts = require('office-addin-dev-certs');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+const CustomFunctionsMetadataPlugin = require('custom-functions-metadata-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
-const path = require("path");
+const path = require('path');
 
-const urlDev = "https://localhost:3000/";
-const urlProd = "https://www.contoso.com/"; // CHANGE THIS TO YOUR PRODUCTION DEPLOYMENT LOCATION
+const urlDev = 'https://localhost:3000/';
+const urlProd = 'https://www.contoso.com/'; // CHANGE THIS TO YOUR PRODUCTION DEPLOYMENT LOCATION
 
 /* global require, module, process, __dirname */
 
@@ -18,20 +18,20 @@ async function getHttpsOptions() {
 }
 
 module.exports = async (env, options) => {
-  const dev = options.mode === "development";
+  const dev = options.mode === 'development';
   const config = {
-    devtool: "source-map",
+    devtool: 'source-map',
     entry: {
-      polyfill: ["core-js/stable", "regenerator-runtime/runtime"],
-      taskpane: ["./src/taskpane/taskpane.ts", "./src/taskpane/taskpane.html"],
-      commands: "./src/commands/commands.ts",
-      functions: "./src/functions/functions.ts"
+      polyfill: ['core-js/stable', 'regenerator-runtime/runtime'],
+      taskpane: ['./src/taskpane/taskpane.ts', './src/taskpane/taskpane.html'],
+      commands: './src/commands/commands.ts',
+      functions: './src/functions/functions.ts'
     },
     output: {
       clean: true,
     },
     resolve: {
-      extensions: [".ts", ".html", ".js"],
+      extensions: ['.ts', '.html', '.js'],
     },
     module: {
       rules: [
@@ -39,22 +39,22 @@ module.exports = async (env, options) => {
           test: /\.ts$/,
           exclude: /node_modules/,
           use: {
-            loader: "babel-loader",
+            loader: 'babel-loader',
             options: {
-              presets: ["@babel/preset-typescript"],
+              presets: ['@babel/preset-typescript'],
             },
           },
         },
         {
           test: /\.html$/,
           exclude: /node_modules/,
-          use: "html-loader",
+          use: 'html-loader',
         },
         {
           test: /\.(png|jpg|jpeg|gif|ico)$/,
-          type: "asset/resource",
+          type: 'asset/resource',
           generator: {
-            filename: "assets/[name][ext][query]",
+            filename: 'assets/[name][ext][query]',
           },
         },
       ],
@@ -62,28 +62,28 @@ module.exports = async (env, options) => {
     plugins: [
       new NodePolyfillPlugin(),
       new CustomFunctionsMetadataPlugin({
-        output: "functions.json",
-        input: "./src/functions/functions.ts",
+        output: 'functions.json',
+        input: './src/functions/functions.ts',
       }),
       new HtmlWebpackPlugin({
-        filename: "taskpane.html",
-        template: "./src/taskpane/taskpane.html",
-        chunks: ["polyfill", "taskpane", "commands", "functions"],
+        filename: 'taskpane.html',
+        template: './src/taskpane/taskpane.html',
+        chunks: ['polyfill', 'taskpane', 'commands', 'functions'],
       }),
       new CopyWebpackPlugin({
         patterns: [
           {
-            from: "assets/*",
-            to: "assets/[name][ext][query]",
+            from: 'assets/*',
+            to: 'assets/[name][ext][query]',
           },
           {
-            from: "manifest*.xml",
-            to: "[name]" + "[ext]",
+            from: 'manifest*.xml',
+            to: '[name]' + '[ext]',
             transform(content) {
               if (dev) {
                 return content;
               } else {
-                return content.toString().replace(new RegExp(urlDev + "(?:public/)?", "g"), urlProd);
+                return content.toString().replace(new RegExp(urlDev + '(?:public/)?', 'g'), urlProd);
               }
             },
           },
@@ -92,14 +92,14 @@ module.exports = async (env, options) => {
     ],
     devServer: {
       static: {
-        directory: path.join(__dirname, "dist"),
-        publicPath: "/public",
+        directory: path.join(__dirname, 'dist'),
+        publicPath: '/public',
       },
       headers: {
-        "Access-Control-Allow-Origin": "*",
+        'Access-Control-Allow-Origin': '*',
       },
       server: {
-        type: "https",
+        type: 'https',
         options: env.WEBPACK_BUILD || options.https !== undefined ? options.https : await getHttpsOptions(),
       },
       port: process.env.npm_package_config_dev_server_port || 3000,

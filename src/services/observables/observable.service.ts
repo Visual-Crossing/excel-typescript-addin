@@ -1,5 +1,5 @@
-import { IObservableService } from "../../types/services/observable.service.type";
-import { DistinctQueue } from "../../types/queues/distinct.queue.type";
+import { IObservableService } from '../../types/services/observable.service.type';
+import { DistinctQueue } from '../../types/queues/distinct.queue.type';
 
 export abstract class ObservableService<T> implements IObservableService<T> {
     private observers: Map<string, DistinctQueue<CustomFunctions.Invocation, T>> | null = null;

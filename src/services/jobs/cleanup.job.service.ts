@@ -1,35 +1,34 @@
-import Container, { Service } from 'typedi';
+import { Service } from 'typedi';
 import { ICleanUpJobService } from '../../types/services/jobs/cleanup.job.service.type';
 import { getCell } from '../../helpers/helpers.excel';
-import { jobTypes } from '../../types/services/jobs/job.service.type';
+import { JobTypes } from '../../types/services/jobs/job.service.type';
 import { IMetadataService } from '../../types/services/jobs/metadata.service.type';
+import { WeatherObserver } from '../../types/weather.observer.type';
+import { getMetadataService } from '../../helpers/helpers.services';
 
 @Service({ transient: true })
-export class CleanUpJobService implements ICleanUpJobService<CustomFunctions.Invocation> {
-    public InitialFormula: any;
-    public ColumnsToClear: number;
-    public RowsToClear: number;
-    public Invocation: CustomFunctions.Invocation;
+export class CleanUpJobService implements ICleanUpJobService<WeatherObserver, CustomFunctions.Invocation> {
+    public Observer: WeatherObserver;
 
-    public create(): ICleanUpJobService<CustomFunctions.Invocation> {
+    public create(): ICleanUpJobService<WeatherObserver, CustomFunctions.Invocation> {
         return new CleanUpJobService();
     }
 
-    public getType(): jobTypes {
-        return jobTypes.cleanUp;
+    public getType(): JobTypes {
+        return JobTypes.cleanUp;
     }
 
     public getId(): CustomFunctions.Invocation {
-        if (this.Invocation && this.Invocation.address) {
-            return this.Invocation;
+        if (this.Observer && this.Observer.Invocation && this.Observer.Invocation.address) {
+            return this.Observer.Invocation;
         } else {
             throw new Error();
         }
     }
 
     public getAddress(): string {
-        if (this.Invocation && this.Invocation.address) {
-            return this.Invocation.address;
+        if (this.Observer.Invocation && this.Observer.Invocation.address) {
+            return this.Observer.Invocation.address;
         } else {
             throw new Error();
         }
@@ -37,27 +36,25 @@ export class CleanUpJobService implements ICleanUpJobService<CustomFunctions.Inv
 
     public async run(context: Excel.RequestContext): Promise<boolean> {
         try {
-            if (context && this.Invocation && this.Invocation.address && this.InitialFormula && (this.ColumnsToClear > 1 || this.RowsToClear > 1)) {
+            if (context && this.Observer && this.Observer.Invocation && this.Observer.Invocation.address && this.Observer.InitialFormula && (this.Observer.ArrayDataColumnsIn > 1 || this.Observer.ArrayDataRowsIn > 1)) {
                 let destination: Excel.Range;
                 
                 try {
-                    destination = await getCell(this.Invocation.address, context);
+                    destination = await getCell(this.Observer.Invocation.address, context);
                 }
                 catch {
-                    // Caller cell no longer exists
+                    // Caller cell no longer exists etc.
                     return true;
                 }
 
-                if (!destination) {
+                if (!destination || !destination.context) {
                     return true;
                 }
 
-                // destination.load();
                 await destination.context.sync();
 
-                // ToDo: Consider implementing case insensitive and whitespace free comparison
-                if (destination.formulas[0][0] === this.InitialFormula) {
-                    const metadataService = Container.get<IMetadataService>('service.metadata');
+                if (destination.formulas[0][0] === this.Observer.InitialFormula) {
+                    const metadataService: IMetadataService = getMetadataService();
                     const maxSheetCols: number = metadataService.MaxSheetCols;
                     const maxSheetRows: number = metadataService.MaxSheetRows;
 
@@ -65,8 +62,8 @@ export class CleanUpJobService implements ICleanUpJobService<CustomFunctions.Inv
                         throw new Error();
                     }
 
-                    const colsToClearAdjusted = destination.columnIndex + this.ColumnsToClear >= maxSheetCols ? maxSheetCols - destination.columnIndex : this.ColumnsToClear;
-                    const rowsToClearAdjusted = destination.rowIndex + this.RowsToClear >= maxSheetRows ? maxSheetRows - destination.rowIndex : this.RowsToClear;
+                    const colsToClearAdjusted = destination.columnIndex + this.Observer.ArrayDataColumnsIn >= maxSheetCols ? maxSheetCols - destination.columnIndex : this.Observer.ArrayDataColumnsIn;
+                    const rowsToClearAdjusted = destination.rowIndex + this.Observer.ArrayDataRowsIn >= maxSheetRows ? maxSheetRows - destination.rowIndex : this.Observer.ArrayDataRowsIn;
 
                     if (colsToClearAdjusted > 1 && destination.columnIndex < maxSheetCols - 1) {
                         destination.worksheet.getRangeByIndexes(destination.rowIndex, destination.columnIndex + 1, rowsToClearAdjusted, colsToClearAdjusted - 1).clear(Excel.ClearApplyTo.contents);

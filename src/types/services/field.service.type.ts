@@ -1,4 +1,4 @@
-import { CacheItem } from "../cache-item.type";
+import { CacheItem } from '../cache-item.type';
 
 export interface IFieldService {
     getTitle(): string;

@@ -1,6 +1,6 @@
-import { Service } from "typedi";
-import { IWeatherResultsStoreService } from "../types/services/weather.result.store.service.type";
-import { IWeatherResultService } from "../types/services/weather.result.service.type";
+import { Service } from 'typedi';
+import { IWeatherResultsStoreService } from '../types/services/weather.result.store.service.type';
+import { IWeatherResultService } from '../types/services/weather.result.service.type';
 
 @Service()
 export class WeatherResultsStore implements IWeatherResultsStoreService {

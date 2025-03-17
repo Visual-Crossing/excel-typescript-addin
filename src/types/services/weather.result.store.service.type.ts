@@ -1,4 +1,4 @@
-import { IWeatherResultService } from "./weather.result.service.type";
+import { IWeatherResultService } from './weather.result.service.type';
 
 export interface IWeatherResultsStoreService {
     addOrUpdate(weatherResult: IWeatherResultService): void;

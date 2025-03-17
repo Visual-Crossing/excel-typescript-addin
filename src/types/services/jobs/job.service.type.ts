@@ -1,6 +1,6 @@
-export enum jobTypes {
+export enum JobTypes {
     cleanUp,
-    formulaCapture,
+    macro,
     print
 }
 
@@ -8,7 +8,7 @@ export interface IJobService<T> {
     key?: string;
 
     getId(): T;
-    getType(): jobTypes;
+    getType(): JobTypes;
     getAddress(): string;
     run(context: Excel.RequestContext): Promise<boolean>;
 }

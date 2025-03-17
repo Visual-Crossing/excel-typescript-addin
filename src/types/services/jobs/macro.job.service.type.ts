@@ -1,4 +1,4 @@
-import { IJobService } from "./job.service.type";
+import { IJobService } from './job.service.type';
 
 export interface IMacroJobService<T, U> extends IJobService<U> {
     Observer: T;

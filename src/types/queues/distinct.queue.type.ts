@@ -1,7 +1,7 @@
-import { Queue } from "queue-typescript";
+import { Queue } from 'queue-typescript';
 
-const INVALID_KEY_ERROR_MSG: string = "Invalid key.";
-const INVALID_QUEUE_STATE_ERROR_MSG: string = "Invalid queue state.";
+const INVALID_KEY_ERROR_MSG: string = 'Invalid key.';
+const INVALID_QUEUE_STATE_ERROR_MSG: string = 'Invalid queue state.';
 
 export class DistinctQueue<T, U> {
     private keys: Set<T> | null = null;

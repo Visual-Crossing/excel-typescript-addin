@@ -1,14 +1,15 @@
-import Container from "typedi";
-import { ISettingsService } from "../types/services/settings.service.type";
-import { ICacheService } from "../types/services/cache.service.type";
-import { IDateParserService } from "../types/services/parsers/date.parser.service.type";
-import { IWeatherObserverService } from "../types/services/weather.observer.service.type";
-import { IObservableService } from "../types/services/observable.service.type";
-import { WeatherObserver } from "../types/weather.observer.type";
-import { IErrorParserService } from "../types/services/parsers/error.parser.service.type";
-import { IMacroCounterService } from "../types/services/macro.counter.service.type";
-import { IWeatherResultService } from "../types/services/weather.result.service.type";
-import { IPrintJobService } from "../types/services/jobs/print.job.service.type";
+import Container from 'typedi';
+import { ISettingsService } from '../types/services/settings.service.type';
+import { ICacheService } from '../types/services/cache.service.type';
+import { IDateParserService } from '../types/services/parsers/date.parser.service.type';
+import { IWeatherObserverService } from '../types/services/weather.observer.service.type';
+import { IObservableService } from '../types/services/observable.service.type';
+import { WeatherObserver } from '../types/weather.observer.type';
+import { IErrorParserService } from '../types/services/parsers/error.parser.service.type';
+import { IMacroCounterService } from '../types/services/macro.counter.service.type';
+import { IWeatherResultService } from '../types/services/weather.result.service.type';
+import { IPrintJobService } from '../types/services/jobs/print.job.service.type';
+import { IMetadataService } from '../types/services/jobs/metadata.service.type';
 
 export function getRequiredService<T>(id: string): T {
     const errorMsg: string = 'Unable to get service.';
@@ -74,4 +75,8 @@ export function getMacroCounterService(): IMacroCounterService {
 
 export function getPrintJobService(): IPrintJobService<IWeatherResultService, CustomFunctions.Invocation> {
     return getRequiredService<IPrintJobService<IWeatherResultService, CustomFunctions.Invocation>>('service.job.print');
+}
+
+export function getMetadataService(): IMetadataService {
+    return getRequiredService<IMetadataService>('service.metadata');
 }

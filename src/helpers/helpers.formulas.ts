@@ -1,4 +1,4 @@
-import { PrintDirections } from "./helpers.args";
+import { PrintDirections } from './helpers.args';
 
 export function getArrayDataCols(arrayData: any[][], printDirection: PrintDirections): number {
     if (printDirection === PrintDirections.Horizontal) {

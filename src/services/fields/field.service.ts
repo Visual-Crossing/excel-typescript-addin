@@ -1,4 +1,4 @@
-import { CacheItem } from "../../types/cache-item.type";
+import { CacheItem } from '../../types/cache-item.type';
 
 export abstract class FieldService<T> {
     public getFieldValueByName(fieldName: string, cacheItem: CacheItem): T | null {

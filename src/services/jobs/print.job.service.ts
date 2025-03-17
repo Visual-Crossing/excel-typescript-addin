@@ -1,19 +1,19 @@
 import { Service } from 'typedi';
 import { getCell } from '../../helpers/helpers.excel';
 import { IPrintJobService } from '../../types/services/jobs/print.job.service.type';
-import { jobTypes } from '../../types/services/jobs/job.service.type';
-import { WeatherResult } from '../weather/weather.result.service';
+import { JobTypes } from '../../types/services/jobs/job.service.type';
+import { IWeatherResultService } from '../../types/services/weather.result.service.type';
 
 @Service({ transient: true })
-export class PrintJobService implements IPrintJobService<WeatherResult, CustomFunctions.Invocation> {
-    public Result: WeatherResult;
+export class PrintJobService implements IPrintJobService<IWeatherResultService, CustomFunctions.Invocation> {
+    public Result: IWeatherResultService;
 
-    public create(): IPrintJobService<WeatherResult, CustomFunctions.Invocation> {
+    public create(): IPrintJobService<IWeatherResultService, CustomFunctions.Invocation> {
         return new PrintJobService();
     }
 
-    public getType(): jobTypes {
-        return jobTypes.print;
+    public getType(): JobTypes {
+        return JobTypes.print;
     }
 
     public getId(): CustomFunctions.Invocation {
@@ -45,7 +45,7 @@ export class PrintJobService implements IPrintJobService<WeatherResult, CustomFu
                     return true;
                 }
 
-                if (!destination) {
+                if (!destination || !destination.context) {
                     return true;
                 }
 

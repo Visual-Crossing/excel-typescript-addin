@@ -1,21 +1,21 @@
-import Container from "typedi";
-import { ObservableService } from "./observable.service";
-import { WeatherObserver } from "../../types/weather.observer.type";
-import { ICacheService } from "../../types/services/cache.service.type";
-import { IJobsProcessorService } from "../../types/services/jobs/jobs-processor.service.type";
-import { IMacroJobService } from "../../types/services/jobs/macro.job.service.type";
-import { ICleanUpJobService } from "../../types/services/jobs/cleanup.job.service.type";
-import { IWeatherResultService } from "../../types/services/weather.result.service.type";
-import { IPrintJobService } from "../../types/services/jobs/print.job.service.type";
-import { IRequestService } from "../../types/services/request.service.type";
-import { IJobService } from "../../types/services/jobs/job.service.type";
-import { PROCESSING } from "../../shared/constants";
-import { IMetadataService } from "../..//types/services/jobs/metadata.service.type";
-import { IWeatherResultsStoreService } from "../../types/services/weather.result.store.service.type";
-import { ArrayDataVerticalPrinterService } from "../printers/vertical.printer.service";
-import { IMacroCounterService } from "../../types/services/macro.counter.service.type";
-import { getCacheService, getMacroCounterService, getPrintJobService, getWeatherResultService } from "../../helpers/helpers.services";
-import { WeatherResult } from "../weather/weather.result.service";
+import Container from 'typedi';
+import { ObservableService } from './observable.service';
+import { WeatherObserver } from '../../types/weather.observer.type';
+import { ICacheService } from '../../types/services/cache.service.type';
+import { IJobsProcessorService } from '../../types/services/jobs/jobs-processor.service.type';
+import { IMacroJobService } from '../../types/services/jobs/macro.job.service.type';
+import { ICleanUpJobService } from '../../types/services/jobs/cleanup.job.service.type';
+import { IWeatherResultService } from '../../types/services/weather.result.service.type';
+import { IPrintJobService } from '../../types/services/jobs/print.job.service.type';
+import { IRequestService } from '../../types/services/request.service.type';
+import { IJobService } from '../../types/services/jobs/job.service.type';
+import { PROCESSING } from '../../shared/constants';
+import { IMetadataService } from '../..//types/services/jobs/metadata.service.type';
+import { IWeatherResultsStoreService } from '../../types/services/weather.result.store.service.type';
+import { ArrayDataVerticalPrinterService } from '../printers/vertical.printer.service';
+import { IMacroCounterService } from '../../types/services/macro.counter.service.type';
+import { getCacheService, getMacroCounterService, getPrintJobService, getWeatherResultService } from '../../helpers/helpers.services';
+import { WeatherResult } from '../weather/weather.result.service';
 
 export class WeatherObservableService extends ObservableService<WeatherObserver> {
     public constructor() {
@@ -64,16 +64,13 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
             return;
         }
 
-        const cleanupJob = Container.get<ICleanUpJobService<CustomFunctions.Invocation>>('service.job.cleanup').create();
+        const cleanupJob = Container.get<ICleanUpJobService<WeatherObserver, CustomFunctions.Invocation>>('service.job.cleanup').create();
 
         if (!cleanupJob) {
             throw new Error();
         }
 
-        cleanupJob.InitialFormula = observer.InitialFormula;
-        cleanupJob.ColumnsToClear = observer.ArrayDataColumnsIn;
-        cleanupJob.RowsToClear = observer.ArrayDataRowsIn;
-        cleanupJob.Invocation = observer.Invocation;
+        cleanupJob.Observer = observer;
 
         this.initJob(cleanupJob);
     }

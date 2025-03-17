@@ -1,7 +1,7 @@
-import Container from "typedi";
-import { WeatherObserver } from "../../../../types/weather.observer.type";
-import { IOptionalArgParserService } from "../../../../types/services/parsers/optional-arg.parser.service.type";
-import { OptionalArgParserService } from "../../parser.service";
+import Container from 'typedi';
+import { WeatherObserver } from '../../../../types/weather.observer.type';
+import { IOptionalArgParserService } from '../../../../types/services/parsers/optional-arg.parser.service.type';
+import { OptionalArgParserService } from '../../parser.service';
 
 export class ArraySizeOptionalArgParserService extends OptionalArgParserService implements IOptionalArgParserService {
     public tryParse(value: string, weatherObserver: WeatherObserver): boolean {

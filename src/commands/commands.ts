@@ -3,9 +3,9 @@
  * See LICENSE in the project root for license information.
  */
 
-import { Setup } from "../services/setup";
-import { ISettingsService } from "../types/services/settings.service.type";
-import Container from "typedi";
+import Container from 'typedi';
+import { Setup } from '../services/setup';
+import { ISettingsService } from '../types/services/settings.service.type';
 
 /**
  * Displays the API key dialog.
@@ -13,7 +13,7 @@ import Container from "typedi";
  */
 async function displaySettingsDialog(event: Office.AddinCommands.Event) {
   try {
-    const TASKPANE_DOMAIN: string = process.env.NODE_ENV === "production" ? "ToDo" : "localhost:3000";
+    const TASKPANE_DOMAIN: string = process.env.NODE_ENV === 'production' ? 'ToDo' : 'localhost:3000';
 
     Office.context.ui.displayDialogAsync(
       `https://${TASKPANE_DOMAIN}/taskpane.html`,

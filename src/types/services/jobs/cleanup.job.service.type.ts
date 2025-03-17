@@ -1,10 +1,7 @@
-import { IJobService } from "./job.service.type";
+import { IJobService } from './job.service.type';
 
-export interface ICleanUpJobService<T> extends IJobService<T> {
-    InitialFormula: any;
-    ColumnsToClear: number;
-    RowsToClear: number;
-    Invocation: T;
+export interface ICleanUpJobService<T, U> extends IJobService<U> {
+    Observer: T;
 
-    create(): ICleanUpJobService<T>;
+    create(): ICleanUpJobService<T, U>;
 }

@@ -1,10 +1,10 @@
-import Container from "typedi";
-import { IRequestService } from "../../types/services/request.service.type";
-import { WeatherObserver } from "../../types/weather.observer.type";
-import { ICacheService } from "../../types/services/cache.service.type";
-import { IObservableService } from "../../types/services/observable.service.type";
-import { NA_DATA } from "../../shared/constants";
-import { ISettingsService } from "../../types/services/settings.service.type";
+import Container from 'typedi';
+import { IRequestService } from '../../types/services/request.service.type';
+import { WeatherObserver } from '../../types/weather.observer.type';
+import { ICacheService } from '../../types/services/cache.service.type';
+import { IObservableService } from '../../types/services/observable.service.type';
+import { NA_DATA } from '../../shared/constants';
+import { ISettingsService } from '../../types/services/settings.service.type';
 
 export class WeatherRequest implements IRequestService<WeatherObserver> {
     async onSuccessJsonResponse(jsonResponse: any, observer: WeatherObserver): Promise<void> {

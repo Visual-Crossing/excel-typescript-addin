@@ -1,5 +1,5 @@
-import { PrintDirections } from "../../helpers/helpers.args";
-import { IWeatherResultService } from "../services/weather.result.service.type";
+import { PrintDirections } from '../../helpers/helpers.args';
+import { IWeatherResultService } from '../services/weather.result.service.type';
 
 export interface IArrayDataPrinter {
     getPrintDirection(): PrintDirections;

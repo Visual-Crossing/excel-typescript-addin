@@ -1,18 +1,16 @@
-import Container, { Service } from "typedi";
-import { IFormulaUpdaterService } from "../../types/services/updaters/formula.updater.service.type";
-import { getArrayDataCols, getArrayDataRows } from "../../helpers/helpers.formulas";
-import { IWeatherResultService } from "../../types/services/weather.result.service.type";
-import { IFieldService } from "../../types/services/field.service.type";
-import { PrintDirections } from "../../helpers/helpers.args";
-import { CacheItem } from "../../types/cache-item.type";
-import { ICacheService } from "../../types/services/cache.service.type";
-import { getCacheService } from "../../helpers/helpers.services";
+import Container, { Service } from 'typedi';
+import { IFormulaUpdaterService } from '../../types/services/updaters/formula.updater.service.type';
+import { getArrayDataCols, getArrayDataRows } from '../../helpers/helpers.formulas';
+import { IWeatherResultService } from '../../types/services/weather.result.service.type';
+import { ICacheService } from '../../types/services/cache.service.type';
+import { getCacheService } from '../../helpers/helpers.services';
+import { NA_DATA } from '../../shared/constants';
 
-import { HumidityFieldService } from "../fields/humidity.field.service";
-import { PrecipitationFieldService } from "../fields/precipitation.field.service";
-import { PressureFieldService } from "../fields/pressure.field.service";
-import { WindDirFieldService } from "../fields/winddir.field.service";
-import { WeatherObserver } from "src/types/weather.observer.type";
+import { HumidityFieldService } from '../fields/humidity.field.service';
+import { PrecipitationFieldService } from '../fields/precipitation.field.service';
+import { PressureFieldService } from '../fields/pressure.field.service';
+import { WindDirFieldService } from '../fields/winddir.field.service';
+import { WeatherObserver } from 'src/types/weather.observer.type';
 
 @Service({ transient: true })
 export class WeatherResult implements IWeatherResultService {
@@ -41,13 +39,13 @@ export class WeatherResult implements IWeatherResultService {
             const cacheItemString: string | null | undefined = cacheService.get(this.Observer.CacheId);
 
             if (!cacheItemString) {
-                this.OutputArrayData.push(['#N/A Data!']);
+                this.OutputArrayData.push([NA_DATA]);
             }
             else {
                 const cacheItemObject = JSON.parse(cacheItemString);
 
                 if (!cacheItemObject || !cacheItemObject.values || cacheItemObject.values.length < 1) {
-                    this.OutputArrayData.push(['#N/A Data!']);
+                    this.OutputArrayData.push([NA_DATA]);
                 } else {
                     if (!this.Observer.Fields?.length) {
                         this.Observer.Fields = [new HumidityFieldService(), new PressureFieldService(), new WindDirFieldService()];

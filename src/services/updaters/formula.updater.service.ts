@@ -1,4 +1,4 @@
-import { IFormulaUpdaterService } from "../../types/services/updaters/formula.updater.service.type";
+import { IFormulaUpdaterService } from '../../types/services/updaters/formula.updater.service.type';
 
 export class FormulaUpdaterService implements IFormulaUpdaterService {
     public generateUpdatedFormula(currentFormula: string, currentCols: number, currentRows: number, arrayDataCols: number, arrayDataRows: number): string {
