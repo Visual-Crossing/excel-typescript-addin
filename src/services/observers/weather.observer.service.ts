@@ -7,7 +7,7 @@ import { ISettingsService } from '../../types/services/settings.service.type';
 import { ICacheService } from '../../types/services/cache.service.type';
 import { IWeatherObserverService } from '../../types/services/weather.observer.service.type';
 import { IErrorParserService } from '../../types/services/parsers/error.parser.service.type';
-import { getCacheService, getDateParserService, getSettingsService } from '../../helpers/helpers.services';
+import { getCacheService, getDateParserService, getErrorParserService, getSettingsService } from '../../helpers/helpers.services';
 
 @Service()
 export class WeatherObserverService implements IWeatherObserverService {
@@ -58,8 +58,13 @@ export class WeatherObserverService implements IWeatherObserverService {
         try {
             dateValue = dateParserService.parse(date);
         } catch (error: any) {
-            const errorParserService = Container.get<IErrorParserService>('service.parser.error');
-            errorMsg = errorParserService.getErrorInfo(error);
+            const errorParserService: IErrorParserService | null = getErrorParserService();
+
+            if (errorParserService) {
+                errorMsg = errorParserService.getErrorInfo(error);
+            } else {
+                errorMsg = '#N/A Invalid Date!';
+            }
         }
 
         const unit: string = await settingsService.getUnitAsync();
