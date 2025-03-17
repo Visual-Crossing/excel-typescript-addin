@@ -1,20 +1,7 @@
-import { PrintDirections } from "../../helpers/helpers.args";
-import { IFieldService } from "./field.service.type";
-import { CacheItem } from "../cache-item.type";
+import { WeatherObserver } from "../weather.observer.type";
 
 export interface IWeatherResultService {
-    CacheItem: CacheItem;
-    DestinationAddress: string;
-    Error?: any;
-
-    CurrentFormula: string;
-    CurrentCols: number;
-    CurrentRows: number;
-
-    PrintDirection: PrintDirections;
-    Fields: IFieldService[];
-    IncludeTitle: boolean;
-    UseExcelErrors: boolean;
+    Observer: WeatherObserver;
 
     create(): IWeatherResultService;
     getFormulaCellValue(): string | number | Date;

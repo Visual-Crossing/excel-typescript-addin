@@ -8,13 +8,14 @@ import { ICleanUpJobService } from "../../types/services/jobs/cleanup.job.servic
 import { IWeatherResultService } from "../../types/services/weather.result.service.type";
 import { IPrintJobService } from "../../types/services/jobs/print.job.service.type";
 import { IRequestService } from "../../types/services/request.service.type";
-import { CacheItem } from "../../types/cache-item.type";
 import { IJobService } from "../../types/services/jobs/job.service.type";
 import { PROCESSING } from "../../shared/constants";
 import { IMetadataService } from "../..//types/services/jobs/metadata.service.type";
 import { IWeatherResultsStoreService } from "../../types/services/weather.result.store.service.type";
 import { ArrayDataVerticalPrinterService } from "../printers/vertical.printer.service";
 import { IMacroCounterService } from "../../types/services/macro.counter.service.type";
+import { getCacheService, getMacroCounterService, getPrintJobService, getWeatherResultService } from "../../helpers/helpers.services";
+import { WeatherResult } from "../weather/weather.result.service";
 
 export class WeatherObservableService extends ObservableService<WeatherObserver> {
     public constructor() {
@@ -24,12 +25,12 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
         this.onUpdate = ((observer: WeatherObserver) => this.onUpdateHandler(observer));
     }
 
-    private initJob(job: IJobService<CustomFunctions.Invocation>): void {
+    private initJob<T>(job: IJobService<T>): void {
         if (!job) {
             return;
         }
 
-        const jobsProcessorService = Container.get<IJobsProcessorService<CustomFunctions.Invocation>>('service.jobs.processor');
+        const jobsProcessorService = Container.get<IJobsProcessorService<T>>('service.jobs.processor');
 
         if (!jobsProcessorService) {
             throw new Error();
@@ -82,21 +83,11 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
             throw new Error();
         }
 
-        const cacheService = Container.get<ICacheService>('service.cache');
+        const cacheService: ICacheService = getCacheService();
         let cacheItemString: string | null | undefined = cacheService.get(observer.CacheId);
 
-        if (!cacheItemString) {
-            if (observer.error) {
-                cacheItemString = JSON.stringify({ 
-                    id: observer.CacheId,
-                    status: 'Complete',
-                    type: 'Permanent',
-                    error: observer.error
-                });
-            } else {
-                cacheItemString = JSON.stringify({ id: observer.CacheId, status: 'Pending' });
-            }
-
+        if (!cacheItemString && !observer.Error) {
+            cacheItemString = JSON.stringify({ id: observer.CacheId, status: 'Pending' });
             cacheService.set(observer.CacheId, cacheItemString);
         }
 
@@ -111,11 +102,11 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
             return PROCESSING;
         } else {
             try {
-                if (!weatherResult.weatherResultService) {
+                if (!weatherResult.weatherResult) {
                     throw new Error();
                 }
 
-                return weatherResult.weatherResultService.getFormulaCellValue();
+                return weatherResult.weatherResult.getFormulaCellValue();
             } finally {
                 const macroCounterService = Container.get<IMacroCounterService>('service.counter.macro');
                 macroCounterService.remove();
@@ -136,7 +127,7 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
     }
 
     private async onMacroCallbackHandler (macroJobService: IMacroJobService<WeatherObserver, CustomFunctions.Invocation>, context: Excel.RequestContext): Promise<void>  { 
-        const macroCounterService = Container.get<IMacroCounterService>('service.counter.macro');
+        const macroCounterService: IMacroCounterService = getMacroCounterService();
 
         try {
             if (!macroJobService || !context) {
@@ -156,21 +147,24 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
                     this.initCleanupJob(observer);
                     this.subscribe(observer.CacheId, observer.Invocation, observer);
 
-                    const cacheService = Container.get<ICacheService>('service.cache');
-                    const cacheItemString: string | null | undefined = cacheService.get(observer.CacheId);
-
-                    const cacheItemObject = cacheItemString ? JSON.parse(cacheItemString) : null;
-
-                    if (cacheItemObject && cacheItemObject.status !== 'Pending') {
-                        if (cacheItemObject.status === 'Complete') {
-                            this.update(observer.CacheId, (observer) => observer.Invocation);
-                        }
+                    if (observer.Error) {
+                        this.update(observer.CacheId, (observer) => observer.Invocation);
                     }
                     else {
-                        const weatherRequest = Container.get<IRequestService<WeatherObserver>>('service.requests.weather');
-                        weatherRequest.fetchData(observer);
+                        const cacheService: ICacheService = getCacheService();
+                        const cacheItemString: string | null | undefined = cacheService.get(observer.CacheId);
+    
+                        const cacheItemObject = cacheItemString ? JSON.parse(cacheItemString) : null;
 
-                        cacheService.set(observer.CacheId, JSON.stringify({ id: observer.CacheId, status: 'Requesting' }));
+                        if (cacheItemObject && cacheItemObject.status === 'Complete') {
+                            this.update(observer.CacheId, (observer) => observer.Invocation);
+                        }
+                        else if (cacheItemObject && cacheItemObject.status === 'Pending') {
+                            const weatherRequest = Container.get<IRequestService<WeatherObserver>>('service.requests.weather');
+                            weatherRequest.fetchData(observer);
+
+                            cacheService.set(observer.CacheId, JSON.stringify({ id: observer.CacheId, status: 'Requesting' }));
+                        }
                     }
                 } else {
                     macroCounterService.remove();
@@ -197,46 +191,16 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
             return;
         }
 
-        const cacheService = Container.get<ICacheService>('service.cache');
-        const cacheItemString: string | null | undefined = cacheService.get(observer.CacheId);
-
-        if (cacheItemString) {
-            const cacheItemObject = JSON.parse(cacheItemString);
-
-            if (!cacheItemObject) {
-                return;
-            }
-        
-            const weatherResult = Container.get<IWeatherResultService>('service.results.weather').create();
-
-            if (observer && observer.Invocation && observer.Invocation.address) {
-                weatherResult.DestinationAddress = observer.Invocation.address;
-            }
-
-            if (!observer.Printer) {
-                observer.Printer = new ArrayDataVerticalPrinterService(); 
-            }
-
-            weatherResult.CurrentFormula = observer.InitialFormula;
-            weatherResult.Fields = observer.Fields;
-            weatherResult.IncludeTitle = observer.IncludeTitle;
-            weatherResult.PrintDirection = observer.Printer.getPrintDirection();
-            weatherResult.CacheItem = cacheItemObject as CacheItem;
-            weatherResult.Error = observer.error;
-
-            if (observer.ArrayDataColumnsIn && observer.ArrayDataRowsIn) {
-                weatherResult.CurrentCols = observer.ArrayDataColumnsIn;
-                weatherResult.CurrentRows = observer.ArrayDataRowsIn;
-            }
-
-            const printJob = Container.get<IPrintJobService<CustomFunctions.Invocation>>('service.job.print').create();
-
-            printJob.InitialFormula = observer.InitialFormula;
-            printJob.WeatherResult = weatherResult;
-            printJob.ArrayDataPrinter = observer.Printer;
-            printJob.Invocation = observer.Invocation;
-
-            this.initJob(printJob);
+        if (!observer.ArrayDataPrinter) {
+            observer.ArrayDataPrinter = new ArrayDataVerticalPrinterService(); 
         }
+
+        const weatherResult: IWeatherResultService = getWeatherResultService().create();
+        weatherResult.Observer = observer;
+
+        const printJob: IPrintJobService<IWeatherResultService, CustomFunctions.Invocation> = getPrintJobService().create();
+        printJob.Result = weatherResult;
+
+        this.initJob(printJob);
     }
 }

@@ -1,18 +1,14 @@
 import { Service } from 'typedi';
 import { getCell } from '../../helpers/helpers.excel';
-import { IArrayDataPrinter } from '../../types/printers/printer.type';
 import { IPrintJobService } from '../../types/services/jobs/print.job.service.type';
 import { jobTypes } from '../../types/services/jobs/job.service.type';
-import { IWeatherResultService } from '../../types/services/weather.result.service.type';
+import { WeatherResult } from '../weather/weather.result.service';
 
 @Service({ transient: true })
-export class PrintJobService implements IPrintJobService<CustomFunctions.Invocation> {
-    public InitialFormula: any;
-    public WeatherResult: IWeatherResultService;
-    public ArrayDataPrinter: IArrayDataPrinter;
-    public Invocation: CustomFunctions.Invocation;
+export class PrintJobService implements IPrintJobService<WeatherResult, CustomFunctions.Invocation> {
+    public Result: WeatherResult;
 
-    public create(): IPrintJobService<CustomFunctions.Invocation> {
+    public create(): IPrintJobService<WeatherResult, CustomFunctions.Invocation> {
         return new PrintJobService();
     }
 
@@ -21,16 +17,16 @@ export class PrintJobService implements IPrintJobService<CustomFunctions.Invocat
     }
 
     public getId(): CustomFunctions.Invocation {
-        if (this.Invocation && this.Invocation.address) {
-            return this.Invocation;
+        if (this.Result && this.Result.Observer && this.Result.Observer.Invocation && this.Result.Observer.Invocation.address) {
+            return this.Result.Observer.Invocation;
         } else {
             throw new Error();
         }
     }
 
     public getAddress(): string {
-        if (this.Invocation && this.Invocation.address) {
-            return this.Invocation.address;
+        if (this.Result && this.Result.Observer && this.Result.Observer.Invocation && this.Result.Observer.Invocation.address) {
+            return this.Result.Observer.Invocation.address;
         } else {
             throw new Error();
         }
@@ -38,14 +34,14 @@ export class PrintJobService implements IPrintJobService<CustomFunctions.Invocat
     
     public async run(context: Excel.RequestContext): Promise<boolean> {
         try {
-            if (context && this.Invocation && this.Invocation.address && this.InitialFormula && this.WeatherResult && this.ArrayDataPrinter) {
+            if (context && this.Result && this.Result.Observer && this.Result.Observer.Invocation && this.Result.Observer.Invocation.address && this.Result.Observer.InitialFormula && this.Result.Observer.ArrayDataPrinter) {
                 let destination: Excel.Range;
                 
                 try {
-                    destination = await getCell(this.Invocation.address, context);
+                    destination = await getCell(this.Result.Observer.Invocation.address, context);
                 }
                 catch {
-                    // Caller cell no longer exists
+                    // Caller cell no longer exists etc.
                     return true;
                 }
 
@@ -53,12 +49,10 @@ export class PrintJobService implements IPrintJobService<CustomFunctions.Invocat
                     return true;
                 }
 
-                // destination.load();
                 await destination.context.sync();
                 
-                // ToDo: Consider implementing case insensitive and whitespace free comparison
-                if (destination.formulas[0][0] === this.InitialFormula) {
-                    if (this.ArrayDataPrinter.print(this.WeatherResult, destination)) {
+                if (destination.formulas[0][0] === this.Result.Observer.InitialFormula) {
+                    if (this.Result.Observer.ArrayDataPrinter.print(this.Result, destination)) {
                         await context.sync();
                     }
                 }

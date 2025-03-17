@@ -4,31 +4,31 @@ import { IWeatherResultService } from "../types/services/weather.result.service.
 
 @Service()
 export class WeatherResultsStore implements IWeatherResultsStoreService {
-    private WeatherResults: Map<string, { key: string, count: number, weatherResultService: IWeatherResultService }> = new Map<string, { key: string, count: number, weatherResultService: IWeatherResultService }>();
+    private WeatherResults: Map<string, { key: string, count: number, weatherResult: IWeatherResultService }> = new Map<string, { key: string, count: number, weatherResult: IWeatherResultService }>();
 
     private generateKey(cacheId: string, destinationAddress: string): string {
         return `${cacheId}_${destinationAddress}`;
     }
 
     public addOrUpdate(weatherResult: IWeatherResultService): void {
-        if (!weatherResult || !weatherResult.CacheItem || !weatherResult.CacheItem.id || !weatherResult.DestinationAddress) {
+        if (!weatherResult || !weatherResult.Observer || !weatherResult.Observer.Invocation || !weatherResult.Observer.Invocation.address) {
             throw new Error();
         }
 
-        let storeItem = this.get(weatherResult.CacheItem.id, weatherResult.DestinationAddress); 
+        let storeItem = this.get(weatherResult.Observer.CacheId, weatherResult.Observer.Invocation.address); 
 
         if (storeItem) {
             storeItem.count++;
-            storeItem.weatherResultService = weatherResult;
+            storeItem.weatherResult = weatherResult;
         } else {
-            const key: string = this.generateKey(weatherResult.CacheItem.id, weatherResult.DestinationAddress);
-            storeItem = { key: key, count: 1, weatherResultService: weatherResult };
+            const key: string = this.generateKey(weatherResult.Observer.CacheId, weatherResult.Observer.Invocation.address);
+            storeItem = { key: key, count: 1, weatherResult: weatherResult };
         }
 
         this.WeatherResults.set(storeItem.key, storeItem);
     }
 
-    private getStoreItemByKey(key: string): { key: string, count: number, weatherResultService: IWeatherResultService } | null {
+    private getStoreItemByKey(key: string): { key: string, count: number, weatherResult: IWeatherResultService } | null {
         if (!key) {
             throw new Error();
         }
@@ -40,7 +40,7 @@ export class WeatherResultsStore implements IWeatherResultsStoreService {
         return null;
     }
 
-    public get(cacheId: string, destinationAddress: string): { key: string, count: number, weatherResultService: IWeatherResultService } | null {
+    public get(cacheId: string, destinationAddress: string): { key: string, count: number, weatherResult: IWeatherResultService } | null {
         if (!cacheId || !destinationAddress) {
             throw new Error();
         }

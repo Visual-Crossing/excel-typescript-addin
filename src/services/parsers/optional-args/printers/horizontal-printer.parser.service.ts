@@ -6,7 +6,7 @@ import { ArrayDataHorizontalPrinterService } from '../../../printers/horizontal.
 export class HorizontalPrinterOptionalArgParserService implements IOptionalArgParserService {
     public tryParse(value: string, weatherObserver: WeatherObserver): boolean {
         if (value && value.localeCompare('dir=h', undefined, { sensitivity: 'base' }) === 0) {
-            weatherObserver.Printer = new ArrayDataHorizontalPrinterService();
+            weatherObserver.ArrayDataPrinter = new ArrayDataHorizontalPrinterService();
             
             return true;
         } else if (value && value.startsWith('dir=') && value.localeCompare('dir=v', undefined, { sensitivity: 'base' }) !== 0 && value.localeCompare('dir=h', undefined, { sensitivity: 'base' }) !== 0) {

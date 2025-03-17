@@ -6,7 +6,7 @@ import { ArrayDataVerticalPrinterService } from '../../../printers/vertical.prin
 export class VerticalPrinterOptionalArgParserService implements IOptionalArgParserService {
     public tryParse(value: string, weatherObserver: WeatherObserver): boolean {
         if (value && value.localeCompare('dir=v', undefined, { sensitivity: 'base' }) === 0) {
-            weatherObserver.Printer = new ArrayDataVerticalPrinterService();
+            weatherObserver.ArrayDataPrinter = new ArrayDataVerticalPrinterService();
             
             return true;
         } else if (value && value.startsWith('dir=') && value.localeCompare('dir=v', undefined, { sensitivity: 'base' }) !== 0 && value.localeCompare('dir=h', undefined, { sensitivity: 'base' }) !== 0) {

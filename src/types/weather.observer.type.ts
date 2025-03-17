@@ -10,9 +10,9 @@ export type WeatherObserver = {
     Location: string;
     Date: Date;
     Unit: string;
-    Printer: IArrayDataPrinter;
     Invocation: CustomFunctions.Invocation;
 
+    ArrayDataPrinter: IArrayDataPrinter;
     Fields: IFieldService[];
     IncludeTitle: boolean;
 
@@ -23,5 +23,5 @@ export type WeatherObserver = {
     OptionalArg5?: any | null | undefined;
 
     InitialFormula?: any;
-    error?: any;
+    Error?: any;
 }

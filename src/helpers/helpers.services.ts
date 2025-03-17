@@ -6,6 +6,9 @@ import { IWeatherObserverService } from "../types/services/weather.observer.serv
 import { IObservableService } from "../types/services/observable.service.type";
 import { WeatherObserver } from "../types/weather.observer.type";
 import { IErrorParserService } from "../types/services/parsers/error.parser.service.type";
+import { IMacroCounterService } from "../types/services/macro.counter.service.type";
+import { IWeatherResultService } from "../types/services/weather.result.service.type";
+import { IPrintJobService } from "../types/services/jobs/print.job.service.type";
 
 export function getRequiredService<T>(id: string): T {
     const errorMsg: string = 'Unable to get service.';
@@ -59,4 +62,16 @@ export function getWeatherObserverService(): IWeatherObserverService {
 
 export function getWeatherObservableService(): IObservableService<WeatherObserver> {
     return getRequiredService<IObservableService<WeatherObserver>>('service.observable.weather');
+}
+
+export function getWeatherResultService(): IWeatherResultService {
+    return getRequiredService<IWeatherResultService>('service.results.weather');
+}
+
+export function getMacroCounterService(): IMacroCounterService {
+    return getRequiredService<IMacroCounterService>('service.counter.macro');
+}
+
+export function getPrintJobService(): IPrintJobService<IWeatherResultService, CustomFunctions.Invocation> {
+    return getRequiredService<IPrintJobService<IWeatherResultService, CustomFunctions.Invocation>>('service.job.print');
 }

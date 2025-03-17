@@ -1,12 +1,7 @@
-import { IArrayDataPrinter } from "../../printers/printer.type";
 import { IJobService } from "./job.service.type";
-import { IWeatherResultService } from "../weather.result.service.type";
 
-export interface IPrintJobService<T> extends IJobService<T> {
-    InitialFormula: any;
-    WeatherResult: IWeatherResultService;
-    ArrayDataPrinter: IArrayDataPrinter;
-    Invocation: T;
+export interface IPrintJobService<T, U> extends IJobService<U> {
+    Result: T;
 
-    create(): IPrintJobService<T>;
+    create(): IPrintJobService<T, U>;
 }

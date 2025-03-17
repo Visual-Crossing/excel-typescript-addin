@@ -64,7 +64,7 @@ export class WeatherObserverService implements IWeatherObserverService {
             ArrayDataRowsIn: 1,
             Fields: [],
             IncludeTitle: false,
-            Printer: new ArrayDataVerticalPrinterService(),
+            ArrayDataPrinter: new ArrayDataVerticalPrinterService(),
             Invocation: invocation,
             OptionalArg1: optionalArg1, 
             OptionalArg2: optionalArg2, 
@@ -84,7 +84,7 @@ export class WeatherObserverService implements IWeatherObserverService {
         const optionalArgs: any[] | null[] | undefined[] = [weatherObserver.OptionalArg1, weatherObserver.OptionalArg2, weatherObserver.OptionalArg3, weatherObserver.OptionalArg4, weatherObserver.OptionalArg5];
 
         if (errorMsg) {
-            weatherObserver.error = errorMsg;
+            weatherObserver.Error = errorMsg;
         }
 
         this.processOptionalArgs(optionalArgs, weatherObserver);
@@ -115,15 +115,11 @@ export class WeatherObserverService implements IWeatherObserverService {
                                 isOptionalArgParseSuccess = optionalArgParser.tryParse(optionalArgStringLower, weatherObserver);
                             } catch (error: any) {
                                 const errorParserService = Container.get<IErrorParserService>('service.parser.error');
-                                weatherObserver.error = errorParserService.getErrorInfo(error);
+                                weatherObserver.Error = errorParserService.getErrorInfo(error);
                             }
                         } while (!isOptionalArgParseSuccess && index < optionalArgParsers.length - 1);
                     }
                 }
-
-                // if (!isOptionalArgParseSuccess) {
-                //     weatherObserver.error = `Invalid parameter: '${optionalArg as string}'!`;
-                // }
             }
         });
     }
