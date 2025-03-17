@@ -2,16 +2,16 @@ import { Service } from 'typedi';
 import { IMacroJobService } from '../../types/services/jobs/macro.job.service.type';
 import { getCell, getSheetColumnsMax, getSheetRowsMax } from '../../helpers/helpers.excel';
 import { JobTypes } from '../../types/services/jobs/job.service.type';
+import { WeatherObserver } from '../../types/weather.observer.type';
 
 @Service({ transient: true })
-export class MacroJobService<T> implements IMacroJobService<T, CustomFunctions.Invocation> {
-    public Observer: T;
-    public Invocation: CustomFunctions.Invocation;
+export class MacroJobService implements IMacroJobService<WeatherObserver, CustomFunctions.Invocation> {
+    public Observer: WeatherObserver;
 
-    public onCallback: (macroJobService: IMacroJobService<T, CustomFunctions.Invocation>, context: Excel.RequestContext) => {};
+    public onCallback: (macroJobService: IMacroJobService<WeatherObserver, CustomFunctions.Invocation>, context: Excel.RequestContext) => {};
 
-    public create(): IMacroJobService<T, CustomFunctions.Invocation> {
-        return new MacroJobService<T>();
+    public create(): IMacroJobService<WeatherObserver, CustomFunctions.Invocation> {
+        return new MacroJobService();
     }
 
     public getType(): JobTypes {
@@ -19,16 +19,16 @@ export class MacroJobService<T> implements IMacroJobService<T, CustomFunctions.I
     }
 
     public getId(): CustomFunctions.Invocation {
-        if (this.Invocation && this.Invocation.address) {
-            return this.Invocation;
+        if (this.Observer && this.Observer.Invocation && this.Observer.Invocation.address) {
+            return this.Observer.Invocation;
         } else {
             throw new Error();
         }
     }
 
     public getAddress(): string {
-        if (this.Invocation && this.Invocation.address) {
-            return this.Invocation.address;
+        if (this.Observer && this.Observer.Invocation && this.Observer.Invocation.address) {
+            return this.Observer.Invocation.address;
         } else {
             throw new Error();
         }

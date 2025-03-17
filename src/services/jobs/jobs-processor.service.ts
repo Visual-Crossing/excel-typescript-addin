@@ -7,62 +7,62 @@ const RETRY_MS: number = 250;
 
 @Service()
 export class JobsProcessorService<T> implements IJobsProcessorService<T> {
-    private jobs: Queue<IJobService<T>> | null = null;
-    private isJobsProcessingInProgress: boolean = false;
+    private Jobs: Queue<IJobService<T>> | null = null;
+    private IsJobsProcessingInProgress: boolean = false;
 
     public add(job: IJobService<T>): void {
         if (!job) {
             return;
         }
 
-        if (!this.jobs) {
-            this.jobs = new Queue<IJobService<T>>();
+        if (!this.Jobs) {
+            this.Jobs = new Queue<IJobService<T>>();
         }
 
-        this.jobs.enqueue(job);
+        this.Jobs.enqueue(job);
     }
 
     public getCount(): number {
-        return this.jobs !== null ? this.jobs.length : 0;
+        return this.Jobs !== null ? this.Jobs.length : 0;
     }
 
     private retry(): void {
-        if (this.jobs && this.jobs.length > 0) {
+        if (this.Jobs && this.Jobs.length > 0) {
             const timeout: NodeJS.Timeout = setTimeout(async () => { clearTimeout(timeout); this.process(); }, RETRY_MS);
         }
     }
 
     public async process(): Promise<void> {
-        if (this.jobs && this.jobs.length > 0 && !this.isJobsProcessingInProgress) {
+        if (this.Jobs && this.Jobs.length > 0 && !this.IsJobsProcessingInProgress) {
             try {
-                this.isJobsProcessingInProgress = true;
+                this.IsJobsProcessingInProgress = true;
 
                 await Excel.run(async (context: Excel.RequestContext) => {
                     try {
-                        while (this.jobs && this.jobs.length > 0) {
-                            const job: IJobService<T> = this.jobs.front;
+                        while (this.Jobs && this.Jobs.length > 0) {
+                            const job: IJobService<T> = this.Jobs.front;
 
                             if (job) {
                                 if (await job.run(context)) {
-                                    this.jobs.dequeue();
+                                    this.Jobs.dequeue();
                                 }
                                 else {
                                     this.retry();
                                     return;
                                 }
                             } else {
-                                this.jobs.dequeue();
+                                this.Jobs.dequeue();
                             }
                         }
 
-                        this.jobs = null;
+                        this.Jobs = null;
                     }
                     catch {
                         this.retry();
                         return;
                     }
                     finally {
-                        this.isJobsProcessingInProgress = false;
+                        this.IsJobsProcessingInProgress = false;
                     }
                 });
             }
@@ -71,7 +71,7 @@ export class JobsProcessorService<T> implements IJobsProcessorService<T> {
                 return;
             }
             finally {
-                this.isJobsProcessingInProgress = false;
+                this.IsJobsProcessingInProgress = false;
             }
         }
     }

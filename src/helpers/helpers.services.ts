@@ -7,9 +7,14 @@ import { IObservableService } from '../types/services/observable.service.type';
 import { WeatherObserver } from '../types/weather.observer.type';
 import { IErrorParserService } from '../types/services/parsers/error.parser.service.type';
 import { IMacroCounterService } from '../types/services/macro.counter.service.type';
+import { IRequestService } from '../types/services/request.service.type';
 import { IWeatherResultService } from '../types/services/weather.result.service.type';
 import { IPrintJobService } from '../types/services/jobs/print.job.service.type';
 import { IMetadataService } from '../types/services/jobs/metadata.service.type';
+import { IJobsProcessorService } from '../types/services/jobs/jobs-processor.service.type';
+import { IMacroJobService } from '../types/services/jobs/macro.job.service.type';
+import { ICleanUpJobService } from '../types/services/jobs/cleanup.job.service.type';
+import { IWeatherResultsStoreService } from '../types/services/weather.result.store.service.type';
 
 export function getRequiredService<T>(id: string): T {
     const errorMsg: string = 'Unable to get service.';
@@ -65,8 +70,16 @@ export function getWeatherObservableService(): IObservableService<WeatherObserve
     return getRequiredService<IObservableService<WeatherObserver>>('service.observable.weather');
 }
 
+export function getWeatherRequestService(): IRequestService<WeatherObserver> {
+    return getRequiredService<IRequestService<WeatherObserver>>('service.requests.weather');
+}
+
 export function getWeatherResultService(): IWeatherResultService {
     return getRequiredService<IWeatherResultService>('service.results.weather');
+}
+
+export function getWeatherResultsStoreService(): IWeatherResultsStoreService {
+    return getRequiredService<IWeatherResultsStoreService>('service.results.store.weather');
 }
 
 export function getMacroCounterService(): IMacroCounterService {
@@ -79,4 +92,16 @@ export function getPrintJobService(): IPrintJobService<IWeatherResultService, Cu
 
 export function getMetadataService(): IMetadataService {
     return getRequiredService<IMetadataService>('service.metadata');
+}
+
+export function getJobsProcessorService<T>(): IJobsProcessorService<T> {
+    return getRequiredService<IJobsProcessorService<T>>('service.jobs.processor');
+}
+
+export function getMacroJobService(): IMacroJobService<WeatherObserver, CustomFunctions.Invocation> {
+    return getRequiredService<IMacroJobService<WeatherObserver, CustomFunctions.Invocation>>('service.job.macro');
+}
+
+export function getCleanUpJobService(): ICleanUpJobService<WeatherObserver, CustomFunctions.Invocation> {
+    return getRequiredService<ICleanUpJobService<WeatherObserver, CustomFunctions.Invocation>>('service.job.cleanup');
 }

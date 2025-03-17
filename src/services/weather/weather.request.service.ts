@@ -5,6 +5,7 @@ import { ICacheService } from '../../types/services/cache.service.type';
 import { IObservableService } from '../../types/services/observable.service.type';
 import { NA_DATA } from '../../shared/constants';
 import { ISettingsService } from '../../types/services/settings.service.type';
+import { getWeatherObservableService } from '../../helpers/helpers.services';
 
 export class WeatherRequest implements IRequestService<WeatherObserver> {
     async onSuccessJsonResponse(jsonResponse: any, observer: WeatherObserver): Promise<void> {
@@ -73,16 +74,10 @@ export class WeatherRequest implements IRequestService<WeatherObserver> {
                         return resolve (await this.onSuccessResponse(observer, response));
                     }
                     else {
-                        const cacheService = Container.get<ICacheService>('service.cache');
-
-                        cacheService.set(observer.CacheId, JSON.stringify({ 
-                            id: observer.CacheId,
-                            status: 'Complete',
-                            type: 'Temporary',
-                            error: 'API Error'
-                        }));
+                        const responseText: string = await response.text();
+                        observer.Error = `#N/A API Error! - (${responseText})`;
         
-                        const weatherObservableService = Container.get<IObservableService<WeatherObserver>>('service.observable.weather');
+                        const weatherObservableService: IObservableService<WeatherObserver> = getWeatherObservableService();
                         weatherObservableService.update(observer.CacheId, (observer) => observer.Invocation);
 
                         return reject();

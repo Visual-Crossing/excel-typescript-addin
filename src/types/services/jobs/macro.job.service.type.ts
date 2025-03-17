@@ -2,7 +2,6 @@ import { IJobService } from './job.service.type';
 
 export interface IMacroJobService<T, U> extends IJobService<U> {
     Observer: T;
-    Invocation: U;
 
     getCallerCellFormula(context: Excel.RequestContext): any;
 

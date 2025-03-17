@@ -14,8 +14,7 @@ import { IMetadataService } from '../..//types/services/jobs/metadata.service.ty
 import { IWeatherResultsStoreService } from '../../types/services/weather.result.store.service.type';
 import { ArrayDataVerticalPrinterService } from '../printers/vertical.printer.service';
 import { IMacroCounterService } from '../../types/services/macro.counter.service.type';
-import { getCacheService, getMacroCounterService, getPrintJobService, getWeatherResultService } from '../../helpers/helpers.services';
-import { WeatherResult } from '../weather/weather.result.service';
+import { getCacheService, getCleanUpJobService, getJobsProcessorService, getMacroCounterService, getMacroJobService, getMetadataService, getPrintJobService, getWeatherRequestService, getWeatherResultService, getWeatherResultsStoreService } from '../../helpers/helpers.services';
 
 export class WeatherObservableService extends ObservableService<WeatherObserver> {
     public constructor() {
@@ -30,11 +29,7 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
             return;
         }
 
-        const jobsProcessorService = Container.get<IJobsProcessorService<T>>('service.jobs.processor');
-
-        if (!jobsProcessorService) {
-            throw new Error();
-        }
+        const jobsProcessorService: IJobsProcessorService<T> = getJobsProcessorService();
 
         jobsProcessorService.add(job);
         jobsProcessorService.process();
@@ -45,16 +40,13 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
             return;
         }
 
-        const macroJob = Container.get<IMacroJobService<WeatherObserver, CustomFunctions.Invocation>>('service.job.macro').create();
-
-        if (!macroJob) {
-            throw new Error();
-        }
+        const macroJob: IMacroJobService<WeatherObserver, CustomFunctions.Invocation> = getMacroJobService().create();
 
         macroJob.Observer = observer;
-        macroJob.Invocation = observer.Invocation;
-
         macroJob.onCallback = async (macroJobService: IMacroJobService<WeatherObserver, CustomFunctions.Invocation>, context: Excel.RequestContext) => this.onMacroCallbackHandler(macroJobService, context);
+
+        const macroCounterService: IMacroCounterService = getMacroCounterService();
+        macroCounterService.add();
 
         this.initJob(macroJob);
     }
@@ -64,11 +56,7 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
             return;
         }
 
-        const cleanupJob = Container.get<ICleanUpJobService<WeatherObserver, CustomFunctions.Invocation>>('service.job.cleanup').create();
-
-        if (!cleanupJob) {
-            throw new Error();
-        }
+        const cleanupJob: ICleanUpJobService<WeatherObserver, CustomFunctions.Invocation> = getCleanUpJobService().create();
 
         cleanupJob.Observer = observer;
 
@@ -76,26 +64,24 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
     }
 
     public observe(observer: WeatherObserver): string | number | Date {
-        if (!observer) {
+        if (!observer || !observer.Invocation || !observer.Invocation.address) {
             throw new Error();
         }
 
-        const cacheService: ICacheService = getCacheService();
-        let cacheItemString: string | null | undefined = cacheService.get(observer.CacheId);
-
-        if (!cacheItemString && !observer.Error) {
-            cacheItemString = JSON.stringify({ id: observer.CacheId, status: 'Pending' });
-            cacheService.set(observer.CacheId, cacheItemString);
-        }
-
-        const weatherResultsStore = Container.get<IWeatherResultsStoreService>('service.results.store.weather');
-        const weatherResult = weatherResultsStore.get(observer.CacheId, observer.Invocation.address!);
+        const weatherResultsStore: IWeatherResultsStoreService = getWeatherResultsStoreService();
+        const weatherResult = weatherResultsStore.get(observer.CacheId, observer.Invocation.address);
 
         if (!weatherResult) {
-            const macroCounterService = Container.get<IMacroCounterService>('service.counter.macro');
-            macroCounterService.add();
+            const cacheService: ICacheService = getCacheService();
+            let cacheItemString: string | null | undefined = cacheService.get(observer.CacheId);
+    
+            if (!cacheItemString && !observer.Error) {
+                cacheItemString = JSON.stringify({ id: observer.CacheId, status: 'Pending' });
+                cacheService.set(observer.CacheId, cacheItemString);
+            }
 
             this.initMacroJob(observer);
+
             return PROCESSING;
         } else {
             try {
@@ -105,14 +91,13 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
 
                 return weatherResult.weatherResult.getFormulaCellValue();
             } finally {
-                const macroCounterService = Container.get<IMacroCounterService>('service.counter.macro');
-                macroCounterService.remove();
+                this.removeMacroCount();
             }
         }
     }
 
     private async saveMetadata(macroJobService: IMacroJobService<WeatherObserver, CustomFunctions.Invocation>, context: Excel.RequestContext) {
-        const metadataService = Container.get<IMetadataService>('service.metadata');
+        const metadataService: IMetadataService = getMetadataService();
 
         if (!metadataService.MaxSheetRows || metadataService.MaxSheetRows === 0) {
             metadataService.MaxSheetRows = await macroJobService.getMaxSheetRows(context);
@@ -123,9 +108,12 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
         }
     }
 
-    private async onMacroCallbackHandler (macroJobService: IMacroJobService<WeatherObserver, CustomFunctions.Invocation>, context: Excel.RequestContext): Promise<void>  { 
+    private removeMacroCount(): void {
         const macroCounterService: IMacroCounterService = getMacroCounterService();
+        macroCounterService.remove();
+    }
 
+    private async onMacroCallbackHandler (macroJobService: IMacroJobService<WeatherObserver, CustomFunctions.Invocation>, context: Excel.RequestContext): Promise<void>  { 
         try {
             if (!macroJobService || !context) {
                 throw new Error();
@@ -157,21 +145,24 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
                             this.update(observer.CacheId, (observer) => observer.Invocation);
                         }
                         else if (cacheItemObject && cacheItemObject.status === 'Pending') {
-                            const weatherRequest = Container.get<IRequestService<WeatherObserver>>('service.requests.weather');
+                            const weatherRequest: IRequestService<WeatherObserver> = getWeatherRequestService();
                             weatherRequest.fetchData(observer);
 
                             cacheService.set(observer.CacheId, JSON.stringify({ id: observer.CacheId, status: 'Requesting' }));
                         }
                     }
                 } else {
-                    macroCounterService.remove();
+                    this.removeMacroCount();
                 }
             } else  {
-                macroCounterService.remove();
+                this.removeMacroCount();
             }
         } catch (error: any){
-            macroCounterService.remove();
-            throw error;
+            //macroCounterService.remove();
+            
+            //ToDo: Display error dialog.
+            //const TASKPANE_DOMAIN: string = process.env.NODE_ENV === 'production' ? 'ToDo' : 'localhost:3000';
+            //Office.context.ui.displayDialogAsync(`https://${TASKPANE_DOMAIN}/taskpane.html`, { height: 30, width: 20, displayInIframe: true });
         }
     }
 
@@ -179,6 +170,8 @@ export class WeatherObservableService extends ObservableService<WeatherObserver>
         if (observer && observer.Invocation && observer.Invocation.address) { 
             return true; 
         } else { 
+            this.removeMacroCount();
+
             return false;
         } 
     }

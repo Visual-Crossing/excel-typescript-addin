@@ -75,7 +75,7 @@ export class Setup {
       ]);
 
       Container.set([
-        { id: 'service.job.macro', value: new MacroJobService<WeatherObserver>, transient: true },
+        { id: 'service.job.macro', value: new MacroJobService, transient: true },
         { id: 'service.job.cleanup', value: new CleanUpJobService() },
         { id: 'service.job.print', value: new PrintJobService() }
       ]);
