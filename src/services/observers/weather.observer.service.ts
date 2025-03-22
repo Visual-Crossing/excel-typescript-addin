@@ -1,13 +1,13 @@
 import Container, { Service } from 'typedi';
 import { WeatherObserver } from '../../types/weather.observer.type';
 import { IOptionalArgParserService } from '../../types/services/parsers/optional-arg.parser.service.type';
-import { ArrayDataVerticalPrinterService } from '../printers/vertical.printer.service';
 import { IDateParserService } from '../../types/services/parsers/date.parser.service.type';
 import { ISettingsService } from '../../types/services/settings.service.type';
 import { ICacheService } from '../../types/services/cache.service.type';
 import { IWeatherObserverService } from '../../types/services/weather.observer.service.type';
 import { IErrorParserService } from '../../types/services/parsers/error.parser.service.type';
 import { getCacheService, getDateParserService, getErrorParserService, getSettingsService } from '../../helpers/helpers.services';
+import { ArrayDataHorizontalPrinterService } from '../printers/horizontal.printer.service';
 
 @Service()
 export class WeatherObserverService implements IWeatherObserverService {
@@ -80,7 +80,7 @@ export class WeatherObserverService implements IWeatherObserverService {
             ArrayDataRowsIn: 1,
             Fields: [],
             IncludeTitle: false,
-            ArrayDataPrinter: new ArrayDataVerticalPrinterService(),
+            ArrayDataPrinter: new ArrayDataHorizontalPrinterService(),
             Invocation: invocation,
             OptionalArg1: optionalArg1, 
             OptionalArg2: optionalArg2, 
