@@ -29,7 +29,7 @@ export async function Weather(
   optionalArg4: any | null | undefined = null, 
   optionalArg5: any | null | undefined = null,
   invocation: CustomFunctions.Invocation
-): Promise<string | number | Date> {
+): Promise<string | number | Date | CustomFunctions.Error> {
   
   try {
     //debugger;
@@ -47,7 +47,7 @@ export async function Weather(
     if (errorParserService) {
       return errorParserService.getErrorInfo(error);
     } else {
-      return '#VALUE!';
+      return new CustomFunctions.Error(CustomFunctions.ErrorCode.invalidValue);
     }
   }
 }

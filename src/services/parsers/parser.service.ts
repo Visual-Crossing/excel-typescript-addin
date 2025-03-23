@@ -1,10 +1,11 @@
 import Container from 'typedi';
 import { IOptionalArgParserService } from '../../types/services/parsers/optional-arg.parser.service.type';
 import { WeatherObserver } from '../../types/weather.observer.type';
+import { NA_ERROR } from '../../shared/constants';
 
 export abstract class OptionalArgParserService {
     public getErrorMessage(value: string): string {
-        return `#Invalid parameter: '${value}'!`;
+        return `${NA_ERROR} - Invalid parameter: '${value}'!`;
     }
 
     public isValidMultiArg(value: string, weatherObserver: WeatherObserver, multiServiceName: string, expectedLength: number = -1, separator: string = ';'): boolean {

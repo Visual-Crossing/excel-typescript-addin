@@ -14,7 +14,8 @@ export type WeatherObserver = {
 
     ArrayDataPrinter: IArrayDataPrinter;
     Fields: IFieldService[];
-    IncludeHeaders: boolean;
+    IncludeHeaders?: boolean;
+    UseExcelErrors?: boolean;
 
     OptionalArg1?: any | null | undefined;
     OptionalArg2?: any | null | undefined;

@@ -8,6 +8,7 @@ import { IWeatherObserverService } from '../../types/services/weather.observer.s
 import { IErrorParserService } from '../../types/services/parsers/error.parser.service.type';
 import { getCacheService, getDateParserService, getErrorParserService, getSettingsService } from '../../helpers/helpers.services';
 import { ArrayDataHorizontalPrinterService } from '../printers/horizontal.printer.service';
+import { NA_ERROR } from '../../shared/constants';
 
 @Service()
 export class WeatherObserverService implements IWeatherObserverService {
@@ -33,7 +34,7 @@ export class WeatherObserverService implements IWeatherObserverService {
         optionalArg5?: any | null | undefined
     ): Promise<WeatherObserver> {
         const INVALID_PARAMETERS: string = 'Invalid parameters!';
-        let errorMsg: string | undefined = undefined;
+        let errorMsg: string | CustomFunctions.Error | undefined = undefined;
 
         if ((optionalArg1 && typeof optionalArg1 !== 'string') ||
             (optionalArg2 && typeof optionalArg2 !== 'string') ||
@@ -46,7 +47,7 @@ export class WeatherObserverService implements IWeatherObserverService {
         const locationString: string = this.parseLocation(location);
 
         if (!locationString || locationString.length === 0) {
-            errorMsg = '#N/A Invalid Location!';
+            errorMsg = `${NA_ERROR} - Invalid Location!`;
         }
 
         const settingsService: ISettingsService = getSettingsService();
@@ -63,7 +64,7 @@ export class WeatherObserverService implements IWeatherObserverService {
             if (errorParserService) {
                 errorMsg = errorParserService.getErrorInfo(error);
             } else {
-                errorMsg = '#N/A Invalid Date!';
+                errorMsg = `${NA_ERROR} - Invalid Date!`;
             }
         }
 
@@ -80,6 +81,7 @@ export class WeatherObserverService implements IWeatherObserverService {
             ArrayDataRowsIn: 1,
             Fields: [],
             IncludeHeaders: false,
+            UseExcelErrors: false,
             ArrayDataPrinter: new ArrayDataHorizontalPrinterService(),
             Invocation: invocation,
             OptionalArg1: optionalArg1, 

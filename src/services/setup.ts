@@ -13,6 +13,8 @@ import { HorizontalPrinterOptionalArgParserService } from './parsers/optional-ar
 import { HeaderNOptionalArgParserService } from './parsers/optional-args/headers/headers-n.parser.service';
 import { HeaderYOptionalArgParserService } from './parsers/optional-args/headers/headers-y.parser.service';
 import { FieldsOptionalArgParserService } from './parsers/optional-args/fields/fields.parser.service';
+import { ExcelErrorOptionalArgParserService } from './parsers/optional-args/errors/excel-error.parser.service';
+import { CustomErrorOptionalArgParserService } from './parsers/optional-args/errors/custom-error.parser.service';
 import { WeatherObserverService } from './observers/weather.observer.service';
 import { JobsProcessorService } from './jobs/jobs-processor.service';
 import { MacroJobService } from './jobs/macro.job.service';
@@ -72,6 +74,8 @@ export class Setup {
         { id: 'service.parser.arg', value: new HeaderYOptionalArgParserService(), multiple: true },
         { id: 'service.parser.arg', value: new HeaderNOptionalArgParserService(), multiple: true },
         { id: 'service.parser.arg', value: new FieldsOptionalArgParserService(), multiple: true },
+        { id: 'service.parser.arg', value: new ExcelErrorOptionalArgParserService(), multiple: true },
+        { id: 'service.parser.arg', value: new CustomErrorOptionalArgParserService(), multiple: true },
       ]);
 
       Container.set([

@@ -4,7 +4,6 @@ import { getArrayDataCols, getArrayDataRows } from '../../helpers/helpers.formul
 import { IWeatherResultService } from '../../types/services/weather.result.service.type';
 import { ICacheService } from '../../types/services/cache.service.type';
 import { getCacheService } from '../../helpers/helpers.services';
-import { NA_DATA } from '../../shared/constants';
 
 import { HumidityFieldService } from '../fields/humidity.field.service';
 import { PrecipitationFieldService } from '../fields/precipitation.field.service';
@@ -33,19 +32,20 @@ export class WeatherResult implements IWeatherResultService {
         }
 
         if (this.Observer.Error) {
-            this.OutputArrayData.push([this.Observer.Error]);
+            const errorValue: any = this.Observer.UseExcelErrors ? new CustomFunctions.Error(CustomFunctions.ErrorCode.invalidValue) : this.Observer.Error;
+            this.OutputArrayData.push([errorValue]);
         } else { 
             const cacheService: ICacheService = getCacheService();
             const cacheItemString: string | null | undefined = cacheService.get(this.Observer.CacheId);
 
             if (!cacheItemString) {
-                this.OutputArrayData.push([NA_DATA]);
+                this.OutputArrayData.push([new CustomFunctions.Error(CustomFunctions.ErrorCode.notAvailable)]);
             }
             else {
                 const cacheItemObject = JSON.parse(cacheItemString);
 
                 if (!cacheItemObject || !cacheItemObject.values || cacheItemObject.values.length < 1) {
-                    this.OutputArrayData.push([NA_DATA]);
+                    this.OutputArrayData.push([new CustomFunctions.Error(CustomFunctions.ErrorCode.notAvailable)]);
                 } else {
                     if (!this.Observer.Fields?.length) {
                         this.Observer.Fields = [new HumidityFieldService(), new PressureFieldService(), new WindDirFieldService()];
@@ -64,7 +64,7 @@ export class WeatherResult implements IWeatherResultService {
 
         if (!validate(this.OutputArrayData)) {
             this.OutputArrayData = [];
-            this.OutputArrayData.push(['#N/A Overflow!']);
+            this.OutputArrayData.push([new CustomFunctions.Error(CustomFunctions.ErrorCode.notAvailable)]);
             
         }
 
