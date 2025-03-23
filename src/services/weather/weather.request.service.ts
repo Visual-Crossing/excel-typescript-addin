@@ -98,7 +98,7 @@ export class WeatherRequest implements IRequestService<WeatherObserver> {
                 }
                 catch (error: any) {
                     const errorParserService: IErrorParserService | null = getErrorParserService();
-                    const errorMsg = errorParserService?.getErrorInfo(error)?.toString();
+                    const errorMsg = errorParserService?.getErrorInfo(error);
 
                     this.processError(observer, errorMsg);
 
