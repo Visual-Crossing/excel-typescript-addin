@@ -14,7 +14,11 @@ import { NA_ERROR } from '../../shared/constants';
 export class WeatherObserverService implements IWeatherObserverService {
     private parseLocation(location: any): string {
         try {
-            const locationString: string = (location as string)?.trim();
+            let locationString: string = (location as string)?.trim();
+
+            if (!locationString) {
+                locationString = '';
+            }
 
             return locationString;
         }
