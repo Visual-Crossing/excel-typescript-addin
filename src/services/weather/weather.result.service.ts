@@ -44,7 +44,10 @@ export class WeatherResult implements IWeatherResultService {
             else {
                 const cacheItemObject = JSON.parse(cacheItemString);
 
-                if (!cacheItemObject || !cacheItemObject.values || cacheItemObject.values.length < 1) {
+                if (cacheItemObject && cacheItemObject.error) {
+                    const errorValue: any = this.Observer.UseExcelErrors ? new CustomFunctions.Error(CustomFunctions.ErrorCode.invalidValue) : cacheItemObject.error;
+                    this.OutputArrayData.push([errorValue]);
+                } else if (!cacheItemObject || !cacheItemObject.values || cacheItemObject.values.length < 1) {
                     this.OutputArrayData.push([new CustomFunctions.Error(CustomFunctions.ErrorCode.notAvailable)]);
                 } else {
                     if (!this.Observer.Fields?.length) {

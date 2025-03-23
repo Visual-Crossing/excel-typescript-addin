@@ -75,7 +75,16 @@ export class WeatherRequest implements IRequestService<WeatherObserver> {
                     else {
                         const responseText: string = await response.text();
                         observer.Error = `#N/A API Error! - ${responseText}`;
-        
+                        
+                        const cacheService = Container.get<ICacheService>('service.cache');
+
+                        cacheService.set(observer.CacheId, JSON.stringify({ 
+                            id: observer.CacheId,
+                            status: 'Complete',
+                            type: 'Permanent',
+                            error: observer.Error
+                        }));
+
                         const weatherObservableService: IObservableService<WeatherObserver> = getWeatherObservableService();
                         weatherObservableService.update(observer.CacheId, (observer) => observer.Invocation);
 
