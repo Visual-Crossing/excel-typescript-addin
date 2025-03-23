@@ -1,11 +1,10 @@
 import { Service } from 'typedi';
 import { IDateParserService } from '../../types/services/parsers/date.parser.service.type';
-import { NA_ERROR } from '../../shared/constants';
 
 @Service()
 export class DateParserService implements IDateParserService {
     public parse(value: any) : Date {
-        const INVALID_DATE: string = `${NA_ERROR} Invalid date!`;
+        const INVALID_DATE: string = 'Invalid date!';
 
         if (!value) {
             throw new Error(INVALID_DATE);

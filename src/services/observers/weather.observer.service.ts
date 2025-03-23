@@ -63,6 +63,8 @@ export class WeatherObserverService implements IWeatherObserverService {
         try {
             dateValue = dateParserService.parse(date);
         } catch (error: any) {
+            dateValue = new Date(1900, 1, 1);
+
             const errorParserService: IErrorParserService | null = getErrorParserService();
 
             if (errorParserService) {
