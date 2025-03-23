@@ -4,7 +4,8 @@ import { WeatherObserver } from '../../types/weather.observer.type';
 import { ICacheService } from '../../types/services/cache.service.type';
 import { IObservableService } from '../../types/services/observable.service.type';
 import { ISettingsService } from '../../types/services/settings.service.type';
-import { getWeatherObservableService } from '../../helpers/helpers.services';
+import { getErrorParserService, getWeatherObservableService } from '../../helpers/helpers.services';
+import { IErrorParserService } from '../../types/services/parsers/error.parser.service.type';
 
 export class WeatherRequest implements IRequestService<WeatherObserver> {
     async onSuccessJsonResponse(jsonResponse: any, observer: WeatherObserver): Promise<void> {
@@ -51,6 +52,22 @@ export class WeatherRequest implements IRequestService<WeatherObserver> {
         });
     }
 
+    private processError(observer: WeatherObserver, error: any): void {
+        observer.Error = error;
+                        
+        const cacheService = Container.get<ICacheService>('service.cache');
+
+        cacheService.set(observer.CacheId, JSON.stringify({ 
+            id: observer.CacheId,
+            status: 'Complete',
+            type: 'Permanent',
+            error: observer.Error
+        }));
+
+        const weatherObservableService: IObservableService<WeatherObserver> = getWeatherObservableService();
+        weatherObservableService.update(observer.CacheId, (observer) => observer.Invocation);
+    }
+
     public async fetchData(observer: WeatherObserver): Promise<string | void | CustomFunctions.Error> {
         const settings = Container.get<ISettingsService>('service.settings');
         const apiKey: string | null | undefined = await settings.getApiKeyAsync();
@@ -74,25 +91,18 @@ export class WeatherRequest implements IRequestService<WeatherObserver> {
                     }
                     else {
                         const responseText: string = await response.text();
-                        observer.Error = `#N/A API Error! - ${responseText}`;
-                        
-                        const cacheService = Container.get<ICacheService>('service.cache');
+                        this.processError(observer, `#N/A API Error! - ${responseText}`);
 
-                        cacheService.set(observer.CacheId, JSON.stringify({ 
-                            id: observer.CacheId,
-                            status: 'Complete',
-                            type: 'Permanent',
-                            error: observer.Error
-                        }));
-
-                        const weatherObservableService: IObservableService<WeatherObserver> = getWeatherObservableService();
-                        weatherObservableService.update(observer.CacheId, (observer) => observer.Invocation);
-
-                        return reject();
+                        return reject(observer.Error);
                     }
                 }
                 catch (error: any) {
-                    return reject(error);
+                    const errorParserService: IErrorParserService | null = getErrorParserService();
+                    const errorMsg = errorParserService?.getErrorInfo(error)?.toString();
+
+                    this.processError(observer, errorMsg);
+
+                    return reject(errorMsg);
                 }
             });
         }
