@@ -53,7 +53,7 @@ export class WeatherResult implements IWeatherResultService {
                     }
                     
                     //ToDo: Consider using multiple services
-                    if (this.Observer.IncludeTitle) {
+                    if (this.Observer.IncludeHeaders) {
                         this.Observer.Fields.forEach((field) => this.OutputArrayData.push([field.getTitle(), field.getValue(cacheItemObject)]));
                     } else {
                         this.Observer.Fields.forEach((field) => this.OutputArrayData.push([field.getValue(cacheItemObject)]));

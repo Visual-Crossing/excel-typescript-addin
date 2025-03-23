@@ -5,7 +5,7 @@ import { WeatherObserver } from '../../../../types/weather.observer.type';
 export class HeaderYOptionalArgParserService implements IOptionalArgParserService {
     public tryParse(value: string, weatherObserver: WeatherObserver): boolean {
         if (value && value.localeCompare('headers=y', undefined, { sensitivity: 'base' }) === 0) {
-            weatherObserver.IncludeTitle = true;
+            weatherObserver.IncludeHeaders = true;
             
             return true;
         } else if (value && value.startsWith('headers=') && value.localeCompare('headers=n', undefined, { sensitivity: 'base' }) !== 0 && value.localeCompare('headers=y', undefined, { sensitivity: 'base' }) !== 0) {
