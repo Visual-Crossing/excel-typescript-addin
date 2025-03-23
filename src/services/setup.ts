@@ -26,7 +26,9 @@ import { WeatherRequest } from './weather/weather.request.service';
 import { WeatherResultsStore } from './weather.result.store.service';
 import { MacroCounterService } from './macro.counter.service';
 
-import { PrecipitationFieldService } from './fields/precipitation.field.service';
+import { CloudCoverFieldParserService } from './parsers/optional-args/fields/cloud-cover.field.parser.service';
+import { ConditionsFieldParserService } from './parsers/optional-args/fields/conditions.field.parser.service';
+import { DescriptionFieldParserService } from './parsers/optional-args/fields/description.field.parser.service';
 import { DewFieldParserService } from './parsers/optional-args/fields/dew.field.parser.service';
 import { HumidityFieldParserService } from './parsers/optional-args/fields/humidity.field.parser.service';
 import { PrecipitationFieldParserService } from './parsers/optional-args/fields/precip.field.parser.service';
@@ -78,6 +80,9 @@ export class Setup {
       ]);
 
       Container.set([
+        { id: 'service.parser.arg.field', value: new CloudCoverFieldParserService(), multiple: true },
+        { id: 'service.parser.arg.field', value: new ConditionsFieldParserService(), multiple: true },
+        { id: 'service.parser.arg.field', value: new DescriptionFieldParserService(), multiple: true },
         { id: 'service.parser.arg.field', value: new DewFieldParserService(), multiple: true },
         { id: 'service.parser.arg.field', value: new HumidityFieldParserService(), multiple: true },
         { id: 'service.parser.arg.field', value: new PrecipitationFieldParserService(), multiple: true },
@@ -116,10 +121,6 @@ export class Setup {
         { id: 'service.requests.weather', value: new WeatherRequest() },
         { id: 'service.results.weather', value: new WeatherResult() },
         { id: 'service.results.store.weather', value: new WeatherResultsStore() }
-      ]);
-
-      Container.set([
-        { id: 'precip', value: new PrecipitationFieldService() }
       ]);
   }
 }
